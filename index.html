@@ -3,543 +3,418 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meu Curso</title>
+  <title>CLAUDE IA PARA MENTORAS</title>
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #FAFAF9;
-      --surface: #FFFFFF;
-      --border: #E7E5E4;
-      --text: #1C1917;
-      --muted: #78716C;
-      --accent: #1C1917;
-      --accent-hover: #292524;
-      --light: #F5F5F4;
+      --bg: #FAFAF9; --surface: #fff; --border: #E7E5E4;
+      --text: #1C1917; --muted: #78716C; --light: #F5F5F4;
+      --accent: #1C1917; --accent-h: #292524;
+      --green: #16A34A; --green-bg: #F0FDF4; --green-border: #BBF7D0;
       --danger: #DC2626;
-      --sidebar-w: 272px;
-      --header-h: 56px;
-      --radius: 8px;
+      --sidebar-w: 280px; --header-h: 56px; --radius: 8px;
     }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100dvh; }
 
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100dvh;
-    }
+    /* AUTH GATE */
+    #authGate { position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999; }
+    .spinner { width:28px;height:28px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
 
-    /* ── AUTH GATE ── */
-    #authGate {
-      position: fixed; inset: 0;
-      background: var(--bg);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 999;
-    }
-    .spinner {
-      width: 28px; height: 28px;
-      border: 2.5px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* HEADER */
+    header { position:fixed;top:0;left:0;right:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border); }
+    .header-main { height:var(--header-h);display:flex;align-items:center;padding:0 16px;gap:10px; }
+    .btn-menu { display:none;background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;color:var(--muted); }
+    .btn-menu:hover { background:var(--light); }
+    .btn-menu svg { width:20px;height:20px;display:block; }
+    .logo { font-size:.95rem;font-weight:800;letter-spacing:-.02em;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .header-right { display:flex;align-items:center;gap:8px; }
+    .user-chip { display:flex;align-items:center;gap:7px;padding:4px 10px 4px 5px;border-radius:99px;border:1px solid var(--border); }
+    .avatar { width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;flex-shrink:0; }
+    .user-email { font-size:.78rem;color:var(--muted); }
+    .btn-sm { padding:6px 12px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;transition:all .12s; }
+    .btn-sm:hover { background:var(--light);color:var(--text); }
+    .btn-sm.active { background:var(--accent);color:#fff;border-color:var(--accent); }
 
-    /* ── HEADER ── */
-    header {
-      position: fixed; top: 0; left: 0; right: 0;
-      height: var(--header-h);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center;
-      padding: 0 20px; gap: 12px;
-      z-index: 100;
-    }
-    .btn-menu {
-      display: none;
-      background: none; border: none; cursor: pointer;
-      padding: 6px; border-radius: 6px; color: var(--muted);
-    }
-    .btn-menu:hover { background: var(--light); color: var(--text); }
-    .btn-menu svg { width: 20px; height: 20px; display: block; }
+    /* PROGRESS BAR */
+    .progress-bar-wrap { height:3px;background:var(--border); }
+    .progress-bar-fill { height:100%;background:var(--green);transition:width .4s ease; }
 
-    .logo {
-      font-size: 1rem; font-weight: 800;
-      letter-spacing: -.02em; color: var(--text);
-      flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+    /* LAYOUT */
+    .layout { display:flex;padding-top:calc(var(--header-h) + 3px);min-height:100dvh; }
 
-    .header-right { display: flex; align-items: center; gap: 10px; }
+    /* SIDEBAR */
+    aside { width:var(--sidebar-w);position:fixed;top:calc(var(--header-h)+3px);left:0;bottom:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;z-index:90;transition:transform .22s ease;display:flex;flex-direction:column; }
+    .sidebar-search { padding:12px 12px 8px; }
+    .search-input { width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem;font-family:inherit;outline:none;background:var(--bg);color:var(--text);transition:border .15s; }
+    .search-input:focus { border-color:var(--accent);background:var(--surface); }
+    .search-input::placeholder { color:#A8A29E; }
 
-    .user-chip {
-      display: flex; align-items: center; gap: 8px;
-      padding: 5px 12px 5px 6px;
-      border-radius: 99px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      font-size: .8rem; color: var(--muted);
-    }
-    .user-avatar {
-      width: 24px; height: 24px; border-radius: 50%;
-      background: var(--accent); color: #fff;
-      display: flex; align-items: center; justify-content: center;
-      font-size: .7rem; font-weight: 700;
-      flex-shrink: 0;
-    }
+    .sidebar-overview-btn { margin:0 12px 10px;padding:9px 12px;background:var(--light);border:1.5px solid var(--border);border-radius:var(--radius);font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .12s;text-align:left; }
+    .sidebar-overview-btn:hover,.sidebar-overview-btn.active { background:var(--accent);color:#fff;border-color:var(--accent); }
 
-    .btn-sm {
-      padding: 6px 14px; border-radius: 6px;
-      font-size: .8rem; font-weight: 600;
-      cursor: pointer; border: 1px solid var(--border);
-      background: var(--surface); color: var(--muted);
-      font-family: inherit; transition: all .12s;
-    }
-    .btn-sm:hover { background: var(--light); color: var(--text); }
-    .btn-sm.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .module-section { margin-bottom:4px; }
+    .module-header { padding:8px 14px 4px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:flex;align-items:center;justify-content:space-between; }
+    .module-progress-text { font-size:.68rem;color:var(--muted);font-weight:400;letter-spacing:0; }
+    .lesson-list { list-style:none;padding:0 8px; }
+    .lesson-btn { width:100%;background:none;border:none;text-align:left;padding:8px 10px;cursor:pointer;border-radius:6px;display:flex;align-items:flex-start;gap:8px;transition:background .1s;font-family:inherit; }
+    .lesson-btn:hover { background:var(--light); }
+    .lesson-btn.active { background:var(--light); }
+    .lesson-num { min-width:22px;height:22px;margin-top:1px;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--muted);flex-shrink:0;transition:all .15s; }
+    .lesson-btn.active .lesson-num { background:var(--accent);color:#fff; }
+    .lesson-btn.done .lesson-num { background:var(--green);color:#fff; }
+    .lesson-info { flex:1;min-width:0; }
+    .lesson-name { font-size:.85rem;font-weight:500;color:var(--text);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .lesson-meta { font-size:.72rem;color:var(--muted);margin-top:2px; }
+    .lesson-actions { display:none;gap:2px; }
+    .admin-mode .lesson-actions { display:flex; }
+    .icon-btn { background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:5px;font-size:.8rem;color:var(--muted);line-height:1;transition:all .1s; }
+    .icon-btn:hover { background:var(--border);color:var(--text); }
+    .icon-btn.danger:hover { color:var(--danger); }
+    .sidebar-footer { padding:8px 12px 16px;margin-top:auto; }
+    .btn-new-lesson { display:none;width:100%;padding:8px 12px;background:none;color:var(--muted);border:1.5px dashed var(--border);border-radius:6px;font-size:.82rem;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s;margin-bottom:6px; }
+    .btn-new-lesson:hover { border-color:var(--accent);color:var(--accent);background:var(--light); }
+    .btn-new-module { display:none;width:100%;padding:8px 12px;background:none;color:var(--muted);border:1.5px dashed var(--border);border-radius:6px;font-size:.82rem;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s; }
+    .btn-new-module:hover { border-color:var(--accent);color:var(--accent);background:var(--light); }
+    .admin-mode .btn-new-lesson,.admin-mode .btn-new-module { display:block; }
 
-    /* ── LAYOUT ── */
-    .layout {
-      display: flex;
-      padding-top: var(--header-h);
-      min-height: 100dvh;
-    }
+    /* MAIN */
+    main { margin-left:var(--sidebar-w);flex:1;padding:32px 28px;max-width:calc(var(--sidebar-w) + 860px); }
 
-    /* ── SIDEBAR ── */
-    aside {
-      width: var(--sidebar-w);
-      min-height: calc(100dvh - var(--header-h));
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      position: fixed; top: var(--header-h); left: 0; bottom: 0;
-      overflow-y: auto; z-index: 90;
-      transition: transform .22s ease;
-    }
+    /* ── OVERVIEW PAGE ── */
+    .overview { display:flex;flex-direction:column;gap:24px; }
 
-    .sidebar-section {
-      padding: 16px 12px 8px;
-    }
-    .sidebar-label {
-      font-size: .7rem; font-weight: 700;
-      text-transform: uppercase; letter-spacing: .07em;
-      color: var(--muted); padding: 0 6px 8px;
-    }
+    /* Banner */
+    .banner { background:var(--accent);border-radius:16px;padding:36px;display:flex;align-items:center;gap:32px;overflow:hidden;position:relative; }
+    .banner::before { content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");z-index:0; }
+    .banner-content { flex:1;z-index:1;min-width:0; }
+    .banner-tag { font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.6);margin-bottom:8px; }
+    .banner-title { font-size:1.7rem;font-weight:900;color:#fff;letter-spacing:-.03em;line-height:1.15;margin-bottom:10px; }
+    .banner-instructor { font-size:.9rem;color:rgba(255,255,255,.75);margin-bottom:20px; }
+    .banner-stats { display:flex;gap:20px;flex-wrap:wrap; }
+    .banner-stat { text-align:center; }
+    .banner-stat-val { font-size:1.4rem;font-weight:800;color:#fff;line-height:1; }
+    .banner-stat-label { font-size:.7rem;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.06em;margin-top:2px; }
+    .banner-photo { width:120px;height:120px;border-radius:50%;border:4px solid rgba(255,255,255,.2);object-fit:cover;flex-shrink:0;z-index:1;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;overflow:hidden; }
+    .banner-photo img { width:100%;height:100%;object-fit:cover; }
+    .banner-photo-placeholder { font-size:2.5rem;color:rgba(255,255,255,.4); }
+    .btn-continue { display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--accent);padding:11px 22px;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .15s; }
+    .btn-continue:hover { background:rgba(255,255,255,.9); }
 
-    .lesson-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+    /* Stats cards */
+    .stats-row { display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px; }
+    .stat-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px; }
+    .stat-card-val { font-size:1.6rem;font-weight:800;color:var(--text);letter-spacing:-.03em; }
+    .stat-card-label { font-size:.78rem;color:var(--muted);margin-top:4px; }
+    .stat-card.green { border-color:var(--green-border);background:var(--green-bg); }
+    .stat-card.green .stat-card-val { color:var(--green); }
 
-    .lesson-btn {
-      width: 100%; background: none; border: none;
-      text-align: left; padding: 9px 10px;
-      cursor: pointer; border-radius: 6px;
-      display: flex; align-items: flex-start; gap: 10px;
-      transition: background .1s; font-family: inherit;
-    }
-    .lesson-btn:hover { background: var(--light); }
-    .lesson-btn.active { background: var(--light); }
+    /* Progress overview */
+    .progress-section { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px; }
+    .progress-section h3 { font-size:.9rem;font-weight:700;margin-bottom:14px; }
+    .progress-track { background:var(--border);border-radius:99px;height:8px;overflow:hidden;margin-bottom:8px; }
+    .progress-track-fill { height:100%;background:var(--green);border-radius:99px;transition:width .4s ease; }
+    .progress-label { font-size:.8rem;color:var(--muted); }
 
-    .lesson-num {
-      min-width: 22px; height: 22px; margin-top: 1px;
-      border-radius: 4px;
-      background: var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: .68rem; font-weight: 700; color: var(--muted);
-      flex-shrink: 0;
-    }
-    .lesson-btn.active .lesson-num { background: var(--accent); color: #fff; }
+    /* Instructor card */
+    .instructor-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:16px; }
+    .instructor-avatar { width:56px;height:56px;border-radius:50%;background:var(--light);flex-shrink:0;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:var(--muted);overflow:hidden; }
+    .instructor-avatar img { width:100%;height:100%;object-fit:cover; }
+    .instructor-name { font-size:1rem;font-weight:700; }
+    .instructor-title { font-size:.8rem;color:var(--muted);margin-top:2px; }
+    .instructor-bio { font-size:.85rem;color:var(--muted);margin-top:8px;line-height:1.6; }
+    .btn-edit-instructor { display:none;margin-left:auto;flex-shrink:0; }
+    .admin-mode .btn-edit-instructor { display:block; }
 
-    .lesson-info { flex: 1; min-width: 0; }
-    .lesson-name {
-      font-size: .875rem; font-weight: 500;
-      color: var(--text); line-height: 1.3;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .lesson-meta {
-      font-size: .75rem; color: var(--muted); margin-top: 2px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+    /* Modules overview */
+    .modules-overview h3 { font-size:.9rem;font-weight:700;margin-bottom:12px; }
+    .module-cards { display:flex;flex-direction:column;gap:8px; }
+    .module-card { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .12s; }
+    .module-card:hover { border-color:var(--accent);background:var(--light); }
+    .module-card-icon { width:36px;height:36px;border-radius:8px;background:var(--light);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0; }
+    .module-card-info { flex:1;min-width:0; }
+    .module-card-title { font-size:.875rem;font-weight:600; }
+    .module-card-meta { font-size:.75rem;color:var(--muted);margin-top:2px; }
+    .module-card-progress { font-size:.75rem;font-weight:700;color:var(--green); }
 
-    .lesson-actions { display: none; gap: 2px; margin-top: 2px; }
-    .admin-mode .lesson-actions { display: flex; }
-    .icon-btn {
-      background: none; border: none; cursor: pointer;
-      padding: 3px 5px; border-radius: 5px;
-      font-size: .8rem; color: var(--muted); line-height: 1;
-      transition: all .1s;
-    }
-    .icon-btn:hover { background: var(--border); color: var(--text); }
-    .icon-btn.danger:hover { color: var(--danger); }
+    /* Completion */
+    .completion-banner { background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:12px;padding:24px;text-align:center;display:none; }
+    .completion-banner.show { display:block; }
+    .completion-banner h3 { font-size:1.1rem;font-weight:800;color:var(--green);margin-bottom:6px; }
+    .completion-banner p { font-size:.875rem;color:#166534; }
 
-    .btn-new-lesson {
-      display: none;
-      width: calc(100% - 8px); margin: 4px 4px 12px;
-      padding: 9px 12px;
-      background: none; color: var(--muted);
-      border: 1.5px dashed var(--border);
-      border-radius: 6px; font-size: .82rem; font-weight: 500;
-      cursor: pointer; font-family: inherit;
-      transition: all .12s;
-    }
-    .btn-new-lesson:hover { border-color: var(--accent); color: var(--accent); background: var(--light); }
-    .admin-mode .btn-new-lesson { display: block; }
-
-    /* ── MAIN ── */
-    main {
-      margin-left: var(--sidebar-w);
-      flex: 1; padding: 36px 32px;
-      max-width: calc(var(--sidebar-w) + 820px);
-    }
-
-    /* Empty state */
-    .empty {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; text-align: center;
-      padding: 80px 20px; gap: 10px; color: var(--muted);
-    }
-    .empty svg { opacity: .25; margin-bottom: 4px; }
-    .empty h2 { font-size: 1.1rem; font-weight: 600; }
-    .empty p { font-size: .85rem; }
-
-    /* Lesson view */
-    .lesson-view { display: flex; flex-direction: column; gap: 28px; }
-
-    .lesson-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-    .lesson-title-row h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; }
-    .lesson-desc { font-size: .9rem; color: var(--muted); margin-top: 6px; }
+    /* ── LESSON VIEW ── */
+    .lesson-view { display:flex;flex-direction:column;gap:20px; }
+    .lesson-header { display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap; }
+    .lesson-header h1 { font-size:1.4rem;font-weight:800;letter-spacing:-.02em;line-height:1.25; }
+    .lesson-desc-text { font-size:.875rem;color:var(--muted);margin-top:5px; }
+    .lesson-duration { font-size:.75rem;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:4px; }
 
     /* Video */
-    .video-wrap {
-      border-radius: 10px; overflow: hidden;
-      aspect-ratio: 16/9; background: #111;
-      border: 1px solid var(--border);
-    }
-    .video-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
-    .video-empty {
-      width: 100%; height: 100%;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 8px; color: #555;
-    }
-    .video-empty svg { opacity: .4; }
-    .video-empty p { font-size: .82rem; }
+    .video-wrap { border-radius:10px;overflow:hidden;aspect-ratio:16/9;background:#111;border:1px solid var(--border); }
+    .video-wrap iframe { width:100%;height:100%;border:none;display:block; }
+    .video-empty { width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#555; }
+    .video-empty svg { opacity:.35; }
+    .video-empty p { font-size:.82rem; }
+
+    /* Mark complete */
+    .complete-bar { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
+    .btn-complete { display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-size:.875rem;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;transition:all .15s; }
+    .btn-complete:hover { border-color:var(--green);color:var(--green);background:var(--green-bg); }
+    .btn-complete.done { background:var(--green-bg);border-color:var(--green);color:var(--green); }
+    .nav-btns { display:flex;gap:8px; }
+
+    /* Tabs */
+    .tabs { display:flex;border-bottom:1.5px solid var(--border);gap:0; }
+    .tab-btn { padding:10px 18px;font-size:.875rem;font-weight:600;background:none;border:none;cursor:pointer;color:var(--muted);font-family:inherit;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .12s; }
+    .tab-btn:hover { color:var(--text); }
+    .tab-btn.active { color:var(--text);border-bottom-color:var(--accent); }
 
     /* Card */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px; overflow: hidden;
-    }
-    .card-head {
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .card-head h2 { font-size: .9rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-    .card-body { padding: 20px; }
-
-    /* Materials */
-    .mat-text {
-      font-size: .9rem; line-height: 1.75;
-      color: var(--text); white-space: pre-wrap;
-    }
-    .mat-empty { color: var(--muted); font-size: .875rem; }
-
-    .mat-textarea {
-      width: 100%; min-height: 130px;
-      padding: 12px 14px;
-      border: 1.5px solid var(--border); border-radius: 8px;
-      font-size: .875rem; line-height: 1.65;
-      font-family: inherit; resize: vertical; outline: none;
-      background: var(--bg); color: var(--text);
-      transition: border-color .15s;
-    }
-    .mat-textarea:focus { border-color: var(--accent); background: var(--surface); }
+    .card { background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden; }
+    .card-body { padding:20px; }
+    .mat-text { font-size:.9rem;line-height:1.75;color:var(--text);white-space:pre-wrap; }
+    .mat-empty { color:var(--muted);font-size:.875rem; }
+    .mat-textarea { width:100%;min-height:130px;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;line-height:1.65;font-family:inherit;resize:vertical;outline:none;background:var(--bg);color:var(--text);transition:border .15s; }
+    .mat-textarea:focus { border-color:var(--accent);background:var(--surface); }
 
     /* Links */
-    .links-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-    .link-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px;
-      background: var(--bg); border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-    .link-icon { color: var(--muted); flex-shrink: 0; font-size: .9rem; }
-    .link-content { flex: 1; min-width: 0; }
-    .link-label { font-size: .82rem; font-weight: 600; color: var(--muted); }
-    .link-url a {
-      font-size: .875rem; color: var(--accent); text-decoration: none;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;
-    }
-    .link-url a:hover { text-decoration: underline; }
-    .link-empty { color: var(--muted); font-size: .875rem; }
+    .links-list { list-style:none;display:flex;flex-direction:column;gap:6px; }
+    .link-row { display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border); }
+    .link-content { flex:1;min-width:0; }
+    .link-label { font-size:.75rem;font-weight:600;color:var(--muted); }
+    .link-url a { font-size:.875rem;color:var(--accent);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block; }
+    .link-url a:hover { text-decoration:underline; }
+    .add-link-form { display:none;flex-direction:column;gap:8px;margin-top:12px; }
+    .admin-mode .add-link-form { display:flex; }
+    .add-link-row { display:flex;gap:8px;flex-wrap:wrap; }
+    .add-link-row input { flex:1;min-width:140px;padding:9px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.85rem;font-family:inherit;outline:none;background:var(--bg);color:var(--text);transition:border .15s; }
+    .add-link-row input:focus { border-color:var(--accent);background:var(--surface); }
+    .add-link-row input::placeholder { color:#A8A29E; }
 
-    /* Add link form */
-    .add-link-form {
-      display: none;
-      flex-direction: column; gap: 8px; margin-top: 12px;
-    }
-    .admin-mode .add-link-form { display: flex; }
-    .add-link-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .add-link-row input, .add-link-form input {
-      flex: 1; min-width: 140px;
-      padding: 9px 12px;
-      border: 1.5px solid var(--border); border-radius: 6px;
-      font-size: .85rem; font-family: inherit; outline: none;
-      background: var(--bg); color: var(--text);
-      transition: border-color .15s;
-    }
-    .add-link-row input:focus, .add-link-form input:focus {
-      border-color: var(--accent); background: var(--surface);
-    }
-    .add-link-row input::placeholder { color: #A8A29E; }
+    /* Notes */
+    .notes-textarea { width:100%;min-height:160px;padding:14px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;line-height:1.7;font-family:inherit;resize:vertical;outline:none;background:var(--bg);color:var(--text);transition:border .15s; }
+    .notes-textarea:focus { border-color:var(--accent);background:var(--surface); }
+    .notes-hint { font-size:.75rem;color:var(--muted);margin-top:8px; }
+    .notes-saved { font-size:.75rem;color:var(--green);margin-top:6px;opacity:0;transition:opacity .3s; }
+    .notes-saved.show { opacity:1; }
+
+    /* Prev/Next nav */
+    .lesson-nav { display:flex;justify-content:space-between;gap:12px;margin-top:4px; }
+    .nav-card { flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;cursor:pointer;font-family:inherit;text-align:left;transition:all .12s;display:flex;align-items:center;gap:10px; }
+    .nav-card:hover { border-color:var(--accent);background:var(--light); }
+    .nav-card.next { text-align:right;flex-direction:row-reverse; }
+    .nav-card-label { font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em; }
+    .nav-card-title { font-size:.85rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .nav-arrow { font-size:1.1rem;color:var(--muted);flex-shrink:0; }
+    .nav-card:disabled { opacity:.3;cursor:not-allowed; }
+    .nav-card:disabled:hover { border-color:var(--border);background:var(--surface); }
 
     /* Buttons */
-    .btn {
-      padding: 9px 18px; border-radius: 6px;
-      font-size: .85rem; font-weight: 600;
-      cursor: pointer; border: none; font-family: inherit;
-      transition: all .12s;
-    }
-    .btn-dark { background: var(--accent); color: #fff; }
-    .btn-dark:hover { background: var(--accent-hover); }
-    .btn-outline { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
-    .btn-outline:hover { background: var(--light); color: var(--text); }
-    .btn-danger { background: #FEF2F2; color: var(--danger); border: 1px solid #FECACA; }
-    .btn-danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+    .btn { padding:9px 18px;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .12s; }
+    .btn-dark { background:var(--accent);color:#fff; }
+    .btn-dark:hover { background:var(--accent-h); }
+    .btn-outline { background:var(--surface);color:var(--muted);border:1px solid var(--border); }
+    .btn-outline:hover { background:var(--light);color:var(--text); }
+    .save-row { display:flex;gap:8px;justify-content:flex-end;margin-top:10px; }
+    .edit-row { display:flex;justify-content:flex-end;margin-top:10px; }
 
-    .save-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
-    .edit-row { display: flex; justify-content: flex-end; margin-top: 10px; }
-
-    /* ── MODAL ── */
-    .overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.35);
-      z-index: 200;
-      display: none; align-items: center; justify-content: center;
-      padding: 20px;
-    }
-    .overlay.open { display: flex; }
-    .modal {
-      background: var(--surface);
-      border-radius: 14px;
-      width: 100%; max-width: 460px;
-      box-shadow: 0 24px 64px rgba(0,0,0,.15);
-    }
-    .modal-head {
-      padding: 18px 22px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .modal-head h3 { font-size: 1rem; font-weight: 700; }
-    .modal-x {
-      background: none; border: none; cursor: pointer;
-      color: var(--muted); font-size: 1.3rem; line-height: 1;
-      padding: 2px 6px; border-radius: 5px;
-    }
-    .modal-x:hover { background: var(--light); color: var(--text); }
-    .modal-body { padding: 22px; display: flex; flex-direction: column; gap: 14px; }
-    .modal-foot { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
-
-    .fgroup { display: flex; flex-direction: column; gap: 6px; }
-    .fgroup label { font-size: .75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-    .fgroup input, .fgroup textarea {
-      padding: 10px 12px;
-      border: 1.5px solid var(--border); border-radius: 6px;
-      font-size: .875rem; font-family: inherit; outline: none;
-      background: var(--bg); color: var(--text);
-      transition: border-color .15s;
-    }
-    .fgroup input:focus, .fgroup textarea:focus {
-      border-color: var(--accent); background: var(--surface);
-    }
-    .fgroup input::placeholder { color: #A8A29E; }
-    .fhint { font-size: .74rem; color: var(--muted); }
+    /* MODAL */
+    .overlay { position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:none;align-items:center;justify-content:center;padding:20px; }
+    .overlay.open { display:flex; }
+    .modal { background:var(--surface);border-radius:14px;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,.15);max-height:90dvh;overflow-y:auto; }
+    .modal-head { padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1; }
+    .modal-head h3 { font-size:1rem;font-weight:700; }
+    .modal-x { background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.3rem;line-height:1;padding:2px 6px;border-radius:5px; }
+    .modal-x:hover { background:var(--light);color:var(--text); }
+    .modal-body { padding:22px;display:flex;flex-direction:column;gap:14px; }
+    .modal-foot { padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end; }
+    .fgroup { display:flex;flex-direction:column;gap:6px; }
+    .fgroup label { font-size:.73rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em; }
+    .fgroup input,.fgroup textarea,.fgroup select { padding:10px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.875rem;font-family:inherit;outline:none;background:var(--bg);color:var(--text);transition:border .15s; }
+    .fgroup input:focus,.fgroup textarea:focus,.fgroup select:focus { border-color:var(--accent);background:var(--surface); }
+    .fgroup input::placeholder { color:#A8A29E; }
+    .fhint { font-size:.73rem;color:var(--muted); }
 
     /* Toast */
-    .toast {
-      position: fixed; bottom: 20px; right: 20px;
-      background: var(--accent); color: #fff;
-      padding: 11px 18px; border-radius: 8px;
-      font-size: .84rem; font-weight: 500;
-      opacity: 0; transform: translateY(6px);
-      transition: all .2s; z-index: 300;
-      pointer-events: none;
-    }
-    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast { position:fixed;bottom:20px;right:20px;background:var(--accent);color:#fff;padding:11px 18px;border-radius:8px;font-size:.84rem;font-weight:500;opacity:0;transform:translateY(6px);transition:all .2s;z-index:300;pointer-events:none; }
+    .toast.show { opacity:1;transform:translateY(0); }
 
-    /* Sidebar backdrop */
-    .backdrop {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,.35); z-index: 85;
-    }
+    /* BACKDROP */
+    .backdrop { display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:85; }
 
-    /* ── RESPONSIVE ── */
-    @media (max-width: 768px) {
-      .btn-menu { display: flex; align-items: center; }
-      aside {
-        transform: translateX(-100%);
-        box-shadow: 4px 0 24px rgba(0,0,0,.12);
-      }
-      aside.open { transform: translateX(0); }
-      .backdrop { display: none; }
-      .backdrop.open { display: block; }
-      main { margin-left: 0; padding: 20px 16px; }
-      .lesson-title-row { flex-direction: column; gap: 8px; }
-      .lesson-title-row h1 { font-size: 1.25rem; }
-      .add-link-row { flex-direction: column; }
-      .user-chip .user-email { display: none; }
+    /* RESPONSIVE */
+    @media (max-width:768px) {
+      .btn-menu { display:flex;align-items:center; }
+      aside { transform:translateX(-100%);box-shadow:4px 0 24px rgba(0,0,0,.12); }
+      aside.open { transform:translateX(0); }
+      .backdrop { display:none; }
+      .backdrop.open { display:block; }
+      main { margin-left:0;padding:20px 14px; }
+      .banner { flex-direction:column;gap:20px;padding:24px; }
+      .banner-photo { width:80px;height:80px; }
+      .banner-title { font-size:1.35rem; }
+      .stats-row { grid-template-columns:1fr 1fr; }
+      .lesson-header h1 { font-size:1.2rem; }
+      .lesson-nav { flex-direction:column; }
+      .nav-card.next { flex-direction:row;text-align:left; }
+      .user-email { display:none; }
+      .add-link-row { flex-direction:column; }
+      .instructor-card { flex-direction:column;align-items:flex-start; }
+      .btn-edit-instructor { margin-left:0; }
     }
-    @media (min-width: 769px) {
-      .btn-menu { display: none !important; }
-      aside { transform: translateX(0) !important; }
-      .backdrop { display: none !important; }
+    @media (min-width:769px) {
+      .btn-menu { display:none !important; }
+      aside { transform:translateX(0) !important; }
+      .backdrop { display:none !important; }
     }
   </style>
 </head>
 <body>
 
-<!-- AUTH GATE -->
 <div id="authGate"><div class="spinner"></div></div>
 
 <!-- HEADER -->
 <header>
-  <button class="btn-menu" id="btnMenu">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-    </svg>
-  </button>
-  <div class="logo" id="headerTitle">Meu Curso</div>
-  <div class="header-right">
-    <div class="user-chip" id="userChip">
-      <div class="user-avatar" id="userAvatar">?</div>
-      <span class="user-email" id="userEmail"></span>
+  <div class="header-main">
+    <button class="btn-menu" id="btnMenu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <div class="logo" id="headerTitle">CLAUDE IA PARA MENTORAS</div>
+    <div class="header-right">
+      <div class="user-chip">
+        <div class="avatar" id="userAvatar">?</div>
+        <span class="user-email" id="userEmail"></span>
+      </div>
+      <button class="btn-sm" id="btnAdmin">Editar</button>
+      <button class="btn-sm" id="btnLogout">Sair</button>
     </div>
-    <button class="btn-sm" id="btnAdmin">Editar</button>
-    <button class="btn-sm" id="btnLogout">Sair</button>
   </div>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBarFill" style="width:0%"></div></div>
 </header>
 
-<!-- MOBILE BACKDROP -->
 <div class="backdrop" id="backdrop"></div>
 
 <div class="layout">
   <!-- SIDEBAR -->
   <aside id="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-label">Aulas</div>
-      <ul class="lesson-list" id="lessonList"></ul>
+    <div class="sidebar-search">
+      <input class="search-input" id="searchInput" type="text" placeholder="🔍  Buscar aula..." />
     </div>
-    <button class="btn-new-lesson" id="btnNewLesson">+ Nova aula</button>
+    <button class="sidebar-overview-btn active" id="btnOverview">🏠  Visão geral</button>
+    <div id="modulesNav"></div>
+    <div class="sidebar-footer">
+      <button class="btn-new-lesson" id="btnNewLesson">+ Nova aula</button>
+      <button class="btn-new-module" id="btnNewModule">+ Novo módulo</button>
+    </div>
   </aside>
 
   <!-- MAIN -->
   <main id="main">
-    <div class="empty" id="emptyState">
-      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="2" y="3" width="20" height="14" rx="2"/>
-        <polyline points="8 21 12 17 16 21"/>
-      </svg>
-      <h2>Nenhuma aula selecionada</h2>
-      <p>Escolha uma aula no menu ao lado para começar.</p>
-    </div>
-    <div class="lesson-view" id="lessonView" style="display:none"></div>
+    <div class="overview" id="overviewPage"></div>
+    <div class="lesson-view" id="lessonPage" style="display:none"></div>
   </main>
 </div>
 
-<!-- MODAL: aula -->
-<div class="overlay" id="modalOverlay">
+<!-- MODAL: Aula -->
+<div class="overlay" id="modalLesson">
   <div class="modal">
-    <div class="modal-head">
-      <h3 id="modalTitle">Nova aula</h3>
-      <button class="modal-x" id="modalClose">×</button>
-    </div>
+    <div class="modal-head"><h3 id="lessonModalTitle">Nova aula</h3><button class="modal-x" data-close="modalLesson">×</button></div>
     <div class="modal-body">
-      <div class="fgroup">
-        <label>Título</label>
-        <input type="text" id="fTitle" placeholder="Ex: Introdução ao tema" />
-      </div>
-      <div class="fgroup">
-        <label>URL do vídeo</label>
-        <input type="url" id="fVideo" placeholder="https://youtube.com/watch?v=..." />
-        <span class="fhint">YouTube ou Vimeo. Deixe em branco se não tiver vídeo.</span>
-      </div>
-      <div class="fgroup">
-        <label>Descrição curta (opcional)</label>
-        <input type="text" id="fDesc" placeholder="Ex: Nessa aula você vai aprender..." />
-      </div>
+      <div class="fgroup"><label>Título</label><input type="text" id="fTitle" placeholder="Ex: Introdução ao ChatGPT" /></div>
+      <div class="fgroup"><label>Módulo</label><select id="fModule"><option value="">— Sem módulo —</option></select></div>
+      <div class="fgroup"><label>URL do vídeo (YouTube / Vimeo)</label><input type="url" id="fVideo" placeholder="https://youtube.com/watch?v=..." /><span class="fhint">Deixe em branco se não tiver vídeo.</span></div>
+      <div class="fgroup"><label>Duração (opcional)</label><input type="text" id="fDuration" placeholder="Ex: 12 min" /></div>
+      <div class="fgroup"><label>Descrição curta (opcional)</label><input type="text" id="fDesc" placeholder="Ex: Aprenda a usar o ChatGPT do zero" /></div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-outline" id="modalCancel">Cancelar</button>
-      <button class="btn btn-dark" id="modalSave">Salvar aula</button>
+      <button class="btn btn-outline" data-close="modalLesson">Cancelar</button>
+      <button class="btn btn-dark" id="saveLessonBtn">Salvar</button>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
+<!-- MODAL: Módulo -->
+<div class="overlay" id="modalModule">
+  <div class="modal">
+    <div class="modal-head"><h3 id="moduleModalTitle">Novo módulo</h3><button class="modal-x" data-close="modalModule">×</button></div>
+    <div class="modal-body">
+      <div class="fgroup"><label>Nome do módulo</label><input type="text" id="fModuleName" placeholder="Ex: Módulo 1 — Fundamentos" /></div>
+      <div class="fgroup"><label>Emoji (opcional)</label><input type="text" id="fModuleEmoji" placeholder="Ex: 🚀" maxlength="4" /></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" data-close="modalModule">Cancelar</button>
+      <button class="btn btn-dark" id="saveModuleBtn">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Instrutora -->
+<div class="overlay" id="modalInstructor">
+  <div class="modal">
+    <div class="modal-head"><h3>Editar perfil da instrutora</h3><button class="modal-x" data-close="modalInstructor">×</button></div>
+    <div class="modal-body">
+      <div class="fgroup"><label>Nome</label><input type="text" id="fIName" placeholder="Ex: Roberta Alves" /></div>
+      <div class="fgroup"><label>Título / Cargo</label><input type="text" id="fITitle" placeholder="Ex: Especialista em IA para Negócios" /></div>
+      <div class="fgroup"><label>Bio curta</label><textarea id="fIBio" rows="3" placeholder="Ex: Mentora de IA com foco em resultados reais para empreendedoras digitais."></textarea></div>
+      <div class="fgroup"><label>URL da foto</label><input type="url" id="fIPhoto" placeholder="https://..." /><span class="fhint">Cole o link de uma foto sua (pode ser do Google Drive, Dropbox, etc.)</span></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" data-close="modalInstructor">Cancelar</button>
+      <button class="btn btn-dark" id="saveInstructorBtn">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-// ── SUPABASE ──
 const { createClient } = supabase
 const db = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
-
 let currentUser = null
 
-// ── AUTH GATE ──
-async function initAuth() {
-  const { data: { session } } = await db.auth.getSession()
-  if (!session) {
-    window.location.replace('login.html')
-    return
-  }
-  currentUser = session.user
-  document.getElementById('authGate').style.display = 'none'
-
-  const email = currentUser.email || ''
-  const name = currentUser.user_metadata?.name || email
-  document.getElementById('userEmail').textContent = email
-  document.getElementById('userAvatar').textContent = (name[0] || '?').toUpperCase()
-  document.getElementById('headerTitle').textContent = window.SITE_NAME || 'Meu Curso'
-  document.title = window.SITE_NAME || 'Meu Curso'
-
-  renderSidebar()
-  renderLesson()
+// ── DATA ──
+const DEFAULTS = {
+  instructor: { name: 'Roberta Alves', title: 'Mentora de IA', bio: '', photo: '' },
+  modules: [],
+  lessons: [],
+  progress: {}
 }
 
-db.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_OUT') window.location.replace('login.html')
-})
+function loadData() {
+  const saved = JSON.parse(localStorage.getItem('curso_data') || 'null')
+  if (!saved) return structuredClone(DEFAULTS)
+  // migrate old format
+  if (saved.lessons && !saved.instructor) {
+    return { ...structuredClone(DEFAULTS), lessons: saved.lessons, progress: saved.progress || {} }
+  }
+  return { ...structuredClone(DEFAULTS), ...saved }
+}
 
-document.getElementById('btnLogout').addEventListener('click', async () => {
-  await db.auth.signOut()
-})
-
-// ── STATE ──
-let data = JSON.parse(localStorage.getItem('curso_data') || 'null') || { lessons: [] }
-let currentId = null
-let editingId = null
+let data = loadData()
+let currentLessonId = null
+let editingLessonId = null
+let editingModuleId = null
 let adminMode = false
+let activeTab = 'material'
 let editingMat = false
+let notesSaveTimer = null
 
 const save = () => localStorage.setItem('curso_data', JSON.stringify(data))
 const uid  = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 
+// ── UTILS ──
 function getEmbed(url) {
   if (!url) return null
   try {
     const u = new URL(url)
-    if (u.hostname.includes('youtube.com')) {
-      const v = u.searchParams.get('v')
-      return v ? `https://www.youtube.com/embed/${v}?rel=0` : null
-    }
-    if (u.hostname.includes('youtu.be')) {
-      const v = u.pathname.slice(1)
-      return v ? `https://www.youtube.com/embed/${v}?rel=0` : null
-    }
-    if (u.hostname.includes('vimeo.com')) {
-      const v = u.pathname.replace('/', '')
-      return v ? `https://player.vimeo.com/video/${v}` : null
-    }
+    if (u.hostname.includes('youtube.com')) { const v = u.searchParams.get('v'); return v ? `https://www.youtube.com/embed/${v}?rel=0` : null }
+    if (u.hostname.includes('youtu.be')) { const v = u.pathname.slice(1); return v ? `https://www.youtube.com/embed/${v}?rel=0` : null }
+    if (u.hostname.includes('vimeo.com')) { const v = u.pathname.replace('/', ''); return v ? `https://player.vimeo.com/video/${v}` : null }
   } catch {}
   return null
 }
@@ -547,182 +422,37 @@ function getEmbed(url) {
 function toast(msg, ms = 2200) {
   const el = document.getElementById('toast')
   el.textContent = msg; el.classList.add('show')
-  setTimeout(() => el.classList.remove('show'), ms)
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), ms)
 }
 
-// ── SIDEBAR ──
-function renderSidebar() {
-  const list = document.getElementById('lessonList')
-  list.innerHTML = ''
-  data.lessons.forEach((l, i) => {
-    const li = document.createElement('li')
-    li.innerHTML = `
-      <button class="lesson-btn${currentId === l.id ? ' active' : ''}" data-id="${l.id}">
-        <span class="lesson-num">${i + 1}</span>
-        <span class="lesson-info">
-          <span class="lesson-name">${l.title}</span>
-          ${l.desc ? `<span class="lesson-meta">${l.desc}</span>` : ''}
-        </span>
-        <span class="lesson-actions">
-          <button class="icon-btn" data-edit="${l.id}" title="Editar">✏️</button>
-          <button class="icon-btn danger" data-del="${l.id}" title="Excluir">🗑️</button>
-        </span>
-      </button>`
-    list.appendChild(li)
-  })
-
-  list.querySelectorAll('.lesson-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      if (e.target.closest('[data-edit],[data-del]')) return
-      openLesson(btn.dataset.id); closeSidebar()
-    })
-  })
-  list.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openModal(b.dataset.edit)))
-  list.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => deleteLesson(b.dataset.del)))
+function getProgress() {
+  const total = data.lessons.length
+  const done  = data.lessons.filter(l => data.progress[l.id]?.completed).length
+  return { total, done, pct: total ? Math.round(done / total * 100) : 0 }
 }
 
-// ── LESSON VIEW ──
-function renderLesson() {
-  const lesson = data.lessons.find(l => l.id === currentId)
-  const view = document.getElementById('lessonView')
-  const empty = document.getElementById('emptyState')
+function getLessonIndex(id) { return data.lessons.findIndex(l => l.id === id) }
 
-  if (!lesson) { view.style.display = 'none'; empty.style.display = 'flex'; return }
-  empty.style.display = 'none'; view.style.display = 'flex'
-
-  const embed = getEmbed(lesson.video)
-  const videoHtml = embed
-    ? `<iframe src="${embed}" allowfullscreen title="${lesson.title}"></iframe>`
-    : `<div class="video-empty">
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <polygon points="5 3 19 12 5 21 5 3"/>
-        </svg>
-        <p>Nenhum vídeo adicionado</p>
-      </div>`
-
-  const links = lesson.links || []
-  const linksHtml = links.length === 0
-    ? `<p class="link-empty">Nenhum link adicionado ainda.</p>`
-    : `<ul class="links-list">${links.map(lk => `
-        <li class="link-row">
-          <span class="link-icon">🔗</span>
-          <div class="link-content">
-            ${lk.label ? `<div class="link-label">${lk.label}</div>` : ''}
-            <div class="link-url"><a href="${lk.url}" target="_blank" rel="noopener">${lk.url}</a></div>
-          </div>
-          ${adminMode ? `<button class="icon-btn danger" data-dellink="${lk.id}" title="Remover">✕</button>` : ''}
-        </li>`).join('')}
-      </ul>`
-
-  const matContent = editingMat
-    ? `<textarea class="mat-textarea" id="matEditor">${lesson.materials || ''}</textarea>
-       <div class="save-row">
-         <button class="btn btn-outline" id="btnCancelMat">Cancelar</button>
-         <button class="btn btn-dark" id="btnSaveMat">Salvar</button>
-       </div>`
-    : `<div class="${lesson.materials ? 'mat-text' : 'mat-empty'}">${lesson.materials || 'Nenhum material adicionado ainda.'}</div>
-       ${adminMode ? `<div class="edit-row"><button class="btn btn-outline" id="btnEditMat">✏️ Editar material</button></div>` : ''}`
-
-  view.innerHTML = `
-    <div class="lesson-title-row">
-      <div>
-        <h1>${lesson.title}</h1>
-        ${lesson.desc ? `<p class="lesson-desc">${lesson.desc}</p>` : ''}
-      </div>
-    </div>
-
-    <div class="video-wrap">${videoHtml}</div>
-
-    <div class="card">
-      <div class="card-head"><h2>📄 Material da aula</h2></div>
-      <div class="card-body">${matContent}</div>
-    </div>
-
-    <div class="card">
-      <div class="card-head"><h2>🔗 Links</h2></div>
-      <div class="card-body">
-        ${linksHtml}
-        <div class="add-link-form">
-          <div class="add-link-row">
-            <input type="text" id="linkLabel" placeholder="Nome (ex: Apostila)" />
-            <input type="url" id="linkUrl" placeholder="https://..." />
-          </div>
-          <div><button class="btn btn-dark" id="btnAddLink">+ Adicionar link</button></div>
-        </div>
-      </div>
-    </div>`
-
-  view.querySelector('#btnEditMat')?.addEventListener('click', () => { editingMat = true; renderLesson() })
-  view.querySelector('#btnCancelMat')?.addEventListener('click', () => { editingMat = false; renderLesson() })
-  view.querySelector('#btnSaveMat')?.addEventListener('click', () => {
-    lesson.materials = document.getElementById('matEditor').value
-    save(); editingMat = false; renderLesson(); toast('Material salvo!')
-  })
-  view.querySelector('#btnAddLink')?.addEventListener('click', () => {
-    const label = document.getElementById('linkLabel').value.trim()
-    const url = document.getElementById('linkUrl').value.trim()
-    if (!url) { toast('Informe a URL do link.'); return }
-    if (!lesson.links) lesson.links = []
-    lesson.links.push({ id: uid(), label, url })
-    save(); renderLesson(); toast('Link adicionado!')
-  })
-  view.querySelectorAll('[data-dellink]').forEach(b => {
-    b.addEventListener('click', () => {
-      lesson.links = (lesson.links || []).filter(l => l.id !== b.dataset.dellink)
-      save(); renderLesson()
-    })
-  })
+function getModuleLessons(moduleId) {
+  return moduleId === '__none__'
+    ? data.lessons.filter(l => !l.moduleId)
+    : data.lessons.filter(l => l.moduleId === moduleId)
 }
 
-function openLesson(id) {
-  currentId = id; editingMat = false
-  renderSidebar(); renderLesson()
+// ── AUTH ──
+async function initAuth() {
+  const { data: { session } } = await db.auth.getSession()
+  if (!session) { window.location.replace('login.html'); return }
+  currentUser = session.user
+  document.getElementById('authGate').style.display = 'none'
+  const email = currentUser.email || ''
+  const name = currentUser.user_metadata?.name || email
+  document.getElementById('userEmail').textContent = email
+  document.getElementById('userAvatar').textContent = (name[0] || '?').toUpperCase()
+  render()
 }
-function deleteLesson(id) {
-  if (!confirm('Excluir esta aula? Não será possível desfazer.')) return
-  data.lessons = data.lessons.filter(l => l.id !== id)
-  if (currentId === id) currentId = null
-  save(); renderSidebar(); renderLesson(); toast('Aula excluída.')
-}
-
-// ── MODAL ──
-function openModal(editId = null) {
-  editingId = editId
-  const l = editId ? data.lessons.find(x => x.id === editId) : null
-  document.getElementById('modalTitle').textContent = l ? 'Editar aula' : 'Nova aula'
-  document.getElementById('fTitle').value  = l?.title  || ''
-  document.getElementById('fVideo').value  = l?.video  || ''
-  document.getElementById('fDesc').value   = l?.desc   || ''
-  document.getElementById('modalOverlay').classList.add('open')
-  document.getElementById('fTitle').focus()
-}
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open'); editingId = null
-}
-document.getElementById('modalClose').addEventListener('click', closeModal)
-document.getElementById('modalCancel').addEventListener('click', closeModal)
-document.getElementById('modalOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('modalOverlay')) closeModal()
-})
-document.getElementById('modalSave').addEventListener('click', () => {
-  const title = document.getElementById('fTitle').value.trim()
-  if (!title) { toast('Informe o título.'); return }
-  const video = document.getElementById('fVideo').value.trim()
-  const desc  = document.getElementById('fDesc').value.trim()
-  if (editingId) {
-    const l = data.lessons.find(x => x.id === editingId)
-    Object.assign(l, { title, video, desc })
-  } else {
-    data.lessons.push({ id: uid(), title, video, desc, materials: '', links: [] })
-  }
-  save(); closeModal(); renderSidebar()
-  if (!editingId && !currentId) openLesson(data.lessons.at(-1).id)
-  else renderLesson()
-  toast(editingId ? 'Aula atualizada!' : 'Aula criada!')
-})
-document.getElementById('fTitle').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('modalSave').click()
-})
+db.auth.onAuthStateChange((e, s) => { if (e === 'SIGNED_OUT') window.location.replace('login.html') })
+document.getElementById('btnLogout').addEventListener('click', () => db.auth.signOut())
 
 // ── ADMIN ──
 document.getElementById('btnAdmin').addEventListener('click', () => {
@@ -730,9 +460,500 @@ document.getElementById('btnAdmin').addEventListener('click', () => {
   document.getElementById('btnAdmin').classList.toggle('active', adminMode)
   document.getElementById('btnAdmin').textContent = adminMode ? 'Editando ✓' : 'Editar'
   document.body.classList.toggle('admin-mode', adminMode)
-  editingMat = false; renderLesson()
+  editingMat = false; render()
 })
-document.getElementById('btnNewLesson').addEventListener('click', () => openModal())
+
+// ── SEARCH ──
+document.getElementById('searchInput').addEventListener('input', e => {
+  renderModulesNav(e.target.value.toLowerCase())
+})
+
+// ── RENDER ──
+function render() {
+  renderModulesNav()
+  updateProgressBar()
+  if (currentLessonId) renderLessonPage()
+  else renderOverview()
+}
+
+function updateProgressBar() {
+  const { pct } = getProgress()
+  document.getElementById('progressBarFill').style.width = pct + '%'
+}
+
+// ── SIDEBAR ──
+function renderModulesNav(search = '') {
+  const nav = document.getElementById('modulesNav')
+  nav.innerHTML = ''
+
+  // Group lessons by module
+  const groups = []
+  data.modules.forEach(m => {
+    const lessons = getModuleLessons(m.id).filter(l => !search || l.title.toLowerCase().includes(search))
+    if (lessons.length || adminMode) groups.push({ module: m, lessons })
+  })
+  const unassigned = data.lessons.filter(l => !l.moduleId && (!search || l.title.toLowerCase().includes(search)))
+  if (unassigned.length || (!data.modules.length)) groups.push({ module: null, lessons: unassigned })
+
+  let globalIdx = 0
+  groups.forEach(({ module, lessons }) => {
+    const section = document.createElement('div')
+    section.className = 'module-section'
+
+    if (module) {
+      const moduleLessons = getModuleLessons(module.id)
+      const doneCnt = moduleLessons.filter(l => data.progress[l.id]?.completed).length
+      section.innerHTML = `
+        <div class="module-header">
+          <span>${module.emoji || '📁'} ${module.title}</span>
+          <span class="module-progress-text">${doneCnt}/${moduleLessons.length}</span>
+        </div>`
+    }
+
+    const ul = document.createElement('ul')
+    ul.className = 'lesson-list'
+
+    lessons.forEach(l => {
+      globalIdx++
+      const done = data.progress[l.id]?.completed
+      const li = document.createElement('li')
+      li.innerHTML = `
+        <button class="lesson-btn${currentLessonId === l.id ? ' active' : ''}${done ? ' done' : ''}" data-id="${l.id}">
+          <span class="lesson-num">${done ? '✓' : globalIdx}</span>
+          <span class="lesson-info">
+            <span class="lesson-name">${l.title}</span>
+            ${l.duration ? `<span class="lesson-meta">⏱ ${l.duration}</span>` : ''}
+          </span>
+          <span class="lesson-actions">
+            <button class="icon-btn" data-edit="${l.id}" title="Editar">✏️</button>
+            <button class="icon-btn danger" data-del="${l.id}" title="Excluir">🗑️</button>
+          </span>
+        </button>`
+      ul.appendChild(li)
+    })
+
+    section.appendChild(ul)
+    nav.appendChild(section)
+  })
+
+  // events
+  nav.querySelectorAll('.lesson-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      if (e.target.closest('[data-edit],[data-del]')) return
+      openLesson(btn.dataset.id); closeSidebar()
+    })
+  })
+  nav.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openLessonModal(b.dataset.edit)))
+  nav.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => deleteLesson(b.dataset.del)))
+}
+
+// ── OVERVIEW ──
+function renderOverview() {
+  document.getElementById('lessonPage').style.display = 'none'
+  const page = document.getElementById('overviewPage')
+  page.style.display = 'flex'
+  document.getElementById('btnOverview').classList.add('active')
+
+  const { total, done, pct } = getProgress()
+  const inst = data.instructor
+  const photoEl = inst.photo
+    ? `<div class="banner-photo"><img src="${inst.photo}" alt="${inst.name}" onerror="this.parentElement.innerHTML='<span class=banner-photo-placeholder>👤</span>'" /></div>`
+    : `<div class="banner-photo"><span class="banner-photo-placeholder">👤</span></div>`
+
+  const lastLesson = data.lessons.find(l => l.id === localStorage.getItem('lastLesson'))
+    || data.lessons.find(l => !data.progress[l.id]?.completed)
+    || data.lessons[0]
+
+  const modulesHtml = data.modules.length
+    ? data.modules.map(m => {
+        const ml = getModuleLessons(m.id)
+        const md = ml.filter(l => data.progress[l.id]?.completed).length
+        return `<div class="module-card" data-module="${m.id}">
+          <div class="module-card-icon">${m.emoji || '📁'}</div>
+          <div class="module-card-info">
+            <div class="module-card-title">${m.title}</div>
+            <div class="module-card-meta">${ml.length} aula${ml.length !== 1 ? 's' : ''}</div>
+          </div>
+          <div class="module-card-progress">${md}/${ml.length} concluídas</div>
+        </div>`
+      }).join('')
+    : data.lessons.map((l, i) => {
+        const done = data.progress[l.id]?.completed
+        return `<div class="module-card" data-lesson="${l.id}">
+          <div class="module-card-icon">${done ? '✅' : '▶️'}</div>
+          <div class="module-card-info">
+            <div class="module-card-title">${i + 1}. ${l.title}</div>
+            ${l.duration ? `<div class="module-card-meta">⏱ ${l.duration}</div>` : ''}
+          </div>
+          ${done ? '<div class="module-card-progress">Concluída</div>' : ''}
+        </div>`
+      }).join('')
+
+  const allDone = total > 0 && done === total
+
+  page.innerHTML = `
+    <!-- Banner -->
+    <div class="banner">
+      <div class="banner-content">
+        <div class="banner-tag">Curso Online</div>
+        <div class="banner-title">${window.SITE_NAME || 'Meu Curso'}</div>
+        <div class="banner-instructor">por ${inst.name}${inst.title ? ' · ' + inst.title : ''}</div>
+        <div class="banner-stats">
+          <div class="banner-stat"><div class="banner-stat-val">${total}</div><div class="banner-stat-label">Aulas</div></div>
+          <div class="banner-stat"><div class="banner-stat-val">${done}</div><div class="banner-stat-label">Concluídas</div></div>
+          <div class="banner-stat"><div class="banner-stat-val">${pct}%</div><div class="banner-stat-label">Progresso</div></div>
+        </div>
+        ${lastLesson ? `<br><button class="btn-continue" id="btnContinue">▶ ${done === 0 ? 'Começar' : 'Continuar de onde parou'}</button>` : ''}
+      </div>
+      ${photoEl}
+    </div>
+
+    <!-- Completion -->
+    <div class="completion-banner ${allDone ? 'show' : ''}">
+      <h3>🎉 Parabéns! Você concluiu o curso!</h3>
+      <p>Você completou todas as ${total} aulas. Continue praticando e aplicando o que aprendeu!</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card ${done > 0 ? 'green' : ''}">
+        <div class="stat-card-val">${done}</div>
+        <div class="stat-card-label">Aulas concluídas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-val">${total - done}</div>
+        <div class="stat-card-label">Aulas restantes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-val">${data.modules.length || '—'}</div>
+        <div class="stat-card-label">Módulos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-val">${total}</div>
+        <div class="stat-card-label">Total de aulas</div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-section">
+      <h3>Seu progresso</h3>
+      <div class="progress-track"><div class="progress-track-fill" style="width:${pct}%"></div></div>
+      <div class="progress-label">${pct}% concluído — ${done} de ${total} aulas</div>
+    </div>
+
+    <!-- Instructor -->
+    <div class="instructor-card">
+      <div class="instructor-avatar">
+        ${inst.photo ? `<img src="${inst.photo}" alt="${inst.name}" onerror="this.style.display='none'">` : '👩‍💼'}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="instructor-name">${inst.name}</div>
+        ${inst.title ? `<div class="instructor-title">${inst.title}</div>` : ''}
+        ${inst.bio ? `<div class="instructor-bio">${inst.bio}</div>` : ''}
+      </div>
+      <button class="btn btn-outline btn-edit-instructor" id="btnEditInstructor">✏️ Editar</button>
+    </div>
+
+    <!-- Modules/Lessons list -->
+    ${total > 0 ? `<div class="modules-overview">
+      <h3>${data.modules.length ? 'Módulos do curso' : 'Aulas do curso'}</h3>
+      <div class="module-cards">${modulesHtml}</div>
+    </div>` : `<div style="text-align:center;padding:40px;color:var(--muted);font-size:.9rem">${adminMode ? 'Clique em <b>+ Nova aula</b> no menu lateral para começar.' : 'Nenhuma aula disponível ainda.'}</div>`}
+  `
+
+  // events
+  document.getElementById('btnContinue')?.addEventListener('click', () => {
+    if (lastLesson) openLesson(lastLesson.id)
+  })
+  document.getElementById('btnEditInstructor')?.addEventListener('click', openInstructorModal)
+  page.querySelectorAll('[data-module]').forEach(el => {
+    el.addEventListener('click', () => {
+      const first = getModuleLessons(el.dataset.module)[0]
+      if (first) openLesson(first.id)
+    })
+  })
+  page.querySelectorAll('[data-lesson]').forEach(el => {
+    el.addEventListener('click', () => openLesson(el.dataset.lesson))
+  })
+}
+
+// ── LESSON PAGE ──
+function openLesson(id) {
+  currentLessonId = id
+  activeTab = 'material'
+  editingMat = false
+  localStorage.setItem('lastLesson', id)
+  document.getElementById('btnOverview').classList.remove('active')
+  document.getElementById('overviewPage').style.display = 'none'
+  renderModulesNav(document.getElementById('searchInput').value.toLowerCase())
+  updateProgressBar()
+  renderLessonPage()
+  closeSidebar()
+}
+
+function renderLessonPage() {
+  const lesson = data.lessons.find(l => l.id === currentLessonId)
+  const page = document.getElementById('lessonPage')
+  if (!lesson) { showOverview(); return }
+  page.style.display = 'flex'
+
+  const idx = getLessonIndex(currentLessonId)
+  const prev = data.lessons[idx - 1]
+  const next = data.lessons[idx + 1]
+  const done = !!data.progress[currentLessonId]?.completed
+  const embed = getEmbed(lesson.video)
+  const prog = data.progress[currentLessonId] || {}
+
+  const videoHtml = embed
+    ? `<iframe src="${embed}" allowfullscreen title="${lesson.title}"></iframe>`
+    : `<div class="video-empty">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <p>${adminMode ? 'Adicione um vídeo editando esta aula' : 'Vídeo em breve'}</p>
+      </div>`
+
+  // Tab content
+  const links = lesson.links || []
+  let tabContent = ''
+  if (activeTab === 'material') {
+    tabContent = editingMat
+      ? `<textarea class="mat-textarea" id="matEditor">${lesson.materials || ''}</textarea>
+         <div class="save-row">
+           <button class="btn btn-outline" id="btnCancelMat">Cancelar</button>
+           <button class="btn btn-dark" id="btnSaveMat">Salvar</button>
+         </div>`
+      : `<div class="${lesson.materials ? 'mat-text' : 'mat-empty'}">${lesson.materials || 'Nenhum material adicionado ainda.'}</div>
+         ${adminMode ? `<div class="edit-row"><button class="btn btn-outline" id="btnEditMat">✏️ Editar material</button></div>` : ''}`
+  } else if (activeTab === 'links') {
+    const linksHtml = links.length === 0
+      ? `<p class="mat-empty">Nenhum link adicionado ainda.</p>`
+      : `<ul class="links-list">${links.map(lk => `
+          <li class="link-row">
+            <div class="link-content">
+              ${lk.label ? `<div class="link-label">${lk.label}</div>` : ''}
+              <div class="link-url"><a href="${lk.url}" target="_blank" rel="noopener">${lk.url}</a></div>
+            </div>
+            ${adminMode ? `<button class="icon-btn danger" data-dellink="${lk.id}">✕</button>` : ''}
+          </li>`).join('')}</ul>`
+    tabContent = `${linksHtml}
+      <div class="add-link-form">
+        <div class="add-link-row">
+          <input type="text" id="linkLabel" placeholder="Nome (ex: Apostila)" />
+          <input type="url" id="linkUrl" placeholder="https://..." />
+        </div>
+        <div><button class="btn btn-dark" id="btnAddLink">+ Adicionar link</button></div>
+      </div>`
+  } else if (activeTab === 'notas') {
+    tabContent = `
+      <textarea class="notes-textarea" id="notesArea" placeholder="Escreva suas anotações sobre esta aula aqui...">${prog.notes || ''}</textarea>
+      <div class="notes-hint">Suas anotações são salvas automaticamente.</div>
+      <div class="notes-saved" id="notesSaved">✓ Anotações salvas</div>`
+  }
+
+  page.innerHTML = `
+    <div class="lesson-header">
+      <div>
+        <h1>${lesson.title}</h1>
+        ${lesson.desc ? `<p class="lesson-desc-text">${lesson.desc}</p>` : ''}
+        ${lesson.duration ? `<p class="lesson-duration">⏱ ${lesson.duration}</p>` : ''}
+      </div>
+    </div>
+
+    <div class="video-wrap">${videoHtml}</div>
+
+    <div class="complete-bar">
+      <button class="btn-complete${done ? ' done' : ''}" id="btnComplete">
+        ${done ? '✅ Aula concluída' : '☐ Marcar como concluída'}
+      </button>
+      <div class="nav-btns">
+        <button class="btn btn-outline" id="btnPrev" ${!prev ? 'disabled' : ''}>← Anterior</button>
+        <button class="btn btn-dark" id="btnNext" ${!next ? 'disabled' : ''}>Próxima →</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="tab-btn${activeTab === 'material' ? ' active' : ''}" data-tab="material">📄 Material</button>
+        <button class="tab-btn${activeTab === 'links' ? ' active' : ''}" data-tab="links">🔗 Links ${links.length > 0 ? `(${links.length})` : ''}</button>
+        <button class="tab-btn${activeTab === 'notas' ? ' active' : ''}" data-tab="notas">📝 Anotações</button>
+      </div>
+      <div class="card-body">${tabContent}</div>
+    </div>
+
+    <div class="lesson-nav">
+      ${prev ? `<button class="nav-card" id="navPrev"><span class="nav-arrow">←</span><div><div class="nav-card-label">Anterior</div><div class="nav-card-title">${prev.title}</div></div></button>` : `<div></div>`}
+      ${next ? `<button class="nav-card next" id="navNext"><span class="nav-arrow">→</span><div><div class="nav-card-label">Próxima</div><div class="nav-card-title">${next.title}</div></div></button>` : `<div></div>`}
+    </div>
+  `
+
+  // EVENTS
+  document.getElementById('btnComplete').addEventListener('click', () => {
+    if (!data.progress[currentLessonId]) data.progress[currentLessonId] = {}
+    data.progress[currentLessonId].completed = !data.progress[currentLessonId].completed
+    data.progress[currentLessonId].completedAt = new Date().toISOString()
+    save(); render()
+    toast(data.progress[currentLessonId].completed ? '✅ Aula marcada como concluída!' : 'Aula desmarcada.')
+  })
+  document.getElementById('btnPrev')?.addEventListener('click', () => prev && openLesson(prev.id))
+  document.getElementById('btnNext')?.addEventListener('click', () => next && openLesson(next.id))
+  document.getElementById('navPrev')?.addEventListener('click', () => prev && openLesson(prev.id))
+  document.getElementById('navNext')?.addEventListener('click', () => next && openLesson(next.id))
+
+  page.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => { activeTab = btn.dataset.tab; renderLessonPage() })
+  })
+  document.getElementById('btnEditMat')?.addEventListener('click', () => { editingMat = true; renderLessonPage() })
+  document.getElementById('btnCancelMat')?.addEventListener('click', () => { editingMat = false; renderLessonPage() })
+  document.getElementById('btnSaveMat')?.addEventListener('click', () => {
+    lesson.materials = document.getElementById('matEditor').value
+    save(); editingMat = false; renderLessonPage(); toast('Material salvo!')
+  })
+  document.getElementById('btnAddLink')?.addEventListener('click', () => {
+    const label = document.getElementById('linkLabel').value.trim()
+    const url   = document.getElementById('linkUrl').value.trim()
+    if (!url) { toast('Informe a URL do link.'); return }
+    if (!lesson.links) lesson.links = []
+    lesson.links.push({ id: uid(), label, url })
+    save(); renderLessonPage(); toast('Link adicionado!')
+  })
+  page.querySelectorAll('[data-dellink]').forEach(b => {
+    b.addEventListener('click', () => {
+      lesson.links = (lesson.links || []).filter(l => l.id !== b.dataset.dellink)
+      save(); renderLessonPage()
+    })
+  })
+  // Notes auto-save
+  const notesEl = document.getElementById('notesArea')
+  if (notesEl) {
+    notesEl.addEventListener('input', () => {
+      clearTimeout(notesSaveTimer)
+      notesSaveTimer = setTimeout(() => {
+        if (!data.progress[currentLessonId]) data.progress[currentLessonId] = {}
+        data.progress[currentLessonId].notes = notesEl.value
+        save()
+        const el = document.getElementById('notesSaved')
+        if (el) { el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 1500) }
+      }, 600)
+    })
+  }
+}
+
+function showOverview() {
+  currentLessonId = null
+  document.getElementById('lessonPage').style.display = 'none'
+  document.getElementById('overviewPage').style.display = 'flex'
+  document.getElementById('btnOverview').classList.add('active')
+  renderModulesNav(); renderOverview(); updateProgressBar()
+}
+
+// ── LESSON MODAL ──
+function openLessonModal(editId = null) {
+  editingLessonId = editId
+  const l = editId ? data.lessons.find(x => x.id === editId) : null
+  document.getElementById('lessonModalTitle').textContent = l ? 'Editar aula' : 'Nova aula'
+  document.getElementById('fTitle').value    = l?.title    || ''
+  document.getElementById('fVideo').value    = l?.video    || ''
+  document.getElementById('fDuration').value = l?.duration || ''
+  document.getElementById('fDesc').value     = l?.desc     || ''
+  // populate modules
+  const sel = document.getElementById('fModule')
+  sel.innerHTML = '<option value="">— Sem módulo —</option>'
+  data.modules.forEach(m => {
+    const opt = document.createElement('option')
+    opt.value = m.id; opt.textContent = m.title
+    if (l?.moduleId === m.id) opt.selected = true
+    sel.appendChild(opt)
+  })
+  document.getElementById('modalLesson').classList.add('open')
+  document.getElementById('fTitle').focus()
+}
+
+document.getElementById('saveLessonBtn').addEventListener('click', () => {
+  const title = document.getElementById('fTitle').value.trim()
+  if (!title) { toast('Informe o título da aula.'); return }
+  const video    = document.getElementById('fVideo').value.trim()
+  const duration = document.getElementById('fDuration').value.trim()
+  const desc     = document.getElementById('fDesc').value.trim()
+  const moduleId = document.getElementById('fModule').value || null
+  if (editingLessonId) {
+    const l = data.lessons.find(x => x.id === editingLessonId)
+    Object.assign(l, { title, video, duration, desc, moduleId })
+  } else {
+    data.lessons.push({ id: uid(), title, video, duration, desc, moduleId, materials: '', links: [] })
+  }
+  save(); closeModal('modalLesson'); render()
+  toast(editingLessonId ? 'Aula atualizada!' : 'Aula criada!')
+})
+document.getElementById('fTitle').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('saveLessonBtn').click() })
+
+function deleteLesson(id) {
+  if (!confirm('Excluir esta aula?')) return
+  data.lessons = data.lessons.filter(l => l.id !== id)
+  delete data.progress[id]
+  if (currentLessonId === id) currentLessonId = null
+  save(); render()
+  toast('Aula excluída.')
+}
+
+// ── MODULE MODAL ──
+function openModuleModal(editId = null) {
+  editingModuleId = editId
+  const m = editId ? data.modules.find(x => x.id === editId) : null
+  document.getElementById('moduleModalTitle').textContent = m ? 'Editar módulo' : 'Novo módulo'
+  document.getElementById('fModuleName').value  = m?.title || ''
+  document.getElementById('fModuleEmoji').value = m?.emoji || ''
+  document.getElementById('modalModule').classList.add('open')
+  document.getElementById('fModuleName').focus()
+}
+
+document.getElementById('saveModuleBtn').addEventListener('click', () => {
+  const title = document.getElementById('fModuleName').value.trim()
+  if (!title) { toast('Informe o nome do módulo.'); return }
+  const emoji = document.getElementById('fModuleEmoji').value.trim()
+  if (editingModuleId) {
+    const m = data.modules.find(x => x.id === editingModuleId)
+    Object.assign(m, { title, emoji })
+  } else {
+    data.modules.push({ id: uid(), title, emoji })
+  }
+  save(); closeModal('modalModule'); render()
+  toast(editingModuleId ? 'Módulo atualizado!' : 'Módulo criado!')
+})
+
+// ── INSTRUCTOR MODAL ──
+function openInstructorModal() {
+  const inst = data.instructor
+  document.getElementById('fIName').value  = inst.name  || ''
+  document.getElementById('fITitle').value = inst.title || ''
+  document.getElementById('fIBio').value   = inst.bio   || ''
+  document.getElementById('fIPhoto').value = inst.photo || ''
+  document.getElementById('modalInstructor').classList.add('open')
+}
+document.getElementById('saveInstructorBtn').addEventListener('click', () => {
+  data.instructor = {
+    name:  document.getElementById('fIName').value.trim(),
+    title: document.getElementById('fITitle').value.trim(),
+    bio:   document.getElementById('fIBio').value.trim(),
+    photo: document.getElementById('fIPhoto').value.trim()
+  }
+  save(); closeModal('modalInstructor'); render(); toast('Perfil atualizado!')
+})
+
+// ── BUTTONS ──
+document.getElementById('btnNewLesson').addEventListener('click', () => openLessonModal())
+document.getElementById('btnNewModule').addEventListener('click', () => openModuleModal())
+document.getElementById('btnOverview').addEventListener('click', showOverview)
+
+// ── MODALS ──
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open')
+  editingLessonId = null; editingModuleId = null
+}
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.addEventListener('click', () => closeModal(btn.dataset.close))
+})
+document.querySelectorAll('.overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) closeModal(el.id) })
+})
 
 // ── MOBILE SIDEBAR ──
 document.getElementById('btnMenu').addEventListener('click', () => {
