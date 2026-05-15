@@ -258,6 +258,46 @@
     .divider-or::before,.divider-or::after { content:'';flex:1;height:1px;background:var(--border); }
     .file-upload-section { display:none;flex-direction:column;gap:8px;padding:12px;background:var(--bg);border-radius:8px;border:1px dashed var(--border);margin-bottom:8px; }
     .admin-mode .file-upload-section { display:flex; }
+    .progress-upload { background:var(--border);border-radius:99px;height:6px;overflow:hidden;margin-top:4px; }
+    .progress-upload-fill { height:100%;background:var(--accent);border-radius:99px;transition:width .2s; }
+
+    /* VIDEO PLAYER PROTEGIDO */
+    .video-shell { position:relative;border-radius:10px;overflow:hidden;aspect-ratio:16/9;background:#111;border:1px solid var(--border); }
+    .video-shell video { width:100%;height:100%;display:block;object-fit:contain; }
+    .video-shield { position:absolute;top:0;left:0;right:0;bottom:44px;z-index:2; }
+    .video-empty-state { width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#555; }
+    .video-empty-state svg { opacity:.35; }
+    .video-empty-state p { font-size:.82rem; }
+
+    /* STUDENTS PAGE */
+    .students-page { display:flex;flex-direction:column;gap:20px; }
+    .students-header { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
+    .students-header h1 { font-size:1.4rem;font-weight:800;letter-spacing:-.02em; }
+    .students-info { background:var(--light);border:1px solid var(--border);border-radius:10px;padding:14px 18px;font-size:.85rem;color:var(--muted);line-height:1.6; }
+    .students-info strong { color:var(--text); }
+    .students-table-wrap { background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden; }
+    .students-table { width:100%;border-collapse:collapse; }
+    .students-table th { padding:12px 16px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;border-bottom:1px solid var(--border);background:var(--bg); }
+    .students-table td { padding:13px 16px;font-size:.85rem;border-bottom:1px solid var(--border); }
+    .students-table tr:last-child td { border-bottom:none; }
+    .students-table tr:hover td { background:var(--bg); }
+    .student-email { font-weight:500; }
+    .student-name { color:var(--muted); }
+    .student-date { color:var(--muted);font-size:.78rem; }
+    .badge { display:inline-block;padding:2px 8px;border-radius:99px;font-size:.72rem;font-weight:600; }
+    .badge-green { background:var(--green-bg);color:var(--green); }
+    .badge-muted { background:var(--light);color:var(--muted); }
+    .students-empty { padding:48px;text-align:center;color:var(--muted);font-size:.9rem; }
+    .add-student-form { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px; }
+    .add-student-form h3 { font-size:.9rem;font-weight:700;margin-bottom:14px; }
+    .add-student-row { display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end; }
+    .add-student-row .fgroup { flex:1;min-width:160px; }
+    .bulk-add { margin-top:12px; }
+    .bulk-textarea { width:100%;min-height:80px;padding:10px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem;font-family:inherit;resize:vertical;outline:none;background:var(--bg); }
+    .bulk-textarea:focus { border-color:var(--accent);background:var(--surface); }
+    .sidebar-students-btn { margin:0 12px 10px;padding:9px 12px;background:var(--light);border:1.5px solid var(--border);border-radius:var(--radius);font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .12s;text-align:left;display:none; }
+    .admin-mode .sidebar-students-btn { display:block; }
+    .sidebar-students-btn:hover,.sidebar-students-btn.active { background:var(--accent);color:#fff;border-color:var(--accent); }
 
     /* RESPONSIVE */
     @media (max-width:768px) {
@@ -320,6 +360,7 @@
       <input class="search-input" id="searchInput" type="text" placeholder="🔍  Buscar aula..." />
     </div>
     <button class="sidebar-overview-btn active" id="btnOverview">🏠  Visão geral</button>
+    <button class="sidebar-students-btn" id="btnStudentsPage">👩‍🎓  Alunas</button>
     <div id="modulesNav"></div>
     <div class="sidebar-footer">
       <button class="btn-new-lesson" id="btnNewLesson">+ Nova aula</button>
@@ -331,6 +372,7 @@
   <main id="main">
     <div class="overview" id="overviewPage"></div>
     <div class="lesson-view" id="lessonPage" style="display:none"></div>
+    <div class="students-page" id="studentsPage" style="display:none"></div>
   </main>
 </div>
 
@@ -341,7 +383,20 @@
     <div class="modal-body">
       <div class="fgroup"><label>Título</label><input type="text" id="fTitle" placeholder="Ex: Introdução ao ChatGPT" /></div>
       <div class="fgroup"><label>Módulo</label><select id="fModule"><option value="">— Sem módulo —</option></select></div>
-      <div class="fgroup"><label>URL do vídeo (YouTube / Vimeo)</label><input type="url" id="fVideo" placeholder="https://youtube.com/watch?v=..." /><span class="fhint">Deixe em branco se não tiver vídeo.</span></div>
+      <div class="fgroup">
+        <label>Vídeo da aula</label>
+        <div class="upload-area">
+          <label class="upload-btn-label" for="videoFileInput">🎬 Enviar vídeo do computador</label>
+          <input type="file" id="videoFileInput" accept="video/*" hidden />
+          <div id="videoUploadProgress" style="display:none">
+            <div class="progress-upload"><div class="progress-upload-fill" id="videoProgressFill" style="width:0%"></div></div>
+          </div>
+          <div class="upload-status" id="videoUploadStatus"></div>
+          <div class="divider-or">ou cole o link do YouTube / Vimeo</div>
+          <input type="url" id="fVideo" placeholder="https://youtube.com/watch?v=..." style="padding:9px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.875rem;font-family:inherit;outline:none;background:var(--bg);width:100%" />
+          <span class="fhint">Deixe em branco se ainda não tiver vídeo.</span>
+        </div>
+      </div>
       <div class="fgroup"><label>Duração (opcional)</label><input type="text" id="fDuration" placeholder="Ex: 12 min" /></div>
       <div class="fgroup"><label>Descrição curta (opcional)</label><input type="text" id="fDesc" placeholder="Ex: Aprenda a usar o ChatGPT do zero" /></div>
     </div>
@@ -472,6 +527,17 @@ async function uploadFile(file, path) {
   if (error) throw error
   const { data } = db.storage.from(window.STORAGE_BUCKET).getPublicUrl(path)
   return data.publicUrl
+}
+
+// ── VIDEO URL (signed, expira em 2h) ──
+async function getVideoUrl(videoValue) {
+  if (!videoValue) return null
+  // YouTube / Vimeo — usa embed normal
+  if (videoValue.startsWith('http')) return { type: 'embed', url: getEmbed(videoValue) }
+  // Supabase path — gera signed URL
+  const { data, error } = await db.storage.from('videos').createSignedUrl(videoValue, 7200)
+  if (error || !data?.signedUrl) return null
+  return { type: 'video', url: data.signedUrl }
 }
 
 // ── AUTH ──
@@ -723,14 +789,16 @@ function openLesson(id) {
   editingMat = false
   localStorage.setItem('lastLesson', id)
   document.getElementById('btnOverview').classList.remove('active')
+  document.getElementById('btnStudentsPage').classList.remove('active')
   document.getElementById('overviewPage').style.display = 'none'
+  document.getElementById('studentsPage').style.display = 'none'
   renderModulesNav(document.getElementById('searchInput').value.toLowerCase())
   updateProgressBar()
   renderLessonPage()
   closeSidebar()
 }
 
-function renderLessonPage() {
+async function renderLessonPage() {
   const lesson = data.lessons.find(l => l.id === currentLessonId)
   const page = document.getElementById('lessonPage')
   if (!lesson) { showOverview(); return }
@@ -740,15 +808,30 @@ function renderLessonPage() {
   const prev = data.lessons[idx - 1]
   const next = data.lessons[idx + 1]
   const done = !!data.progress[currentLessonId]?.completed
-  const embed = getEmbed(lesson.video)
   const prog = data.progress[currentLessonId] || {}
 
-  const videoHtml = embed
-    ? `<iframe src="${embed}" allowfullscreen title="${lesson.title}"></iframe>`
-    : `<div class="video-empty">
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        <p>${adminMode ? 'Adicione um vídeo editando esta aula' : 'Vídeo em breve'}</p>
+  // ── Vídeo protegido ──
+  let videoHtml = ''
+  if (lesson.video) {
+    const result = await getVideoUrl(lesson.video)
+    if (result?.type === 'embed' && result.url) {
+      videoHtml = `<div class="video-shell"><iframe src="${result.url}" allowfullscreen title="${lesson.title}" style="width:100%;height:100%;border:none;display:block"></iframe></div>`
+    } else if (result?.type === 'video' && result.url) {
+      videoHtml = `<div class="video-shell" oncontextmenu="return false">
+        <div class="video-shield"></div>
+        <video controlsList="nodownload noplaybackrate" disablePictureInPicture oncontextmenu="return false" controls preload="metadata">
+          <source src="${result.url}" type="video/mp4">
+        </video>
       </div>`
+    } else {
+      videoHtml = `<div class="video-shell"><div class="video-empty-state"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg><p>Erro ao carregar vídeo.</p></div></div>`
+    }
+  } else {
+    videoHtml = `<div class="video-shell"><div class="video-empty-state">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <p>${adminMode ? 'Adicione um vídeo editando esta aula' : 'Vídeo em breve'}</p>
+    </div></div>`
+  }
 
   // Tab content
   const links = lesson.links || []
@@ -804,7 +887,7 @@ function renderLessonPage() {
       </div>
     </div>
 
-    <div class="video-wrap">${videoHtml}</div>
+    ${videoHtml}
 
     <div class="complete-bar">
       <button class="btn-complete${done ? ' done' : ''}" id="btnComplete">
@@ -907,9 +990,144 @@ function renderLessonPage() {
 function showOverview() {
   currentLessonId = null
   document.getElementById('lessonPage').style.display = 'none'
+  document.getElementById('studentsPage').style.display = 'none'
   document.getElementById('overviewPage').style.display = 'flex'
   document.getElementById('btnOverview').classList.add('active')
+  document.getElementById('btnStudentsPage').classList.remove('active')
   renderModulesNav(); renderOverview(); updateProgressBar()
+}
+
+// ── STUDENTS PAGE ──
+async function showStudentsPage() {
+  currentLessonId = null
+  document.getElementById('lessonPage').style.display = 'none'
+  document.getElementById('overviewPage').style.display = 'none'
+  document.getElementById('btnOverview').classList.remove('active')
+  document.getElementById('btnStudentsPage').classList.add('active')
+  const page = document.getElementById('studentsPage')
+  page.style.display = 'flex'
+  page.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">Carregando alunas...</div>`
+  closeSidebar()
+
+  // Buscar alunas via API
+  const { data: { session } } = await db.auth.getSession()
+  const token = session?.access_token
+  let students = []
+  try {
+    const res = await fetch('/api/students', { headers: { Authorization: `Bearer ${token}` } })
+    const json = await res.json()
+    students = json.students || []
+  } catch { students = [] }
+
+  const defaultPass = 'Mentoras@2024'
+  const formatDate = d => d ? new Date(d).toLocaleDateString('pt-BR') : '—'
+  const rowsHtml = students.length === 0
+    ? `<tr><td colspan="4" class="students-empty">Nenhuma aluna cadastrada ainda.</td></tr>`
+    : students.map(s => `<tr>
+        <td><div class="student-email">${s.email}</div>${s.name ? `<div class="student-name">${s.name}</div>` : ''}</td>
+        <td class="student-date">${formatDate(s.created_at)}</td>
+        <td class="student-date">${s.last_sign_in ? formatDate(s.last_sign_in) : '<span class="badge badge-muted">Nunca acessou</span>'}</td>
+        <td><button class="btn btn-outline" style="font-size:.75rem;padding:5px 10px;color:var(--danger);border-color:#FECACA" data-delstudent="${s.id}" data-email="${s.email}">Remover</button></td>
+      </tr>`).join('')
+
+  page.innerHTML = `
+    <div class="students-header">
+      <h1>👩‍🎓 Alunas</h1>
+      <span style="font-size:.85rem;color:var(--muted)">${students.length} cadastrada${students.length !== 1 ? 's' : ''}</span>
+    </div>
+
+    <div class="students-info">
+      <strong>Senha padrão de acesso:</strong> <code style="background:var(--border);padding:2px 8px;border-radius:4px;font-family:monospace">${defaultPass}</code><br>
+      As alunas podem trocar a senha após o primeiro acesso clicando em "Esqueci minha senha" na tela de login.
+    </div>
+
+    <div class="add-student-form">
+      <h3>Adicionar aluna</h3>
+      <div class="add-student-row">
+        <div class="fgroup"><label>Nome (opcional)</label><input type="text" id="newStudentName" placeholder="Ex: Maria Silva" /></div>
+        <div class="fgroup"><label>E-mail *</label><input type="email" id="newStudentEmail" placeholder="aluna@email.com" /></div>
+        <button class="btn btn-dark" id="btnAddStudent" style="margin-bottom:0;height:40px;align-self:flex-end">+ Adicionar</button>
+      </div>
+      <div class="upload-status" id="addStudentStatus" style="margin-top:8px"></div>
+
+      <div class="bulk-add" style="margin-top:16px">
+        <div style="font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Adicionar várias de uma vez</div>
+        <textarea class="bulk-textarea" id="bulkEmails" placeholder="Cole os e-mails, um por linha:&#10;maria@email.com&#10;joana@email.com&#10;ana@email.com"></textarea>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+          <button class="btn btn-outline" id="btnBulkAdd">Adicionar todas</button>
+          <div class="upload-status" id="bulkStatus"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="students-table-wrap">
+      <table class="students-table">
+        <thead><tr>
+          <th>Aluna</th><th>Cadastrada em</th><th>Último acesso</th><th></th>
+        </tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>`
+
+  // Eventos
+  document.getElementById('btnAddStudent').addEventListener('click', () => addStudent(token))
+  document.getElementById('newStudentEmail').addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(token) })
+  document.getElementById('btnBulkAdd').addEventListener('click', () => bulkAddStudents(token))
+  page.querySelectorAll('[data-delstudent]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm(`Remover ${btn.dataset.email}?`)) return
+      const res = await fetch('/api/students', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: btn.dataset.delstudent })
+      })
+      if (res.ok) { toast('Aluna removida.'); showStudentsPage() }
+      else toast('Erro ao remover.')
+    })
+  })
+}
+
+async function addStudent(token) {
+  const email = document.getElementById('newStudentEmail').value.trim()
+  const name  = document.getElementById('newStudentName').value.trim()
+  const status = document.getElementById('addStudentStatus')
+  if (!email) { status.textContent = 'Informe o e-mail.'; status.className = 'upload-status err'; return }
+  status.textContent = 'Adicionando...'; status.className = 'upload-status'
+  const res = await fetch('/api/students', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, name })
+  })
+  const json = await res.json()
+  if (res.ok) {
+    status.textContent = `✓ ${email} adicionada! E-mail de boas-vindas enviado.`
+    status.className = 'upload-status ok'
+    document.getElementById('newStudentEmail').value = ''
+    document.getElementById('newStudentName').value = ''
+    setTimeout(() => showStudentsPage(), 1200)
+  } else {
+    status.textContent = json.erro || 'Erro ao adicionar.'
+    status.className = 'upload-status err'
+  }
+}
+
+async function bulkAddStudents(token) {
+  const lines = document.getElementById('bulkEmails').value.split('\n').map(l => l.trim()).filter(Boolean)
+  if (!lines.length) return
+  const status = document.getElementById('bulkStatus')
+  status.textContent = `Adicionando ${lines.length} alunas...`; status.className = 'upload-status'
+  let ok = 0, fail = 0
+  for (const email of lines) {
+    const res = await fetch('/api/students', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    })
+    res.ok ? ok++ : fail++
+  }
+  status.textContent = `✓ ${ok} adicionada${ok !== 1 ? 's' : ''}${fail ? ` · ${fail} erro(s)` : ''}.`
+  status.className = 'upload-status ok'
+  setTimeout(() => showStudentsPage(), 1500)
 }
 
 // ── LESSON MODAL ──
@@ -1036,6 +1254,47 @@ document.getElementById('photoFileInput').addEventListener('change', async (e) =
 document.getElementById('btnNewLesson').addEventListener('click', () => openLessonModal())
 document.getElementById('btnNewModule').addEventListener('click', () => openModuleModal())
 document.getElementById('btnOverview').addEventListener('click', showOverview)
+document.getElementById('btnStudentsPage').addEventListener('click', showStudentsPage)
+
+// ── UPLOAD DE VÍDEO na modal de aula ──
+document.getElementById('videoFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  const statusEl = document.getElementById('videoUploadStatus')
+  const progressEl = document.getElementById('videoUploadProgress')
+  const fillEl = document.getElementById('videoProgressFill')
+
+  if (file.size > 5 * 1024 * 1024 * 1024) {
+    statusEl.textContent = '❌ Arquivo muito grande (máx 5 GB).'; statusEl.className = 'upload-status err'; return
+  }
+
+  statusEl.textContent = 'Enviando vídeo... (pode levar alguns minutos)'; statusEl.className = 'upload-status'
+  progressEl.style.display = 'block'
+
+  // Simula progresso visual enquanto faz upload
+  let fakeProgress = 0
+  const fakeTimer = setInterval(() => {
+    fakeProgress = Math.min(fakeProgress + Math.random() * 3, 85)
+    fillEl.style.width = fakeProgress + '%'
+  }, 400)
+
+  try {
+    const safeName = file.name.replace(/\s+/g, '_').replace(/[^\w.-]/g, '')
+    const path = `aulas/${Date.now()}_${safeName}`
+    const { error } = await db.storage.from('videos').upload(path, file, { upsert: false })
+    clearInterval(fakeTimer)
+    if (error) throw error
+    fillEl.style.width = '100%'
+    document.getElementById('fVideo').value = path   // guarda o path, não URL
+    statusEl.textContent = '✅ Vídeo enviado! Clique em Salvar.'
+    statusEl.className = 'upload-status ok'
+  } catch (err) {
+    clearInterval(fakeTimer)
+    progressEl.style.display = 'none'
+    statusEl.textContent = '❌ Erro ao enviar: ' + (err.message || 'tente novamente.')
+    statusEl.className = 'upload-status err'
+  }
+})
 
 // ── MODALS ──
 function closeModal(id) {
