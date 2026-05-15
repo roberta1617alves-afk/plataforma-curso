@@ -521,11 +521,20 @@ function getModuleLessons(moduleId) {
     : data.lessons.filter(l => l.moduleId === moduleId)
 }
 
-// ── UPLOAD ──
-async function uploadFile(file, path) {
-  const { error } = await db.storage.from(window.STORAGE_BUCKET).upload(path, file, { upsert: true, contentType: file.type })
+// ── UPLOAD (usa servidor para gerar URL assinada, bypassa RLS) ──
+async function uploadFile(file, path, bucket = window.STORAGE_BUCKET) {
+  const { data: { session } } = await db.auth.getSession()
+  const accessToken = session?.access_token
+  const res = await fetch('/api/upload-token', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ bucket, path })
+  })
+  if (!res.ok) throw new Error('Erro ao obter permissão de upload')
+  const { token: uploadToken, path: uploadPath } = await res.json()
+  const { error } = await db.storage.from(bucket).uploadToSignedUrl(uploadPath, uploadToken, file, { contentType: file.type })
   if (error) throw error
-  const { data } = db.storage.from(window.STORAGE_BUCKET).getPublicUrl(path)
+  const { data } = db.storage.from(bucket).getPublicUrl(path)
   return data.publicUrl
 }
 
@@ -1281,7 +1290,16 @@ document.getElementById('videoFileInput').addEventListener('change', async (e) =
   try {
     const safeName = file.name.replace(/\s+/g, '_').replace(/[^\w.-]/g, '')
     const path = `aulas/${Date.now()}_${safeName}`
-    const { error } = await db.storage.from('videos').upload(path, file, { upsert: false })
+    const { data: { session } } = await db.auth.getSession()
+    const accessToken = session?.access_token
+    const tokenRes = await fetch('/api/upload-token', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bucket: 'videos', path })
+    })
+    if (!tokenRes.ok) throw new Error('Erro ao obter permissão de upload')
+    const { token: uploadToken, path: uploadPath } = await tokenRes.json()
+    const { error } = await db.storage.from('videos').uploadToSignedUrl(uploadPath, uploadToken, file)
     clearInterval(fakeTimer)
     if (error) throw error
     fillEl.style.width = '100%'
