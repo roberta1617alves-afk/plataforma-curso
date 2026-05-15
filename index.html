@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meu Curso</title>
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #FAFAF9;
+      --surface: #FFFFFF;
+      --border: #E7E5E4;
+      --text: #1C1917;
+      --muted: #78716C;
+      --accent: #1C1917;
+      --accent-hover: #292524;
+      --light: #F5F5F4;
+      --danger: #DC2626;
+      --sidebar-w: 272px;
+      --header-h: 56px;
+      --radius: 8px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+    }
+
+    /* ── AUTH GATE ── */
+    #authGate {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── HEADER ── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0;
+      height: var(--header-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 20px; gap: 12px;
+      z-index: 100;
+    }
+    .btn-menu {
+      display: none;
+      background: none; border: none; cursor: pointer;
+      padding: 6px; border-radius: 6px; color: var(--muted);
+    }
+    .btn-menu:hover { background: var(--light); color: var(--text); }
+    .btn-menu svg { width: 20px; height: 20px; display: block; }
+
+    .logo {
+      font-size: 1rem; font-weight: 800;
+      letter-spacing: -.02em; color: var(--text);
+      flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    .user-chip {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 12px 5px 6px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: .8rem; color: var(--muted);
+    }
+    .user-avatar {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .7rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .btn-sm {
+      padding: 6px 14px; border-radius: 6px;
+      font-size: .8rem; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted);
+      font-family: inherit; transition: all .12s;
+    }
+    .btn-sm:hover { background: var(--light); color: var(--text); }
+    .btn-sm.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ── LAYOUT ── */
+    .layout {
+      display: flex;
+      padding-top: var(--header-h);
+      min-height: 100dvh;
+    }
+
+    /* ── SIDEBAR ── */
+    aside {
+      width: var(--sidebar-w);
+      min-height: calc(100dvh - var(--header-h));
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      position: fixed; top: var(--header-h); left: 0; bottom: 0;
+      overflow-y: auto; z-index: 90;
+      transition: transform .22s ease;
+    }
+
+    .sidebar-section {
+      padding: 16px 12px 8px;
+    }
+    .sidebar-label {
+      font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--muted); padding: 0 6px 8px;
+    }
+
+    .lesson-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+
+    .lesson-btn {
+      width: 100%; background: none; border: none;
+      text-align: left; padding: 9px 10px;
+      cursor: pointer; border-radius: 6px;
+      display: flex; align-items: flex-start; gap: 10px;
+      transition: background .1s; font-family: inherit;
+    }
+    .lesson-btn:hover { background: var(--light); }
+    .lesson-btn.active { background: var(--light); }
+
+    .lesson-num {
+      min-width: 22px; height: 22px; margin-top: 1px;
+      border-radius: 4px;
+      background: var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .68rem; font-weight: 700; color: var(--muted);
+      flex-shrink: 0;
+    }
+    .lesson-btn.active .lesson-num { background: var(--accent); color: #fff; }
+
+    .lesson-info { flex: 1; min-width: 0; }
+    .lesson-name {
+      font-size: .875rem; font-weight: 500;
+      color: var(--text); line-height: 1.3;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .lesson-meta {
+      font-size: .75rem; color: var(--muted); margin-top: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .lesson-actions { display: none; gap: 2px; margin-top: 2px; }
+    .admin-mode .lesson-actions { display: flex; }
+    .icon-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 3px 5px; border-radius: 5px;
+      font-size: .8rem; color: var(--muted); line-height: 1;
+      transition: all .1s;
+    }
+    .icon-btn:hover { background: var(--border); color: var(--text); }
+    .icon-btn.danger:hover { color: var(--danger); }
+
+    .btn-new-lesson {
+      display: none;
+      width: calc(100% - 8px); margin: 4px 4px 12px;
+      padding: 9px 12px;
+      background: none; color: var(--muted);
+      border: 1.5px dashed var(--border);
+      border-radius: 6px; font-size: .82rem; font-weight: 500;
+      cursor: pointer; font-family: inherit;
+      transition: all .12s;
+    }
+    .btn-new-lesson:hover { border-color: var(--accent); color: var(--accent); background: var(--light); }
+    .admin-mode .btn-new-lesson { display: block; }
+
+    /* ── MAIN ── */
+    main {
+      margin-left: var(--sidebar-w);
+      flex: 1; padding: 36px 32px;
+      max-width: calc(var(--sidebar-w) + 820px);
+    }
+
+    /* Empty state */
+    .empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center;
+      padding: 80px 20px; gap: 10px; color: var(--muted);
+    }
+    .empty svg { opacity: .25; margin-bottom: 4px; }
+    .empty h2 { font-size: 1.1rem; font-weight: 600; }
+    .empty p { font-size: .85rem; }
+
+    /* Lesson view */
+    .lesson-view { display: flex; flex-direction: column; gap: 28px; }
+
+    .lesson-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .lesson-title-row h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; }
+    .lesson-desc { font-size: .9rem; color: var(--muted); margin-top: 6px; }
+
+    /* Video */
+    .video-wrap {
+      border-radius: 10px; overflow: hidden;
+      aspect-ratio: 16/9; background: #111;
+      border: 1px solid var(--border);
+    }
+    .video-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+    .video-empty {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px; color: #555;
+    }
+    .video-empty svg { opacity: .4; }
+    .video-empty p { font-size: .82rem; }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+    .card-head {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-head h2 { font-size: .9rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .card-body { padding: 20px; }
+
+    /* Materials */
+    .mat-text {
+      font-size: .9rem; line-height: 1.75;
+      color: var(--text); white-space: pre-wrap;
+    }
+    .mat-empty { color: var(--muted); font-size: .875rem; }
+
+    .mat-textarea {
+      width: 100%; min-height: 130px;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: .875rem; line-height: 1.65;
+      font-family: inherit; resize: vertical; outline: none;
+      background: var(--bg); color: var(--text);
+      transition: border-color .15s;
+    }
+    .mat-textarea:focus { border-color: var(--accent); background: var(--surface); }
+
+    /* Links */
+    .links-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .link-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg); border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .link-icon { color: var(--muted); flex-shrink: 0; font-size: .9rem; }
+    .link-content { flex: 1; min-width: 0; }
+    .link-label { font-size: .82rem; font-weight: 600; color: var(--muted); }
+    .link-url a {
+      font-size: .875rem; color: var(--accent); text-decoration: none;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;
+    }
+    .link-url a:hover { text-decoration: underline; }
+    .link-empty { color: var(--muted); font-size: .875rem; }
+
+    /* Add link form */
+    .add-link-form {
+      display: none;
+      flex-direction: column; gap: 8px; margin-top: 12px;
+    }
+    .admin-mode .add-link-form { display: flex; }
+    .add-link-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .add-link-row input, .add-link-form input {
+      flex: 1; min-width: 140px;
+      padding: 9px 12px;
+      border: 1.5px solid var(--border); border-radius: 6px;
+      font-size: .85rem; font-family: inherit; outline: none;
+      background: var(--bg); color: var(--text);
+      transition: border-color .15s;
+    }
+    .add-link-row input:focus, .add-link-form input:focus {
+      border-color: var(--accent); background: var(--surface);
+    }
+    .add-link-row input::placeholder { color: #A8A29E; }
+
+    /* Buttons */
+    .btn {
+      padding: 9px 18px; border-radius: 6px;
+      font-size: .85rem; font-weight: 600;
+      cursor: pointer; border: none; font-family: inherit;
+      transition: all .12s;
+    }
+    .btn-dark { background: var(--accent); color: #fff; }
+    .btn-dark:hover { background: var(--accent-hover); }
+    .btn-outline { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+    .btn-outline:hover { background: var(--light); color: var(--text); }
+    .btn-danger { background: #FEF2F2; color: var(--danger); border: 1px solid #FECACA; }
+    .btn-danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+    .save-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+    .edit-row { display: flex; justify-content: flex-end; margin-top: 10px; }
+
+    /* ── MODAL ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.35);
+      z-index: 200;
+      display: none; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border-radius: 14px;
+      width: 100%; max-width: 460px;
+      box-shadow: 0 24px 64px rgba(0,0,0,.15);
+    }
+    .modal-head {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-head h3 { font-size: 1rem; font-weight: 700; }
+    .modal-x {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 1.3rem; line-height: 1;
+      padding: 2px 6px; border-radius: 5px;
+    }
+    .modal-x:hover { background: var(--light); color: var(--text); }
+    .modal-body { padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+    .modal-foot { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+    .fgroup { display: flex; flex-direction: column; gap: 6px; }
+    .fgroup label { font-size: .75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .fgroup input, .fgroup textarea {
+      padding: 10px 12px;
+      border: 1.5px solid var(--border); border-radius: 6px;
+      font-size: .875rem; font-family: inherit; outline: none;
+      background: var(--bg); color: var(--text);
+      transition: border-color .15s;
+    }
+    .fgroup input:focus, .fgroup textarea:focus {
+      border-color: var(--accent); background: var(--surface);
+    }
+    .fgroup input::placeholder { color: #A8A29E; }
+    .fhint { font-size: .74rem; color: var(--muted); }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--accent); color: #fff;
+      padding: 11px 18px; border-radius: 8px;
+      font-size: .84rem; font-weight: 500;
+      opacity: 0; transform: translateY(6px);
+      transition: all .2s; z-index: 300;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* Sidebar backdrop */
+    .backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.35); z-index: 85;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .btn-menu { display: flex; align-items: center; }
+      aside {
+        transform: translateX(-100%);
+        box-shadow: 4px 0 24px rgba(0,0,0,.12);
+      }
+      aside.open { transform: translateX(0); }
+      .backdrop { display: none; }
+      .backdrop.open { display: block; }
+      main { margin-left: 0; padding: 20px 16px; }
+      .lesson-title-row { flex-direction: column; gap: 8px; }
+      .lesson-title-row h1 { font-size: 1.25rem; }
+      .add-link-row { flex-direction: column; }
+      .user-chip .user-email { display: none; }
+    }
+    @media (min-width: 769px) {
+      .btn-menu { display: none !important; }
+      aside { transform: translateX(0) !important; }
+      .backdrop { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div id="authGate"><div class="spinner"></div></div>
+
+<!-- HEADER -->
+<header>
+  <button class="btn-menu" id="btnMenu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <div class="logo" id="headerTitle">Meu Curso</div>
+  <div class="header-right">
+    <div class="user-chip" id="userChip">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <span class="user-email" id="userEmail"></span>
+    </div>
+    <button class="btn-sm" id="btnAdmin">Editar</button>
+    <button class="btn-sm" id="btnLogout">Sair</button>
+  </div>
+</header>
+
+<!-- MOBILE BACKDROP -->
+<div class="backdrop" id="backdrop"></div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Aulas</div>
+      <ul class="lesson-list" id="lessonList"></ul>
+    </div>
+    <button class="btn-new-lesson" id="btnNewLesson">+ Nova aula</button>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main">
+    <div class="empty" id="emptyState">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <polyline points="8 21 12 17 16 21"/>
+      </svg>
+      <h2>Nenhuma aula selecionada</h2>
+      <p>Escolha uma aula no menu ao lado para começar.</p>
+    </div>
+    <div class="lesson-view" id="lessonView" style="display:none"></div>
+  </main>
+</div>
+
+<!-- MODAL: aula -->
+<div class="overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Nova aula</h3>
+      <button class="modal-x" id="modalClose">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fgroup">
+        <label>Título</label>
+        <input type="text" id="fTitle" placeholder="Ex: Introdução ao tema" />
+      </div>
+      <div class="fgroup">
+        <label>URL do vídeo</label>
+        <input type="url" id="fVideo" placeholder="https://youtube.com/watch?v=..." />
+        <span class="fhint">YouTube ou Vimeo. Deixe em branco se não tiver vídeo.</span>
+      </div>
+      <div class="fgroup">
+        <label>Descrição curta (opcional)</label>
+        <input type="text" id="fDesc" placeholder="Ex: Nessa aula você vai aprender..." />
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" id="modalCancel">Cancelar</button>
+      <button class="btn btn-dark" id="modalSave">Salvar aula</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── SUPABASE ──
+const { createClient } = supabase
+const db = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+
+let currentUser = null
+
+// ── AUTH GATE ──
+async function initAuth() {
+  const { data: { session } } = await db.auth.getSession()
+  if (!session) {
+    window.location.replace('login.html')
+    return
+  }
+  currentUser = session.user
+  document.getElementById('authGate').style.display = 'none'
+
+  const email = currentUser.email || ''
+  const name = currentUser.user_metadata?.name || email
+  document.getElementById('userEmail').textContent = email
+  document.getElementById('userAvatar').textContent = (name[0] || '?').toUpperCase()
+  document.getElementById('headerTitle').textContent = window.SITE_NAME || 'Meu Curso'
+  document.title = window.SITE_NAME || 'Meu Curso'
+
+  renderSidebar()
+  renderLesson()
+}
+
+db.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT') window.location.replace('login.html')
+})
+
+document.getElementById('btnLogout').addEventListener('click', async () => {
+  await db.auth.signOut()
+})
+
+// ── STATE ──
+let data = JSON.parse(localStorage.getItem('curso_data') || 'null') || { lessons: [] }
+let currentId = null
+let editingId = null
+let adminMode = false
+let editingMat = false
+
+const save = () => localStorage.setItem('curso_data', JSON.stringify(data))
+const uid  = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
+
+function getEmbed(url) {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    if (u.hostname.includes('youtube.com')) {
+      const v = u.searchParams.get('v')
+      return v ? `https://www.youtube.com/embed/${v}?rel=0` : null
+    }
+    if (u.hostname.includes('youtu.be')) {
+      const v = u.pathname.slice(1)
+      return v ? `https://www.youtube.com/embed/${v}?rel=0` : null
+    }
+    if (u.hostname.includes('vimeo.com')) {
+      const v = u.pathname.replace('/', '')
+      return v ? `https://player.vimeo.com/video/${v}` : null
+    }
+  } catch {}
+  return null
+}
+
+function toast(msg, ms = 2200) {
+  const el = document.getElementById('toast')
+  el.textContent = msg; el.classList.add('show')
+  setTimeout(() => el.classList.remove('show'), ms)
+}
+
+// ── SIDEBAR ──
+function renderSidebar() {
+  const list = document.getElementById('lessonList')
+  list.innerHTML = ''
+  data.lessons.forEach((l, i) => {
+    const li = document.createElement('li')
+    li.innerHTML = `
+      <button class="lesson-btn${currentId === l.id ? ' active' : ''}" data-id="${l.id}">
+        <span class="lesson-num">${i + 1}</span>
+        <span class="lesson-info">
+          <span class="lesson-name">${l.title}</span>
+          ${l.desc ? `<span class="lesson-meta">${l.desc}</span>` : ''}
+        </span>
+        <span class="lesson-actions">
+          <button class="icon-btn" data-edit="${l.id}" title="Editar">✏️</button>
+          <button class="icon-btn danger" data-del="${l.id}" title="Excluir">🗑️</button>
+        </span>
+      </button>`
+    list.appendChild(li)
+  })
+
+  list.querySelectorAll('.lesson-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      if (e.target.closest('[data-edit],[data-del]')) return
+      openLesson(btn.dataset.id); closeSidebar()
+    })
+  })
+  list.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openModal(b.dataset.edit)))
+  list.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => deleteLesson(b.dataset.del)))
+}
+
+// ── LESSON VIEW ──
+function renderLesson() {
+  const lesson = data.lessons.find(l => l.id === currentId)
+  const view = document.getElementById('lessonView')
+  const empty = document.getElementById('emptyState')
+
+  if (!lesson) { view.style.display = 'none'; empty.style.display = 'flex'; return }
+  empty.style.display = 'none'; view.style.display = 'flex'
+
+  const embed = getEmbed(lesson.video)
+  const videoHtml = embed
+    ? `<iframe src="${embed}" allowfullscreen title="${lesson.title}"></iframe>`
+    : `<div class="video-empty">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        <p>Nenhum vídeo adicionado</p>
+      </div>`
+
+  const links = lesson.links || []
+  const linksHtml = links.length === 0
+    ? `<p class="link-empty">Nenhum link adicionado ainda.</p>`
+    : `<ul class="links-list">${links.map(lk => `
+        <li class="link-row">
+          <span class="link-icon">🔗</span>
+          <div class="link-content">
+            ${lk.label ? `<div class="link-label">${lk.label}</div>` : ''}
+            <div class="link-url"><a href="${lk.url}" target="_blank" rel="noopener">${lk.url}</a></div>
+          </div>
+          ${adminMode ? `<button class="icon-btn danger" data-dellink="${lk.id}" title="Remover">✕</button>` : ''}
+        </li>`).join('')}
+      </ul>`
+
+  const matContent = editingMat
+    ? `<textarea class="mat-textarea" id="matEditor">${lesson.materials || ''}</textarea>
+       <div class="save-row">
+         <button class="btn btn-outline" id="btnCancelMat">Cancelar</button>
+         <button class="btn btn-dark" id="btnSaveMat">Salvar</button>
+       </div>`
+    : `<div class="${lesson.materials ? 'mat-text' : 'mat-empty'}">${lesson.materials || 'Nenhum material adicionado ainda.'}</div>
+       ${adminMode ? `<div class="edit-row"><button class="btn btn-outline" id="btnEditMat">✏️ Editar material</button></div>` : ''}`
+
+  view.innerHTML = `
+    <div class="lesson-title-row">
+      <div>
+        <h1>${lesson.title}</h1>
+        ${lesson.desc ? `<p class="lesson-desc">${lesson.desc}</p>` : ''}
+      </div>
+    </div>
+
+    <div class="video-wrap">${videoHtml}</div>
+
+    <div class="card">
+      <div class="card-head"><h2>📄 Material da aula</h2></div>
+      <div class="card-body">${matContent}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>🔗 Links</h2></div>
+      <div class="card-body">
+        ${linksHtml}
+        <div class="add-link-form">
+          <div class="add-link-row">
+            <input type="text" id="linkLabel" placeholder="Nome (ex: Apostila)" />
+            <input type="url" id="linkUrl" placeholder="https://..." />
+          </div>
+          <div><button class="btn btn-dark" id="btnAddLink">+ Adicionar link</button></div>
+        </div>
+      </div>
+    </div>`
+
+  view.querySelector('#btnEditMat')?.addEventListener('click', () => { editingMat = true; renderLesson() })
+  view.querySelector('#btnCancelMat')?.addEventListener('click', () => { editingMat = false; renderLesson() })
+  view.querySelector('#btnSaveMat')?.addEventListener('click', () => {
+    lesson.materials = document.getElementById('matEditor').value
+    save(); editingMat = false; renderLesson(); toast('Material salvo!')
+  })
+  view.querySelector('#btnAddLink')?.addEventListener('click', () => {
+    const label = document.getElementById('linkLabel').value.trim()
+    const url = document.getElementById('linkUrl').value.trim()
+    if (!url) { toast('Informe a URL do link.'); return }
+    if (!lesson.links) lesson.links = []
+    lesson.links.push({ id: uid(), label, url })
+    save(); renderLesson(); toast('Link adicionado!')
+  })
+  view.querySelectorAll('[data-dellink]').forEach(b => {
+    b.addEventListener('click', () => {
+      lesson.links = (lesson.links || []).filter(l => l.id !== b.dataset.dellink)
+      save(); renderLesson()
+    })
+  })
+}
+
+function openLesson(id) {
+  currentId = id; editingMat = false
+  renderSidebar(); renderLesson()
+}
+function deleteLesson(id) {
+  if (!confirm('Excluir esta aula? Não será possível desfazer.')) return
+  data.lessons = data.lessons.filter(l => l.id !== id)
+  if (currentId === id) currentId = null
+  save(); renderSidebar(); renderLesson(); toast('Aula excluída.')
+}
+
+// ── MODAL ──
+function openModal(editId = null) {
+  editingId = editId
+  const l = editId ? data.lessons.find(x => x.id === editId) : null
+  document.getElementById('modalTitle').textContent = l ? 'Editar aula' : 'Nova aula'
+  document.getElementById('fTitle').value  = l?.title  || ''
+  document.getElementById('fVideo').value  = l?.video  || ''
+  document.getElementById('fDesc').value   = l?.desc   || ''
+  document.getElementById('modalOverlay').classList.add('open')
+  document.getElementById('fTitle').focus()
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open'); editingId = null
+}
+document.getElementById('modalClose').addEventListener('click', closeModal)
+document.getElementById('modalCancel').addEventListener('click', closeModal)
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal()
+})
+document.getElementById('modalSave').addEventListener('click', () => {
+  const title = document.getElementById('fTitle').value.trim()
+  if (!title) { toast('Informe o título.'); return }
+  const video = document.getElementById('fVideo').value.trim()
+  const desc  = document.getElementById('fDesc').value.trim()
+  if (editingId) {
+    const l = data.lessons.find(x => x.id === editingId)
+    Object.assign(l, { title, video, desc })
+  } else {
+    data.lessons.push({ id: uid(), title, video, desc, materials: '', links: [] })
+  }
+  save(); closeModal(); renderSidebar()
+  if (!editingId && !currentId) openLesson(data.lessons.at(-1).id)
+  else renderLesson()
+  toast(editingId ? 'Aula atualizada!' : 'Aula criada!')
+})
+document.getElementById('fTitle').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('modalSave').click()
+})
+
+// ── ADMIN ──
+document.getElementById('btnAdmin').addEventListener('click', () => {
+  adminMode = !adminMode
+  document.getElementById('btnAdmin').classList.toggle('active', adminMode)
+  document.getElementById('btnAdmin').textContent = adminMode ? 'Editando ✓' : 'Editar'
+  document.body.classList.toggle('admin-mode', adminMode)
+  editingMat = false; renderLesson()
+})
+document.getElementById('btnNewLesson').addEventListener('click', () => openModal())
+
+// ── MOBILE SIDEBAR ──
+document.getElementById('btnMenu').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open')
+  document.getElementById('backdrop').classList.toggle('open')
+})
+document.getElementById('backdrop').addEventListener('click', closeSidebar)
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open')
+  document.getElementById('backdrop').classList.remove('open')
+}
+
+// ── INIT ──
+initAuth()
+</script>
+</body>
+</html>

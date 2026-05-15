@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entrar</title>
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #FAFAF9;
+      --surface: #FFFFFF;
+      --border: #E7E5E4;
+      --text: #1C1917;
+      --muted: #78716C;
+      --accent: #1C1917;
+      --accent-hover: #292524;
+      --light: #F5F5F4;
+      --danger: #DC2626;
+      --radius: 8px;
+    }
+
+    body {
+      min-height: 100dvh;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: var(--text);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .brand-name {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      color: var(--text);
+    }
+    .brand-sub {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .form { display: flex; flex-direction: column; gap: 16px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    .field input {
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: .92rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      transition: border-color .15s, background .15s;
+    }
+    .field input:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+    .field input::placeholder { color: #A8A29E; }
+
+    .btn-submit {
+      margin-top: 4px;
+      padding: 12px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: .92rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+      letter-spacing: .01em;
+    }
+    .btn-submit:hover { background: var(--accent-hover); }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; }
+
+    .forgot {
+      text-align: center;
+      margin-top: 4px;
+    }
+    .forgot a {
+      font-size: .82rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .12s;
+    }
+    .forgot a:hover { color: var(--text); text-decoration: underline; }
+
+    .alert {
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      font-size: .85rem;
+      line-height: 1.4;
+      display: none;
+    }
+    .alert.error { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+    .alert.success { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; }
+    .alert.show { display: block; }
+
+    /* Reset password view */
+    .view { display: none; }
+    .view.active { display: flex; flex-direction: column; gap: 16px; }
+
+    .back-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: .82rem;
+      display: flex; align-items: center; gap: 4px;
+      padding: 0; font-family: inherit;
+      transition: color .12s;
+    }
+    .back-btn:hover { color: var(--text); }
+
+    .view-title {
+      font-size: 1.1rem; font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .view-desc { font-size: .85rem; color: var(--muted); line-height: 1.5; }
+
+    @media (max-width: 440px) {
+      .card { padding: 32px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- VIEW: LOGIN -->
+  <div class="view active" id="viewLogin">
+    <div class="brand">
+      <div class="brand-name" id="siteName">Meu Curso</div>
+      <div class="brand-sub">Acesse sua conta</div>
+    </div>
+
+    <div class="alert" id="loginAlert"></div>
+
+    <form class="form" id="loginForm" novalidate>
+      <div class="field">
+        <label>E-mail</label>
+        <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email" required />
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required />
+      </div>
+      <button class="btn-submit" type="submit" id="btnLogin">Entrar</button>
+    </form>
+
+    <div class="forgot">
+      <a href="#" id="linkForgot">Esqueci minha senha</a>
+    </div>
+  </div>
+
+  <!-- VIEW: ESQUECI A SENHA -->
+  <div class="view" id="viewForgot">
+    <button class="back-btn" id="btnBack">← Voltar</button>
+    <div>
+      <div class="view-title">Redefinir senha</div>
+      <div class="view-desc">Digite seu e-mail e enviaremos um link para você criar uma nova senha.</div>
+    </div>
+
+    <div class="alert" id="forgotAlert"></div>
+
+    <form class="form" id="forgotForm" novalidate>
+      <div class="field">
+        <label>E-mail</label>
+        <input type="email" id="forgotEmail" placeholder="seu@email.com" autocomplete="email" required />
+      </div>
+      <button class="btn-submit" type="submit" id="btnForgot">Enviar link</button>
+    </form>
+  </div>
+
+</div>
+
+<script>
+  const { createClient } = supabase
+  const db = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+
+  document.getElementById('siteName').textContent = window.SITE_NAME || 'Meu Curso'
+  document.title = `Entrar — ${window.SITE_NAME || 'Meu Curso'}`
+
+  // Redirect if already logged in
+  db.auth.getSession().then(({ data: { session } }) => {
+    if (session) window.location.replace('index.html')
+  })
+
+  // Handle magic link / password reset callback
+  db.auth.onAuthStateChange((event, session) => {
+    if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session) {
+      window.location.replace('index.html')
+    }
+  })
+
+  // Utils
+  function showAlert(id, msg, type = 'error') {
+    const el = document.getElementById(id)
+    el.textContent = msg
+    el.className = `alert ${type} show`
+  }
+  function hideAlert(id) {
+    const el = document.getElementById(id)
+    el.className = 'alert'
+  }
+  function setLoading(btn, loading, label) {
+    btn.disabled = loading
+    btn.textContent = loading ? 'Aguarde...' : label
+  }
+
+  // LOGIN
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    hideAlert('loginAlert')
+    const email = document.getElementById('loginEmail').value.trim()
+    const password = document.getElementById('loginPassword').value
+    if (!email || !password) { showAlert('loginAlert', 'Preencha e-mail e senha.'); return }
+
+    const btn = document.getElementById('btnLogin')
+    setLoading(btn, true, 'Entrar')
+
+    const { error } = await db.auth.signInWithPassword({ email, password })
+    setLoading(btn, false, 'Entrar')
+
+    if (error) {
+      const msg = error.message.includes('Invalid login')
+        ? 'E-mail ou senha incorretos.'
+        : 'Erro ao entrar. Tente novamente.'
+      showAlert('loginAlert', msg)
+    }
+  })
+
+  // VIEWS
+  document.getElementById('linkForgot').addEventListener('click', (e) => {
+    e.preventDefault()
+    document.getElementById('viewLogin').classList.remove('active')
+    document.getElementById('viewForgot').classList.add('active')
+    document.getElementById('forgotEmail').value = document.getElementById('loginEmail').value
+    hideAlert('forgotAlert')
+  })
+  document.getElementById('btnBack').addEventListener('click', () => {
+    document.getElementById('viewForgot').classList.remove('active')
+    document.getElementById('viewLogin').classList.add('active')
+  })
+
+  // FORGOT PASSWORD
+  document.getElementById('forgotForm').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    hideAlert('forgotAlert')
+    const email = document.getElementById('forgotEmail').value.trim()
+    if (!email) { showAlert('forgotAlert', 'Digite seu e-mail.'); return }
+
+    const btn = document.getElementById('btnForgot')
+    setLoading(btn, true, 'Enviar link')
+
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/index.html'
+    })
+    setLoading(btn, false, 'Enviar link')
+
+    if (error) {
+      showAlert('forgotAlert', 'Erro ao enviar. Verifique o e-mail.')
+    } else {
+      showAlert('forgotAlert', 'Link enviado! Verifique sua caixa de entrada.', 'success')
+    }
+  })
+</script>
+</body>
+</html>
