@@ -245,6 +245,20 @@
     /* BACKDROP */
     .backdrop { display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:85; }
 
+    /* UPLOAD */
+    .upload-area { display:flex;flex-direction:column;gap:8px; }
+    .upload-btn-label { display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:var(--light);border:1.5px dashed var(--border);border-radius:8px;font-size:.85rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;width:fit-content; }
+    .upload-btn-label:hover { border-color:var(--accent);color:var(--accent);background:#fff; }
+    .upload-status { font-size:.78rem;color:var(--muted);min-height:18px; }
+    .upload-status.ok { color:var(--green); }
+    .upload-status.err { color:var(--danger); }
+    .photo-preview-wrap { display:flex;align-items:center;gap:12px;margin-bottom:6px; }
+    .photo-preview-wrap img { width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--border); }
+    .divider-or { display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.75rem;margin:4px 0; }
+    .divider-or::before,.divider-or::after { content:'';flex:1;height:1px;background:var(--border); }
+    .file-upload-section { display:none;flex-direction:column;gap:8px;padding:12px;background:var(--bg);border-radius:8px;border:1px dashed var(--border);margin-bottom:8px; }
+    .admin-mode .file-upload-section { display:flex; }
+
     /* RESPONSIVE */
     @media (max-width:768px) {
       .btn-menu { display:flex;align-items:center; }
@@ -361,7 +375,20 @@
       <div class="fgroup"><label>Nome</label><input type="text" id="fIName" placeholder="Ex: Roberta Alves" /></div>
       <div class="fgroup"><label>Título / Cargo</label><input type="text" id="fITitle" placeholder="Ex: Especialista em IA para Negócios" /></div>
       <div class="fgroup"><label>Bio curta</label><textarea id="fIBio" rows="3" placeholder="Ex: Mentora de IA com foco em resultados reais para empreendedoras digitais."></textarea></div>
-      <div class="fgroup"><label>URL da foto</label><input type="url" id="fIPhoto" placeholder="https://..." /><span class="fhint">Cole o link de uma foto sua (pode ser do Google Drive, Dropbox, etc.)</span></div>
+      <div class="fgroup">
+        <label>Foto da instrutora</label>
+        <div class="upload-area">
+          <div class="photo-preview-wrap" id="photoPreviewWrap" style="display:none">
+            <img id="photoPreviewImg" src="" alt="preview" />
+            <span style="font-size:.8rem;color:var(--muted)">Foto selecionada</span>
+          </div>
+          <label class="upload-btn-label" for="photoFileInput">📷 Escolher foto do computador</label>
+          <input type="file" id="photoFileInput" accept="image/*" hidden />
+          <div class="upload-status" id="photoUploadStatus"></div>
+          <div class="divider-or">ou cole um link direto</div>
+          <input type="url" id="fIPhoto" placeholder="https://..." style="padding:9px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.875rem;font-family:inherit;outline:none;background:var(--bg);width:100%" />
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-outline" data-close="modalInstructor">Cancelar</button>
@@ -439,16 +466,28 @@ function getModuleLessons(moduleId) {
     : data.lessons.filter(l => l.moduleId === moduleId)
 }
 
+// ── UPLOAD ──
+async function uploadFile(file, path) {
+  const { error } = await db.storage.from(window.STORAGE_BUCKET).upload(path, file, { upsert: true, contentType: file.type })
+  if (error) throw error
+  const { data } = db.storage.from(window.STORAGE_BUCKET).getPublicUrl(path)
+  return data.publicUrl
+}
+
 // ── AUTH ──
+let isAdmin = false
 async function initAuth() {
   const { data: { session } } = await db.auth.getSession()
   if (!session) { window.location.replace('login.html'); return }
   currentUser = session.user
+  isAdmin = currentUser.email === window.ADMIN_EMAIL
   document.getElementById('authGate').style.display = 'none'
   const email = currentUser.email || ''
   const name = currentUser.user_metadata?.name || email
   document.getElementById('userEmail').textContent = email
   document.getElementById('userAvatar').textContent = (name[0] || '?').toUpperCase()
+  // Só admin vê o botão Editar
+  document.getElementById('btnAdmin').style.display = isAdmin ? '' : 'none'
   render()
 }
 db.auth.onAuthStateChange((e, s) => { if (e === 'SIGNED_OUT') window.location.replace('login.html') })
@@ -736,11 +775,18 @@ function renderLessonPage() {
           </li>`).join('')}</ul>`
     tabContent = `${linksHtml}
       <div class="add-link-form">
+        <div class="file-upload-section">
+          <div style="font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">📎 Enviar arquivo do computador</div>
+          <label class="upload-btn-label" for="fileUploadInput">Escolher arquivo (PDF, imagem, doc...)</label>
+          <input type="file" id="fileUploadInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.mp4,.zip,.txt,.csv" hidden />
+          <div class="upload-status" id="fileUploadStatus"></div>
+        </div>
+        <div class="divider-or" style="display:none" id="linkOrDivider">ou adicione um link</div>
         <div class="add-link-row">
           <input type="text" id="linkLabel" placeholder="Nome (ex: Apostila)" />
           <input type="url" id="linkUrl" placeholder="https://..." />
         </div>
-        <div><button class="btn btn-dark" id="btnAddLink">+ Adicionar link</button></div>
+        <div><button class="btn btn-dark" id="btnAddLink">+ Adicionar link manual</button></div>
       </div>`
   } else if (activeTab === 'notas') {
     tabContent = `
@@ -820,6 +866,27 @@ function renderLessonPage() {
       lesson.links = (lesson.links || []).filter(l => l.id !== b.dataset.dellink)
       save(); renderLessonPage()
     })
+  })
+  // Mostrar divisor "ou" no modo admin
+  if (adminMode) document.getElementById('linkOrDivider')?.style.setProperty('display','flex')
+  // Upload de arquivo na aula
+  document.getElementById('fileUploadInput')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const statusEl = document.getElementById('fileUploadStatus')
+    statusEl.textContent = `Enviando ${file.name}...`
+    statusEl.className = 'upload-status'
+    try {
+      const safeName = file.name.replace(/\s+/g, '_').replace(/[^\w.-]/g, '')
+      const path = `lessons/${currentLessonId}/${Date.now()}_${safeName}`
+      const url = await uploadFile(file, path)
+      if (!lesson.links) lesson.links = []
+      lesson.links.push({ id: uid(), label: file.name, url })
+      save(); renderLessonPage(); toast('✅ Arquivo enviado!')
+    } catch (err) {
+      statusEl.textContent = '❌ Erro ao enviar. Tente novamente.'
+      statusEl.className = 'upload-status err'
+    }
   })
   // Notes auto-save
   const notesEl = document.getElementById('notesArea')
@@ -936,6 +1003,33 @@ document.getElementById('saveInstructorBtn').addEventListener('click', () => {
     photo: document.getElementById('fIPhoto').value.trim()
   }
   save(); closeModal('modalInstructor'); render(); toast('Perfil atualizado!')
+})
+
+// Upload de foto da instrutora
+document.getElementById('photoFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  // Preview imediato
+  const reader = new FileReader()
+  reader.onload = ev => {
+    document.getElementById('photoPreviewImg').src = ev.target.result
+    document.getElementById('photoPreviewWrap').style.display = 'flex'
+  }
+  reader.readAsDataURL(file)
+  // Upload para Supabase
+  const statusEl = document.getElementById('photoUploadStatus')
+  statusEl.textContent = 'Enviando foto...'
+  statusEl.className = 'upload-status'
+  try {
+    const ext = file.name.split('.').pop().toLowerCase()
+    const url = await uploadFile(file, `instructor/photo.${ext}`)
+    document.getElementById('fIPhoto').value = url
+    statusEl.textContent = '✓ Foto enviada! Clique em Salvar.'
+    statusEl.className = 'upload-status ok'
+  } catch (err) {
+    statusEl.textContent = '❌ Erro ao enviar. Cole o link da foto abaixo.'
+    statusEl.className = 'upload-status err'
+  }
 })
 
 // ── BUTTONS ──
