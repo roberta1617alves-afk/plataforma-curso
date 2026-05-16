@@ -170,7 +170,6 @@ async function renderBrick(payerName, payerEmail) {
     customization: {
       paymentMethods: {
         creditCard: 'all',
-        debitCard: 'all',
         bankTransfer: 'all'   // PIX
       },
       visual: { style: { theme: 'default' } }
@@ -180,22 +179,23 @@ async function renderBrick(payerName, payerEmail) {
       onSubmit: ({ formData }) => {
         return new Promise(async (resolve, reject) => {
           try {
-            const payload = {
+            // urlencoded para evitar bloqueio do WAF do Vercel
+            const params = new URLSearchParams({
               courseId,
               payerName,
               payerEmail,
-              token:              formData.token              || null,
-              paymentMethodId:    formData.payment_method_id || null,
-              installments:       formData.installments       || 1,
-              issuerId:           formData.issuer_id          || null,
-              identificationType: formData.payer?.identification?.type   || null,
-              identificationNumber: formData.payer?.identification?.number || null
-            }
+              token:                formData.token                         || '',
+              paymentMethodId:      formData.payment_method_id             || '',
+              installments:         formData.installments                  || 1,
+              issuerId:             formData.issuer_id                     || '',
+              identificationType:   formData.payer?.identification?.type   || '',
+              identificationNumber: formData.payer?.identification?.number || ''
+            })
 
             const res = await fetch('/api/process-payment', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: params.toString()
             })
             const result = await res.json()
 
@@ -203,14 +203,15 @@ async function renderBrick(payerName, payerEmail) {
               resolve()
               window.location.href = '/sucesso.html'
 
-            } else if (result.status === 'pending' && result.pixQrCode) {
-              resolve()
+            } else if ((result.status === 'pending' || result.status === 'in_process') && result.pixQrCode) {
+              // Mostra tela de PIX antes de resolver para o brick não sobrescrever o DOM
               document.getElementById('pixQrImg').src =
                 result.pixQrCodeBase64
                   ? 'data:image/png;base64,' + result.pixQrCodeBase64
                   : ''
               document.getElementById('pixCode').textContent = result.pixQrCode
               show('viewPix')
+              resolve()
 
             } else {
               reject(new Error(result.erro || 'Pagamento não aprovado.'))
