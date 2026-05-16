@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Checkout</title>
   <script src="config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: #FAFAF9; color: #1C1917; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; }
@@ -36,26 +35,29 @@
 </div>
 
 <script>
-const { createClient } = supabase
-const db = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
-
 const params = new URLSearchParams(location.search)
 const courseId = params.get('course')
 
 async function init() {
   if (!courseId) { showError('Link inválido. Nenhum curso selecionado.'); return }
 
-  const { data, error } = await db.from('courses').select('name, data').eq('id', courseId).single()
-  if (error || !data) { showError('Curso não encontrado.'); return }
+  // Busca nome e preço via API server-side (sem depender de autenticação)
+  let courseData
+  try {
+    const res = await fetch(`/api/checkout?courseId=${encodeURIComponent(courseId)}`)
+    courseData = await res.json()
+  } catch { showError('Erro de conexão. Recarregue a página.'); return }
 
-  const price = data.data?.price
+  if (!courseData || courseData.erro) { showError(courseData?.erro || 'Curso não encontrado.'); return }
+
+  const price = courseData.price
   if (!price) { showError('Preço não configurado para este curso. Entre em contato com a administradora.'); return }
 
   const fmt = n => n.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
 
   document.getElementById('cardContent').innerHTML = `
-    <div class="logo">${window.SITE_NAME}</div>
-    <div class="course-name">${data.name}</div>
+    <div class="logo">${window.SITE_NAME || ''}</div>
+    <div class="course-name">${courseData.name}</div>
     <div class="price-tag">R$ ${fmt(price)} <span>/ acesso completo</span></div>
     <div class="desc">Acesso imediato após o pagamento. Você receberá as credenciais de acesso no seu e-mail.</div>
 
