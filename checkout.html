@@ -6,6 +6,7 @@
   <title>Checkout</title>
   <script src="config.js"></script>
   <script src="https://sdk.mercadopago.com/js/v2"></script>
+  <script src="https://www.mercadopago.com/v2/security.js" view="checkout"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: #FAFAF9; color: #1C1917; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; }
@@ -258,10 +259,16 @@ async function gerarPix() {
   btn.disabled = true; btn.textContent = 'Gerando QR Code...'
 
   try {
+    // Pegar deviceId do cookie de segurança do MP
+    const deviceId = document.cookie.split(';').map(c=>c.trim())
+      .find(c => c.startsWith('deviceId=') || c.startsWith('MP_DEVICE_SESSION_ID='))
+      ?.split('=').slice(1).join('=') || ''
+
     const params = new URLSearchParams({
       courseId, payerName, payerEmail,
       token: '', paymentMethodId: 'pix', installments: 1,
-      issuerId: '', identificationType: 'CPF', identificationNumber: cpfRaw
+      issuerId: '', identificationType: 'CPF', identificationNumber: cpfRaw,
+      deviceId
     })
     const res = await fetch('/api/process-payment', {
       method: 'POST',

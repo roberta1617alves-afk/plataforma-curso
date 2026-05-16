@@ -25,6 +25,8 @@ module.exports = async function handler(req, res) {
     const firstName = (payerName || '').split(' ')[0] || 'Aluna'
     const lastName  = (payerName || '').split(' ').slice(1).join(' ') || firstName
 
+    const deviceId = (body.deviceId || '').trim()
+
     // Monta payload base
     const payload = {
       transaction_amount: Number(price),
@@ -32,6 +34,10 @@ module.exports = async function handler(req, res) {
       external_reference: courseId,
       notification_url: `${siteUrl}/api/mp-webhook`,
       statement_descriptor: 'PLATAFORMA CURSOS',
+      additional_info: {
+        items: [{ id: courseId, title: course.name, quantity: 1, unit_price: Number(price) }],
+        payer: { first_name: firstName, last_name: lastName }
+      },
       payer: {
         email: payerEmail,
         first_name: firstName,
@@ -49,7 +55,15 @@ module.exports = async function handler(req, res) {
         payload.payer.identification = { type: body.identificationType, number: body.identificationNumber }
       }
     }
-    // PIX ou outro método
+    // PIX
+    else if (body.paymentMethodId === 'pix') {
+      payload.payment_method_id = 'pix'
+      payload.payment_type_id   = 'bank_transfer'
+      if (body.identificationNumber) {
+        payload.payer.identification = { type: 'CPF', number: body.identificationNumber }
+      }
+    }
+    // Outro método
     else if (body.paymentMethodId) {
       payload.payment_method_id = body.paymentMethodId
       if (body.identificationType && body.identificationNumber) {
@@ -59,13 +73,16 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ erro: 'Método de pagamento não informado.' })
     }
 
+    const mpHeaders = {
+      Authorization: `Bearer ${mpToken}`,
+      'Content-Type': 'application/json',
+      'X-Idempotency-Key': `${courseId}-${payerEmail}-${Date.now()}`
+    }
+    if (deviceId) mpHeaders['X-meli-session-id'] = deviceId
+
     const mpRes = await fetch('https://api.mercadopago.com/v1/payments', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${mpToken}`,
-        'Content-Type': 'application/json',
-        'X-Idempotency-Key': `${courseId}-${payerEmail}-${Date.now()}`
-      },
+      headers: mpHeaders,
       body: JSON.stringify(payload)
     })
 
