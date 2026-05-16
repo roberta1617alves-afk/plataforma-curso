@@ -10,40 +10,65 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: #FAFAF9; color: #1C1917; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; }
     .wrap { width: 100%; max-width: 480px; }
-    .card { background: #fff; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px 28px; box-shadow: 0 4px 32px rgba(0,0,0,.06); margin-bottom: 16px; }
-    .logo { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #A8A29E; margin-bottom: 16px; }
-    .course-name { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; }
-    .price-tag { font-size: 2rem; font-weight: 800; color: #1C1917; margin-bottom: 4px; }
-    .price-tag span { font-size: .95rem; font-weight: 400; color: #78716C; }
-    .desc { font-size: .82rem; color: #78716C; line-height: 1.6; margin-top: 8px; padding-top: 16px; border-top: 1px solid #F5F5F4; }
-    .section-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #A8A29E; margin-bottom: 14px; }
+
+    .card { background: #fff; border: 1px solid #E7E5E4; border-radius: 16px; padding: 28px 24px; box-shadow: 0 4px 32px rgba(0,0,0,.06); margin-bottom: 14px; }
+
+    /* Course info */
+    .logo { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #A8A29E; margin-bottom: 12px; }
+    .course-name { font-size: 1.2rem; font-weight: 800; margin-bottom: 4px; }
+    .price-tag { font-size: 1.9rem; font-weight: 800; color: #1C1917; }
+    .price-tag span { font-size: .9rem; font-weight: 400; color: #78716C; }
+    .desc { font-size: .8rem; color: #78716C; margin-top: 8px; padding-top: 12px; border-top: 1px solid #F5F5F4; }
+
+    /* Form */
+    .section-title { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #A8A29E; margin-bottom: 14px; }
     .fgroup { margin-bottom: 12px; }
-    label { display: block; font-size: .75rem; font-weight: 600; color: #78716C; margin-bottom: 5px; }
+    label { display: block; font-size: .75rem; font-weight: 600; color: #78716C; margin-bottom: 4px; }
     input { width: 100%; padding: 11px 14px; border: 1.5px solid #E7E5E4; border-radius: 8px; font-size: .9rem; font-family: inherit; outline: none; background: #FAFAF9; color: #1C1917; transition: border .15s; }
     input:focus { border-color: #1C1917; background: #fff; }
-    .btn-primary { width: 100%; padding: 14px; background: #1C1917; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 8px; transition: opacity .15s; }
+
+    /* Buttons */
+    .btn-primary { width: 100%; padding: 14px; background: #1C1917; color: #fff; border: none; border-radius: 10px; font-size: .95rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 8px; transition: opacity .15s; }
     .btn-primary:hover { opacity: .85; }
     .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-back { background: none; border: none; color: #78716C; font-size: .82rem; cursor: pointer; margin-bottom: 14px; padding: 0; font-family: inherit; }
+    .btn-back { background: none; border: none; color: #78716C; font-size: .8rem; cursor: pointer; margin-bottom: 12px; padding: 0; font-family: inherit; }
     .btn-back:hover { color: #1C1917; }
+
+    /* Tabs */
+    .tabs { display: flex; border: 1.5px solid #E7E5E4; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .tab { flex: 1; padding: 11px; text-align: center; font-size: .85rem; font-weight: 600; cursor: pointer; background: #fff; border: none; font-family: inherit; color: #78716C; transition: background .15s, color .15s; }
+    .tab.active { background: #1C1917; color: #fff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Buyer summary */
+    .buyer-summary { background: #F5F5F4; border-radius: 8px; padding: 10px 14px; font-size: .82rem; color: #44403C; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+    /* Error */
     .error { color: #DC2626; font-size: .82rem; margin-top: 10px; text-align: center; }
+
+    /* Seguro */
     .seguro { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; font-size: .72rem; color: #A8A29E; }
-    .spinner-wrap { text-align: center; padding: 40px; color: #78716C; }
-    .spinner { width: 28px; height: 28px; border: 2.5px solid #E7E5E4; border-top-color: #1C1917; border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px; }
+
+    /* Loading */
+    .spinner-wrap { text-align: center; padding: 36px; color: #78716C; }
+    .spinner { width: 26px; height: 26px; border: 2.5px solid #E7E5E4; border-top-color: #1C1917; border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 10px; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* PIX */
-    .pix-box { text-align: center; }
-    .pix-box h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
-    .pix-box p { font-size: .85rem; color: #78716C; margin-bottom: 20px; }
-    .pix-box img { width: 200px; height: 200px; margin: 0 auto 16px; display: block; border: 1px solid #E7E5E4; border-radius: 12px; padding: 8px; }
-    .pix-code { background: #F5F5F4; border-radius: 8px; padding: 12px 14px; font-size: .72rem; word-break: break-all; color: #44403C; margin-bottom: 12px; text-align: left; }
-    .btn-copy { width: 100%; padding: 12px; background: #22C55E; color: #fff; border: none; border-radius: 8px; font-size: .9rem; font-weight: 700; cursor: pointer; font-family: inherit; }
-    .pix-note { font-size: .75rem; color: #78716C; margin-top: 12px; }
+    .pix-section { text-align: center; }
+    .pix-section p { font-size: .85rem; color: #78716C; margin-bottom: 16px; line-height: 1.6; }
+    .btn-pix { width: 100%; padding: 14px; background: #22C55E; color: #fff; border: none; border-radius: 10px; font-size: .95rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity .15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-pix:hover { opacity: .9; }
+    .btn-pix:disabled { opacity: .5; cursor: not-allowed; }
 
-    /* Buyer summary */
-    .buyer-summary { background: #F5F5F4; border-radius: 8px; padding: 10px 14px; font-size: .82rem; color: #44403C; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
-    .buyer-summary strong { font-weight: 600; }
+    /* PIX QR */
+    .pix-box h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; text-align: center; }
+    .pix-box .sub { font-size: .82rem; color: #78716C; text-align: center; margin-bottom: 18px; line-height: 1.6; }
+    .pix-box img { width: 190px; height: 190px; margin: 0 auto 16px; display: block; border: 1px solid #E7E5E4; border-radius: 12px; padding: 8px; background: #fff; }
+    .pix-code { background: #F5F5F4; border-radius: 8px; padding: 11px 13px; font-size: .68rem; word-break: break-all; color: #44403C; margin-bottom: 12px; line-height: 1.5; max-height: 80px; overflow-y: auto; }
+    .btn-copy { width: 100%; padding: 12px; background: #22C55E; color: #fff; border: none; border-radius: 8px; font-size: .9rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .pix-note { font-size: .74rem; color: #A8A29E; margin-top: 12px; text-align: center; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -56,7 +81,7 @@
 
   <!-- STEP 1: dados pessoais -->
   <div id="viewStep1" style="display:none">
-    <div class="card" id="courseInfoCard"><!-- preenchido via JS --></div>
+    <div class="card" id="infoCard1"></div>
     <div class="card">
       <div class="section-title">Seus dados</div>
       <div class="fgroup">
@@ -67,19 +92,44 @@
         <label>E-mail</label>
         <input type="email" id="payerEmail" placeholder="seuemail@email.com" autocomplete="email" />
       </div>
-      <button class="btn-primary" id="btnContinuar" onclick="continuar()">Continuar →</button>
+      <button class="btn-primary" onclick="continuar()">Continuar →</button>
       <div class="error" id="errStep1" style="display:none"></div>
       <div class="seguro">🔒 Pagamento 100% seguro</div>
     </div>
   </div>
 
-  <!-- STEP 2: formulário de pagamento (Payment Brick) -->
+  <!-- STEP 2: escolha de pagamento -->
   <div id="viewStep2" style="display:none">
-    <div class="card" id="courseInfoCard2"><!-- preenchido via JS --></div>
+    <div class="card" id="infoCard2"></div>
     <div class="card">
       <button class="btn-back" onclick="voltarStep1()">← Alterar dados</button>
       <div class="buyer-summary" id="buyerSummary"></div>
-      <div id="paymentBrick_container"></div>
+
+      <!-- Abas -->
+      <div class="tabs">
+        <button class="tab active" id="tabCard" onclick="switchTab('card')">💳 Cartão de crédito</button>
+        <button class="tab" id="tabPix"  onclick="switchTab('pix')">⚡ PIX</button>
+      </div>
+
+      <!-- Aba cartão -->
+      <div class="tab-content active" id="tabContentCard">
+        <div id="paymentBrick_container"></div>
+      </div>
+
+      <!-- Aba PIX -->
+      <div class="tab-content" id="tabContentPix">
+        <div class="pix-section">
+          <p>Pague instantaneamente via PIX.<br>O QR Code aparece na tela — sem precisar sair desta página.</p>
+          <div class="fgroup">
+            <label>CPF do pagador</label>
+            <input type="text" id="pixCpf" placeholder="000.000.000-00" maxlength="14"
+              oninput="this.value=this.value.replace(/\D/g,'').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')" />
+          </div>
+          <button class="btn-pix" id="btnGerarPix" onclick="gerarPix()">⚡ Gerar QR Code PIX</button>
+          <div class="error" id="errPix" style="display:none"></div>
+        </div>
+      </div>
+
       <div class="seguro">🔒 Pagamento 100% seguro via Mercado Pago</div>
     </div>
   </div>
@@ -87,18 +137,17 @@
   <!-- STEP 3: PIX QR Code -->
   <div id="viewPix" style="display:none">
     <div class="card pix-box">
-      <div style="font-size:2.5rem;margin-bottom:8px">📱</div>
-      <h2>Pague com PIX</h2>
-      <p>Escaneie o QR Code ou copie o código abaixo.<br>O acesso é liberado automaticamente após o pagamento.</p>
+      <div style="font-size:2.2rem;margin-bottom:8px;text-align:center">⚡</div>
+      <h2>QR Code PIX gerado!</h2>
+      <div class="sub">Escaneie o QR Code com o app do seu banco<br>ou copie e cole o código abaixo.</div>
       <img id="pixQrImg" src="" alt="QR Code PIX" />
-      <div class="pix-code" id="pixCode"></div>
+      <div class="pix-code" id="pixCodeText"></div>
       <button class="btn-copy" onclick="copiarPix()">📋 Copiar código PIX</button>
-      <div class="pix-note">⏱ O código expira em 30 minutos. Após pagar, verifique seu e-mail.</div>
+      <div class="pix-note">⏱ Código válido por 30 minutos.<br>Após pagar, você receberá o e-mail de acesso automaticamente.</div>
     </div>
   </div>
 
 </div>
-
 <script>
 const MP_PUBLIC_KEY = 'APP_USR-eb22defb-977f-481b-875a-447f7c62ceec'
 const mp = new MercadoPago(MP_PUBLIC_KEY, { locale: 'pt-BR' })
@@ -106,49 +155,45 @@ const mp = new MercadoPago(MP_PUBLIC_KEY, { locale: 'pt-BR' })
 const courseId = new URLSearchParams(location.search).get('course')
 let courseData = null
 let brickController = null
+let payerName = '', payerEmail = ''
 
 function show(id) {
-  ['viewLoading','viewStep1','viewStep2','viewPix'].forEach(v => {
-    document.getElementById(v).style.display = v === id ? '' : 'none'
-  })
+  ['viewLoading','viewStep1','viewStep2','viewPix'].forEach(v =>
+    document.getElementById(v).style.display = v === id ? '' : 'none')
 }
 
-function courseInfoHTML(data) {
+function courseInfoHTML(d) {
   const fmt = n => Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-  return `
-    <div class="logo">${window.SITE_NAME || 'Plataforma'}</div>
-    <div class="course-name">${data.name}</div>
-    <div class="price-tag">R$ ${fmt(data.price)} <span>/ acesso completo</span></div>
+  return `<div class="logo">${window.SITE_NAME || 'Plataforma'}</div>
+    <div class="course-name">${d.name}</div>
+    <div class="price-tag">R$ ${fmt(d.price)} <span>/ acesso completo</span></div>
     <div class="desc">✅ Acesso imediato &nbsp;·&nbsp; 📧 Login enviado por e-mail</div>`
 }
 
 async function init() {
-  if (!courseId) { showFatalError('Link inválido.'); return }
+  if (!courseId) { fatalErr('Link inválido.'); return }
   try {
-    const res = await fetch(`/api/checkout?courseId=${encodeURIComponent(courseId)}`)
-    courseData = await res.json()
-  } catch { showFatalError('Erro de conexão. Recarregue a página.'); return }
-  if (!courseData || courseData.erro) { showFatalError(courseData?.erro || 'Curso não encontrado.'); return }
-  if (!courseData.price) { showFatalError('Preço não configurado. Entre em contato.'); return }
-
-  document.getElementById('courseInfoCard').innerHTML = courseInfoHTML(courseData)
+    const r = await fetch(`/api/checkout?courseId=${encodeURIComponent(courseId)}`)
+    courseData = await r.json()
+  } catch { fatalErr('Erro de conexão. Recarregue a página.'); return }
+  if (!courseData || courseData.erro) { fatalErr(courseData?.erro || 'Curso não encontrado.'); return }
+  if (!courseData.price) { fatalErr('Preço não configurado. Entre em contato.'); return }
+  document.getElementById('infoCard1').innerHTML = courseInfoHTML(courseData)
   show('viewStep1')
 }
 
 function continuar() {
-  const name  = document.getElementById('payerName').value.trim()
-  const email = document.getElementById('payerEmail').value.trim()
-  const err   = document.getElementById('errStep1')
+  const n = document.getElementById('payerName').value.trim()
+  const e = document.getElementById('payerEmail').value.trim()
+  const err = document.getElementById('errStep1')
   err.style.display = 'none'
-  if (!name)  { err.textContent = 'Informe seu nome.'; err.style.display = 'block'; return }
-  if (!email || !email.includes('@')) { err.textContent = 'Informe um e-mail válido.'; err.style.display = 'block'; return }
-
-  document.getElementById('courseInfoCard2').innerHTML = courseInfoHTML(courseData)
-  document.getElementById('buyerSummary').innerHTML =
-    `<span>${name}</span><strong>${email}</strong>`
-
+  if (!n) { err.textContent = 'Informe seu nome.'; err.style.display='block'; return }
+  if (!e || !e.includes('@')) { err.textContent = 'Informe um e-mail válido.'; err.style.display='block'; return }
+  payerName = n; payerEmail = e
+  document.getElementById('infoCard2').innerHTML = courseInfoHTML(courseData)
+  document.getElementById('buyerSummary').innerHTML = `<span>${n}</span><strong>${e}</strong>`
   show('viewStep2')
-  renderBrick(name, email)
+  renderBrick()
 }
 
 function voltarStep1() {
@@ -156,88 +201,103 @@ function voltarStep1() {
   show('viewStep1')
 }
 
-async function renderBrick(payerName, payerEmail) {
+function switchTab(tab) {
+  document.getElementById('tabCard').classList.toggle('active', tab === 'card')
+  document.getElementById('tabPix').classList.toggle('active',  tab === 'pix')
+  document.getElementById('tabContentCard').classList.toggle('active', tab === 'card')
+  document.getElementById('tabContentPix').classList.toggle('active',  tab === 'pix')
+}
+
+async function renderBrick() {
   if (brickController) { brickController.unmount(); brickController = null }
   document.getElementById('paymentBrick_container').innerHTML =
-    '<div class="spinner-wrap"><div class="spinner"></div>Carregando pagamento...</div>'
+    '<div class="spinner-wrap"><div class="spinner"></div>Carregando...</div>'
 
   const bricksBuilder = mp.bricks()
   brickController = await bricksBuilder.create('payment', 'paymentBrick_container', {
-    initialization: {
-      amount: Number(courseData.price),
-      payer: { email: payerEmail }
-    },
+    initialization: { amount: Number(courseData.price), payer: { email: payerEmail } },
     customization: {
-      paymentMethods: {
-        creditCard: 'all',
-        bankTransfer: 'all'   // PIX
-      },
+      paymentMethods: { creditCard: 'all' },
       visual: { style: { theme: 'default' } }
     },
     callbacks: {
       onReady: () => {},
-      onSubmit: ({ formData }) => {
-        return new Promise(async (resolve, reject) => {
-          try {
-            // urlencoded para evitar bloqueio do WAF do Vercel
-            const params = new URLSearchParams({
-              courseId,
-              payerName,
-              payerEmail,
-              token:                formData.token                         || '',
-              paymentMethodId:      formData.payment_method_id             || '',
-              installments:         formData.installments                  || 1,
-              issuerId:             formData.issuer_id                     || '',
-              identificationType:   formData.payer?.identification?.type   || '',
-              identificationNumber: formData.payer?.identification?.number || ''
-            })
-
-            const res = await fetch('/api/process-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: params.toString()
-            })
-            const result = await res.json()
-
-            if (result.status === 'approved') {
-              resolve()
-              window.location.href = '/sucesso.html'
-
-            } else if ((result.status === 'pending' || result.status === 'in_process') && result.pixQrCode) {
-              // Mostra tela de PIX antes de resolver para o brick não sobrescrever o DOM
-              document.getElementById('pixQrImg').src =
-                result.pixQrCodeBase64
-                  ? 'data:image/png;base64,' + result.pixQrCodeBase64
-                  : ''
-              document.getElementById('pixCode').textContent = result.pixQrCode
-              show('viewPix')
-              resolve()
-
-            } else {
-              reject(new Error(result.erro || 'Pagamento não aprovado.'))
-            }
-          } catch (e) {
-            reject(e)
-          }
-        })
-      },
-      onError: (error) => console.error('Brick error:', error)
+      onSubmit: ({ formData }) => new Promise(async (resolve, reject) => {
+        try {
+          const params = new URLSearchParams({
+            courseId, payerName, payerEmail,
+            token:                formData.token                         || '',
+            paymentMethodId:      formData.payment_method_id             || '',
+            installments:         formData.installments                  || 1,
+            issuerId:             formData.issuer_id                     || '',
+            identificationType:   formData.payer?.identification?.type   || '',
+            identificationNumber: formData.payer?.identification?.number || ''
+          })
+          const res = await fetch('/api/process-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString()
+          })
+          const result = await res.json()
+          if (result.status === 'approved') { resolve(); window.location.href = '/sucesso.html' }
+          else reject(new Error(result.erro || 'Pagamento recusado.'))
+        } catch(e) { reject(e) }
+      }),
+      onError: e => console.error('Brick error:', e)
     }
   })
 }
 
+async function gerarPix() {
+  const cpfRaw = (document.getElementById('pixCpf').value || '').replace(/\D/g, '')
+  const errEl  = document.getElementById('errPix')
+  const btn    = document.getElementById('btnGerarPix')
+  errEl.style.display = 'none'
+  if (cpfRaw.length !== 11) { errEl.textContent = 'Informe um CPF válido (11 dígitos).'; errEl.style.display='block'; return }
+
+  btn.disabled = true; btn.textContent = 'Gerando QR Code...'
+
+  try {
+    const params = new URLSearchParams({
+      courseId, payerName, payerEmail,
+      token: '', paymentMethodId: 'pix', installments: 1,
+      issuerId: '', identificationType: 'CPF', identificationNumber: cpfRaw
+    })
+    const res = await fetch('/api/process-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    })
+    const result = await res.json()
+
+    if (result.pixQrCode) {
+      document.getElementById('pixQrImg').src =
+        result.pixQrCodeBase64 ? 'data:image/png;base64,' + result.pixQrCodeBase64 : ''
+      document.getElementById('pixCodeText').textContent = result.pixQrCode
+      show('viewPix')
+    } else {
+      errEl.textContent = result.erro || 'Não foi possível gerar o PIX. Tente novamente.'
+      errEl.style.display = 'block'
+      btn.disabled = false; btn.textContent = '⚡ Gerar QR Code PIX'
+    }
+  } catch {
+    errEl.textContent = 'Erro de conexão. Tente novamente.'
+    errEl.style.display = 'block'
+    btn.disabled = false; btn.textContent = '⚡ Gerar QR Code PIX'
+  }
+}
+
 function copiarPix() {
-  const code = document.getElementById('pixCode').textContent
-  navigator.clipboard.writeText(code).then(() => {
+  navigator.clipboard.writeText(document.getElementById('pixCodeText').textContent).then(() => {
     const btn = document.querySelector('.btn-copy')
     btn.textContent = '✅ Copiado!'
-    setTimeout(() => { btn.textContent = '📋 Copiar código PIX' }, 2500)
+    setTimeout(() => btn.textContent = '📋 Copiar código PIX', 2500)
   })
 }
 
-function showFatalError(msg) {
+function fatalErr(msg) {
   document.getElementById('viewLoading').innerHTML =
-    `<div style="text-align:center;padding:20px"><div style="font-size:2rem;margin-bottom:12px">⚠️</div><p style="color:#78716C">${msg}</p></div>`
+    `<div style="text-align:center;padding:20px"><div style="font-size:2rem;margin-bottom:10px">⚠️</div><p style="color:#78716C">${msg}</p></div>`
 }
 
 init()
