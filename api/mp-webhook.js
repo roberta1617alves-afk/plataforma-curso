@@ -33,9 +33,27 @@ module.exports = async function handler(req, res) {
 
   if (!payerEmail || !courseId) return res.status(200).json({ ok: true })
 
-  // Criar ou buscar usuária no Supabase
-  const password = process.env.DEFAULT_STUDENT_PASSWORD || 'Mentoras@2024'
+  // Gera senha aleatória segura para cada aluna nova
+  function gerarSenha() {
+    const upper  = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+    const lower  = 'abcdefghjkmnpqrstuvwxyz'
+    const digits = '23456789'
+    const special = '@#$!'
+    const all = upper + lower + digits + special
+    let senha = ''
+    // Garante pelo menos 1 de cada tipo
+    senha += upper [Math.floor(Math.random() * upper.length)]
+    senha += lower [Math.floor(Math.random() * lower.length)]
+    senha += digits[Math.floor(Math.random() * digits.length)]
+    senha += special[Math.floor(Math.random() * special.length)]
+    // Completa até 10 caracteres
+    for (let i = 4; i < 10; i++) senha += all[Math.floor(Math.random() * all.length)]
+    // Embaralha
+    return senha.split('').sort(() => Math.random() - 0.5).join('')
+  }
+
   let userId
+  let senhaGerada = null
 
   const { data: existing } = await supabase.auth.admin.listUsers({ perPage: 1000 })
   const existingUser = existing?.users?.find(u => u.email === payerEmail)
@@ -43,9 +61,10 @@ module.exports = async function handler(req, res) {
   if (existingUser) {
     userId = existingUser.id
   } else {
+    senhaGerada = gerarSenha()
     const { data: created, error: createErr } = await supabase.auth.admin.createUser({
       email: payerEmail,
-      password,
+      password: senhaGerada,
       email_confirm: true,
       user_metadata: { name: payerName }
     })
@@ -90,7 +109,7 @@ module.exports = async function handler(req, res) {
     </div>
     <div style="background:#F5F5F4;border-radius:10px;padding:16px 20px;margin:16px 0">
       <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#78716C;margin-bottom:6px">Senha de acesso</div>
-      <div style="font-size:.92rem;color:#1C1917;font-weight:500">${existingUser ? '(use sua senha atual)' : password}</div>
+      <div style="font-size:.92rem;color:#1C1917;font-weight:500">${existingUser ? '(use sua senha atual)' : senhaGerada}</div>
     </div>
     <p style="font-size:.82rem;color:#78716C">Você pode trocar sua senha após o primeiro acesso.</p>
     <div style="text-align:center;margin:24px 0">
