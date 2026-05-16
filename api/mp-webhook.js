@@ -19,8 +19,9 @@ module.exports = async function handler(req, res) {
   if (type !== 'payment' || !data?.id) return res.status(200).json({ ok: true })
 
   // Buscar detalhes do pagamento no MP
+  const mpToken = (process.env.MP_ACCESS_TOKEN || '').replace(/﻿/g, '').trim()
   const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${data.id}`, {
-    headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` }
+    headers: { Authorization: `Bearer ${mpToken}` }
   })
   const payment = await mpRes.json()
 

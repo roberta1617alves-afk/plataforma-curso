@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
     }
 
     const siteUrl = process.env.SITE_URL || 'https://plataforma-curso-swart.vercel.app'
-    const mpToken = process.env.MP_ACCESS_TOKEN
+    const mpToken = (process.env.MP_ACCESS_TOKEN || '').replace(/﻿/g, '').trim()
     if (!mpToken) {
       return res.status(500).json({ erro: 'Configuração de pagamento ausente.' })
     }
