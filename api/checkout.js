@@ -30,7 +30,7 @@ module.exports = async function handler(req, res) {
 
     const price = course.data?.price
     if (!price || price <= 0) {
-      return res.status(400).json({ erro: 'Preço não configurado. Entre em contato com a administradora.' })
+      return res.status(400).json({ erro: 'Preço não configurado. Entre em contato com a administradora.', courseData: course.data })
     }
 
     const siteUrl = process.env.SITE_URL || 'https://plataforma-curso-swart.vercel.app'
@@ -69,6 +69,6 @@ module.exports = async function handler(req, res) {
 
   } catch (err) {
     console.error('Erro checkout:', err)
-    return res.status(500).json({ erro: 'Erro interno. Tente novamente.' })
+    return res.status(500).json({ erro: 'Erro interno: ' + (err?.message || String(err)) })
   }
 }
