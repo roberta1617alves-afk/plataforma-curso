@@ -599,7 +599,7 @@ async function loadCourses() {
 }
 
 function showCourseSelection(courses) {
-  document.getElementById('main').style.display = 'none'
+  document.querySelector('main').style.display = 'none'
   document.querySelector('aside').style.display = 'none'
   let p = document.getElementById('courseSelPage')
   if (!p) {
@@ -616,7 +616,7 @@ async function selectCourse(course) {
   document.getElementById('courseSelPage')?.remove()
   currentCourseId = course.id
   document.getElementById('logo').textContent = course.name || window.SITE_NAME
-  document.getElementById('main').style.display = ''
+  document.querySelector('main').style.display = ''
   document.querySelector('aside').style.display = ''
 
   // Carregar conteúdo do curso do Supabase
