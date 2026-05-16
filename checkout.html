@@ -9,124 +9,234 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: #FAFAF9; color: #1C1917; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .card { background: #fff; border: 1px solid #E7E5E4; border-radius: 16px; padding: 36px 32px; max-width: 440px; width: 100%; box-shadow: 0 4px 32px rgba(0,0,0,.06); }
-    .logo { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #78716C; margin-bottom: 24px; }
-    .course-name { font-size: 1.35rem; font-weight: 800; line-height: 1.25; margin-bottom: 8px; }
-    .price-tag { font-size: 2rem; font-weight: 800; color: #1C1917; margin-bottom: 6px; }
-    .price-tag span { font-size: 1rem; font-weight: 500; color: #78716C; }
-    .desc { font-size: .875rem; color: #78716C; line-height: 1.6; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid #E7E5E4; }
-    .fgroup { margin-bottom: 14px; }
-    label { display: block; font-size: .78rem; font-weight: 700; color: #78716C; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .05em; }
+    .wrap { width: 100%; max-width: 480px; }
+    .card { background: #fff; border: 1px solid #E7E5E4; border-radius: 16px; padding: 32px 28px; box-shadow: 0 4px 32px rgba(0,0,0,.06); margin-bottom: 16px; }
+    .logo { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #A8A29E; margin-bottom: 16px; }
+    .course-name { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; }
+    .price-tag { font-size: 2rem; font-weight: 800; color: #1C1917; margin-bottom: 4px; }
+    .price-tag span { font-size: .95rem; font-weight: 400; color: #78716C; }
+    .desc { font-size: .82rem; color: #78716C; line-height: 1.6; margin-top: 8px; padding-top: 16px; border-top: 1px solid #F5F5F4; }
+    .section-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #A8A29E; margin-bottom: 14px; }
+    .fgroup { margin-bottom: 12px; }
+    label { display: block; font-size: .75rem; font-weight: 600; color: #78716C; margin-bottom: 5px; }
     input { width: 100%; padding: 11px 14px; border: 1.5px solid #E7E5E4; border-radius: 8px; font-size: .9rem; font-family: inherit; outline: none; background: #FAFAF9; color: #1C1917; transition: border .15s; }
     input:focus { border-color: #1C1917; background: #fff; }
-    .btn { width: 100%; padding: 14px; background: #009EE3; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 20px; transition: opacity .15s; display: flex; align-items: center; justify-content: center; gap: 10px; }
-    .btn:hover { opacity: .9; }
-    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-primary { width: 100%; padding: 14px; background: #1C1917; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 8px; transition: opacity .15s; }
+    .btn-primary:hover { opacity: .85; }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-back { background: none; border: none; color: #78716C; font-size: .82rem; cursor: pointer; margin-bottom: 14px; padding: 0; font-family: inherit; }
+    .btn-back:hover { color: #1C1917; }
     .error { color: #DC2626; font-size: .82rem; margin-top: 10px; text-align: center; }
-    .seguro { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 14px; font-size: .75rem; color: #78716C; }
-    .loading { text-align: center; padding: 40px; color: #78716C; }
-    .spinner { width: 24px; height: 24px; border: 2.5px solid #E7E5E4; border-top-color: #1C1917; border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px; }
+    .seguro { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; font-size: .72rem; color: #A8A29E; }
+    .spinner-wrap { text-align: center; padding: 40px; color: #78716C; }
+    .spinner { width: 28px; height: 28px; border: 2.5px solid #E7E5E4; border-top-color: #1C1917; border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto 12px; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* PIX */
+    .pix-box { text-align: center; }
+    .pix-box h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
+    .pix-box p { font-size: .85rem; color: #78716C; margin-bottom: 20px; }
+    .pix-box img { width: 200px; height: 200px; margin: 0 auto 16px; display: block; border: 1px solid #E7E5E4; border-radius: 12px; padding: 8px; }
+    .pix-code { background: #F5F5F4; border-radius: 8px; padding: 12px 14px; font-size: .72rem; word-break: break-all; color: #44403C; margin-bottom: 12px; text-align: left; }
+    .btn-copy { width: 100%; padding: 12px; background: #22C55E; color: #fff; border: none; border-radius: 8px; font-size: .9rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .pix-note { font-size: .75rem; color: #78716C; margin-top: 12px; }
+
+    /* Buyer summary */
+    .buyer-summary { background: #F5F5F4; border-radius: 8px; padding: 10px 14px; font-size: .82rem; color: #44403C; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .buyer-summary strong { font-weight: 600; }
   </style>
 </head>
 <body>
-<div class="card" id="cardContent">
-  <div class="loading"><div class="spinner"></div>Carregando...</div>
+<div class="wrap">
+
+  <!-- LOADING -->
+  <div class="card" id="viewLoading">
+    <div class="spinner-wrap"><div class="spinner"></div>Carregando...</div>
+  </div>
+
+  <!-- STEP 1: dados pessoais -->
+  <div id="viewStep1" style="display:none">
+    <div class="card" id="courseInfoCard"><!-- preenchido via JS --></div>
+    <div class="card">
+      <div class="section-title">Seus dados</div>
+      <div class="fgroup">
+        <label>Nome completo</label>
+        <input type="text" id="payerName" placeholder="Maria Silva" autocomplete="name" />
+      </div>
+      <div class="fgroup">
+        <label>E-mail</label>
+        <input type="email" id="payerEmail" placeholder="seuemail@email.com" autocomplete="email" />
+      </div>
+      <button class="btn-primary" id="btnContinuar" onclick="continuar()">Continuar →</button>
+      <div class="error" id="errStep1" style="display:none"></div>
+      <div class="seguro">🔒 Pagamento 100% seguro</div>
+    </div>
+  </div>
+
+  <!-- STEP 2: formulário de pagamento (Payment Brick) -->
+  <div id="viewStep2" style="display:none">
+    <div class="card" id="courseInfoCard2"><!-- preenchido via JS --></div>
+    <div class="card">
+      <button class="btn-back" onclick="voltarStep1()">← Alterar dados</button>
+      <div class="buyer-summary" id="buyerSummary"></div>
+      <div id="paymentBrick_container"></div>
+      <div class="seguro">🔒 Pagamento 100% seguro via Mercado Pago</div>
+    </div>
+  </div>
+
+  <!-- STEP 3: PIX QR Code -->
+  <div id="viewPix" style="display:none">
+    <div class="card pix-box">
+      <div style="font-size:2.5rem;margin-bottom:8px">📱</div>
+      <h2>Pague com PIX</h2>
+      <p>Escaneie o QR Code ou copie o código abaixo.<br>O acesso é liberado automaticamente após o pagamento.</p>
+      <img id="pixQrImg" src="" alt="QR Code PIX" />
+      <div class="pix-code" id="pixCode"></div>
+      <button class="btn-copy" onclick="copiarPix()">📋 Copiar código PIX</button>
+      <div class="pix-note">⏱ O código expira em 30 minutos. Após pagar, verifique seu e-mail.</div>
+    </div>
+  </div>
+
 </div>
 
 <script>
 const MP_PUBLIC_KEY = 'APP_USR-eb22defb-977f-481b-875a-447f7c62ceec'
 const mp = new MercadoPago(MP_PUBLIC_KEY, { locale: 'pt-BR' })
 
-const params = new URLSearchParams(location.search)
-const courseId = params.get('course')
+const courseId = new URLSearchParams(location.search).get('course')
+let courseData = null
+let brickController = null
+
+function show(id) {
+  ['viewLoading','viewStep1','viewStep2','viewPix'].forEach(v => {
+    document.getElementById(v).style.display = v === id ? '' : 'none'
+  })
+}
+
+function courseInfoHTML(data) {
+  const fmt = n => Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+  return `
+    <div class="logo">${window.SITE_NAME || 'Plataforma'}</div>
+    <div class="course-name">${data.name}</div>
+    <div class="price-tag">R$ ${fmt(data.price)} <span>/ acesso completo</span></div>
+    <div class="desc">✅ Acesso imediato &nbsp;·&nbsp; 📧 Login enviado por e-mail</div>`
+}
 
 async function init() {
-  if (!courseId) { showError('Link inválido. Nenhum curso selecionado.'); return }
-
-  let courseData
+  if (!courseId) { showFatalError('Link inválido.'); return }
   try {
     const res = await fetch(`/api/checkout?courseId=${encodeURIComponent(courseId)}`)
     courseData = await res.json()
-  } catch { showError('Erro de conexão. Recarregue a página.'); return }
+  } catch { showFatalError('Erro de conexão. Recarregue a página.'); return }
+  if (!courseData || courseData.erro) { showFatalError(courseData?.erro || 'Curso não encontrado.'); return }
+  if (!courseData.price) { showFatalError('Preço não configurado. Entre em contato.'); return }
 
-  if (!courseData || courseData.erro) { showError(courseData?.erro || 'Curso não encontrado.'); return }
-
-  const price = courseData.price
-  if (!price) { showError('Preço não configurado. Entre em contato com a administradora.'); return }
-
-  const fmt = n => n.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-
-  document.getElementById('cardContent').innerHTML = `
-    <div class="logo">${window.SITE_NAME || ''}</div>
-    <div class="course-name">${courseData.name}</div>
-    <div class="price-tag">R$ ${fmt(price)} <span>/ acesso completo</span></div>
-    <div class="desc">Acesso imediato após o pagamento. Você receberá as credenciais de acesso no seu e-mail.</div>
-
-    <div class="fgroup">
-      <label>Seu nome</label>
-      <input type="text" id="payerName" placeholder="Maria Silva" autocomplete="name" />
-    </div>
-    <div class="fgroup">
-      <label>Seu e-mail</label>
-      <input type="email" id="payerEmail" placeholder="seuemail@email.com" autocomplete="email" />
-    </div>
-
-    <button class="btn" id="btnPay" onclick="pagar()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="4" fill="#fff" fill-opacity=".2"/><path d="M4 8h16v8H4z" fill="currentColor" opacity=".3"/><path d="M4 8h16" stroke="currentColor" stroke-width="1.5"/></svg>
-      Pagar agora
-    </button>
-    <div class="error" id="errMsg" style="display:none"></div>
-    <div class="seguro">🔒 Pagamento 100% seguro via Mercado Pago</div>`
+  document.getElementById('courseInfoCard').innerHTML = courseInfoHTML(courseData)
+  show('viewStep1')
 }
 
-async function pagar() {
-  const name = document.getElementById('payerName').value.trim()
+function continuar() {
+  const name  = document.getElementById('payerName').value.trim()
   const email = document.getElementById('payerEmail').value.trim()
-  const errEl = document.getElementById('errMsg')
-  const btn = document.getElementById('btnPay')
+  const err   = document.getElementById('errStep1')
+  err.style.display = 'none'
+  if (!name)  { err.textContent = 'Informe seu nome.'; err.style.display = 'block'; return }
+  if (!email || !email.includes('@')) { err.textContent = 'Informe um e-mail válido.'; err.style.display = 'block'; return }
 
-  errEl.style.display = 'none'
-  if (!name) { errEl.textContent = 'Por favor, informe seu nome.'; errEl.style.display = 'block'; return }
-  if (!email || !email.includes('@')) { errEl.textContent = 'Por favor, informe um e-mail válido.'; errEl.style.display = 'block'; return }
+  document.getElementById('courseInfoCard2').innerHTML = courseInfoHTML(courseData)
+  document.getElementById('buyerSummary').innerHTML =
+    `<span>${name}</span><strong>${email}</strong>`
 
-  btn.disabled = true
-  btn.textContent = 'Abrindo pagamento...'
-
-  try {
-    const body = new URLSearchParams({ courseId, payerName: name, payerEmail: email })
-    const res = await fetch('/api/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString()
-    })
-    let json
-    try { json = await res.json() } catch { json = {} }
-
-    if (json.prefId) {
-      // Abre o checkout do MP como modal (sem sair da página)
-      mp.checkout({
-        preference: { id: json.prefId },
-        autoOpen: true
-      })
-      btn.disabled = false
-      btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="4" fill="#fff" fill-opacity=".2"/><path d="M4 8h16v8H4z" fill="currentColor" opacity=".3"/><path d="M4 8h16" stroke="currentColor" stroke-width="1.5"/></svg> Pagar agora`
-    } else {
-      errEl.textContent = json.erro || 'Erro ao iniciar pagamento. Tente novamente.'
-      errEl.style.display = 'block'
-      btn.disabled = false
-      btn.textContent = 'Pagar agora'
-    }
-  } catch {
-    errEl.textContent = 'Erro de conexão. Tente novamente.'
-    errEl.style.display = 'block'
-    btn.disabled = false
-    btn.textContent = 'Pagar agora'
-  }
+  show('viewStep2')
+  renderBrick(name, email)
 }
 
-function showError(msg) {
-  document.getElementById('cardContent').innerHTML = `<div style="text-align:center;padding:20px"><div style="font-size:2rem;margin-bottom:12px">⚠️</div><p style="color:#78716C">${msg}</p></div>`
+function voltarStep1() {
+  if (brickController) { brickController.unmount(); brickController = null }
+  show('viewStep1')
+}
+
+async function renderBrick(payerName, payerEmail) {
+  if (brickController) { brickController.unmount(); brickController = null }
+  document.getElementById('paymentBrick_container').innerHTML =
+    '<div class="spinner-wrap"><div class="spinner"></div>Carregando pagamento...</div>'
+
+  const bricksBuilder = mp.bricks()
+  brickController = await bricksBuilder.create('payment', 'paymentBrick_container', {
+    initialization: {
+      amount: Number(courseData.price),
+      payer: { email: payerEmail }
+    },
+    customization: {
+      paymentMethods: {
+        creditCard: 'all',
+        debitCard: 'all',
+        bankTransfer: 'all'   // PIX
+      },
+      visual: { style: { theme: 'default' } }
+    },
+    callbacks: {
+      onReady: () => {},
+      onSubmit: ({ formData }) => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            const payload = {
+              courseId,
+              payerName,
+              payerEmail,
+              token:              formData.token              || null,
+              paymentMethodId:    formData.payment_method_id || null,
+              installments:       formData.installments       || 1,
+              issuerId:           formData.issuer_id          || null,
+              identificationType: formData.payer?.identification?.type   || null,
+              identificationNumber: formData.payer?.identification?.number || null
+            }
+
+            const res = await fetch('/api/process-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            })
+            const result = await res.json()
+
+            if (result.status === 'approved') {
+              resolve()
+              window.location.href = '/sucesso.html'
+
+            } else if (result.status === 'pending' && result.pixQrCode) {
+              resolve()
+              document.getElementById('pixQrImg').src =
+                result.pixQrCodeBase64
+                  ? 'data:image/png;base64,' + result.pixQrCodeBase64
+                  : ''
+              document.getElementById('pixCode').textContent = result.pixQrCode
+              show('viewPix')
+
+            } else {
+              reject(new Error(result.erro || 'Pagamento não aprovado.'))
+            }
+          } catch (e) {
+            reject(e)
+          }
+        })
+      },
+      onError: (error) => console.error('Brick error:', error)
+    }
+  })
+}
+
+function copiarPix() {
+  const code = document.getElementById('pixCode').textContent
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.querySelector('.btn-copy')
+    btn.textContent = '✅ Copiado!'
+    setTimeout(() => { btn.textContent = '📋 Copiar código PIX' }, 2500)
+  })
+}
+
+function showFatalError(msg) {
+  document.getElementById('viewLoading').innerHTML =
+    `<div style="text-align:center;padding:20px"><div style="font-size:2rem;margin-bottom:12px">⚠️</div><p style="color:#78716C">${msg}</p></div>`
 }
 
 init()
