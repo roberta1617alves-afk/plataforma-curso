@@ -618,15 +618,9 @@ function showCourseSelection(courses) {
     const checkoutLink = `${siteUrl}/checkout.html?course=${c.id}`
     const adminControls = isAdmin ? `
       <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:8px;display:flex;flex-direction:column;gap:6px">
-        <div style="display:flex;gap:6px">
-          <input id="name_${c.id}" type="text" value="${c.name}" placeholder="Nome do curso" style="flex:1;padding:6px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem;font-family:inherit;outline:none;background:var(--bg)" />
-          <button onclick="renameCourse('${c.id}')" style="padding:6px 10px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted)">✏️</button>
-        </div>
-        <div style="display:flex;gap:6px">
-          <input id="price_${c.id}" type="number" value="${price||''}" placeholder="Preço R$" style="flex:1;padding:6px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem;font-family:inherit;outline:none;background:var(--bg)" />
-          <button onclick="savePrice('${c.id}')" style="padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit">Salvar</button>
-        </div>
-        <button onclick="navigator.clipboard.writeText('${checkoutLink}');toast('✅ Link copiado!')" style="padding:6px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted)">🔗 Copiar link de checkout</button>
+        <button onclick="renameCourse('${c.id}',${JSON.stringify(c.name)})" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">✏️ Renomear curso</button>
+        <button onclick="savePricePrompt('${c.id}',${price||0})" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">💰 ${fmtPrice} — Alterar preço</button>
+        <button onclick="navigator.clipboard.writeText('${checkoutLink}');toast('✅ Link copiado!')" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">🔗 Copiar link de checkout</button>
       </div>` : ''
     return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:8px">
       <div onclick="selectCourse({id:'${c.id}',name:${JSON.stringify(c.name)}})" style="cursor:pointer">
@@ -640,30 +634,28 @@ function showCourseSelection(courses) {
   p.innerHTML = `<div style="max-width:820px;margin:0 auto">${backBtn}<h1 style="font-size:1.3rem;font-weight:800;margin-bottom:6px">Seus cursos</h1><p style="color:var(--muted);margin-bottom:28px;font-size:.9rem">${isAdmin ? 'Clique no curso para editar • defina o preço • copie o link de checkout' : 'Selecione um curso para continuar'}</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">${courses.length ? grid : '<p style="color:var(--muted)">Nenhum curso criado ainda.</p>'}</div>${isAdmin ? `<button onclick="showCreateCourse()" style="margin-top:24px;padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">+ Criar novo curso</button>` : ''}</div>`
 }
 
-async function renameCourse(courseId) {
-  const input = document.getElementById('name_' + courseId)
-  const name = input?.value.trim()
-  if (!name) { toast('❌ Nome inválido.'); return }
+async function renameCourse(courseId, currentName) {
+  const name = prompt('Novo nome do curso:', currentName)
+  if (!name?.trim()) return
   const { data: { session } } = await db.auth.getSession()
   const res = await fetch('/api/courses', {
     method: 'PUT',
     headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: courseId, name })
+    body: JSON.stringify({ id: courseId, name: name.trim() })
   })
   if (res.ok) {
-    toast('✅ Nome salvo!')
-    if (currentCourseId === courseId) document.getElementById('logo').textContent = name
+    if (currentCourseId === courseId) document.getElementById('logo').textContent = name.trim()
     const { data: d } = await db.from('courses').select('id, name, data').order('created_at')
     showCourseSelection(d || [])
+    toast('✅ Nome salvo!')
   } else toast('❌ Erro ao renomear.')
 }
 
-async function savePrice(courseId) {
-  const input = document.getElementById('price_' + courseId)
-  const price = parseFloat(input?.value)
-  if (!price || price <= 0) { toast('❌ Preço inválido.'); return }
+async function savePricePrompt(courseId, currentPrice) {
+  const val = prompt('Preço do curso (apenas números, ex: 97):', currentPrice || '')
+  const price = parseFloat(val)
+  if (!price || price <= 0) return
   const { data: { session } } = await db.auth.getSession()
-  // Buscar dados atuais do curso para não sobrescrever o conteúdo
   const { data: current } = await db.from('courses').select('data').eq('id', courseId).single()
   const currentData = current?.data || {}
   const res = await fetch('/api/courses', {
@@ -672,11 +664,12 @@ async function savePrice(courseId) {
     body: JSON.stringify({ id: courseId, data: { ...currentData, price } })
   })
   if (res.ok) {
-    toast('✅ Preço salvo!')
     const { data: d } = await db.from('courses').select('id, name, data').order('created_at')
     showCourseSelection(d || [])
+    toast('✅ Preço salvo!')
   } else toast('❌ Erro ao salvar preço.')
 }
+
 
 function voltarCursoAtual() {
   document.getElementById('courseSelPage')?.remove()
