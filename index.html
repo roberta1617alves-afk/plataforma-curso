@@ -467,17 +467,7 @@ const DEFAULTS = {
   progress: {}
 }
 
-function loadData() {
-  const saved = JSON.parse(localStorage.getItem('curso_data') || 'null')
-  if (!saved) return structuredClone(DEFAULTS)
-  // migrate old format
-  if (saved.lessons && !saved.instructor) {
-    return { ...structuredClone(DEFAULTS), lessons: saved.lessons, progress: saved.progress || {} }
-  }
-  return { ...structuredClone(DEFAULTS), ...saved }
-}
-
-let data = loadData()
+let data = structuredClone(DEFAULTS)
 let currentLessonId = null
 let editingLessonId = null
 let editingModuleId = null
@@ -485,8 +475,25 @@ let adminMode = false
 let activeTab = 'material'
 let editingMat = false
 let notesSaveTimer = null
+let currentCourseId = null
+let saveTimer = null
 
-const save = () => localStorage.setItem('curso_data', JSON.stringify(data))
+function save() {
+  clearTimeout(saveTimer)
+  saveTimer = setTimeout(syncCourseToSupabase, 800)
+}
+
+async function syncCourseToSupabase() {
+  if (!currentCourseId || !isAdmin) return
+  try {
+    const { data: { session } } = await db.auth.getSession()
+    await fetch('/api/courses', {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: currentCourseId, data: { instructor: data.instructor, modules: data.modules, lessons: data.lessons } })
+    })
+  } catch (e) { console.error('Erro ao salvar no servidor:', e) }
+}
 const uid  = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
 
 // ── UTILS ──
@@ -556,15 +563,121 @@ async function initAuth() {
   if (!session) { window.location.replace('login.html'); return }
   currentUser = session.user
   isAdmin = currentUser.email === window.ADMIN_EMAIL
-  document.getElementById('authGate').style.display = 'none'
   const email = currentUser.email || ''
   const name = currentUser.user_metadata?.name || email
   document.getElementById('userEmail').textContent = email
   document.getElementById('userAvatar').textContent = (name[0] || '?').toUpperCase()
-  // Só admin vê o botão Editar
   document.getElementById('btnAdmin').style.display = isAdmin ? '' : 'none'
+  await loadCourses()
+}
+
+// ── CURSOS ──
+async function loadCourses() {
+  let courses = []
+  try {
+    if (isAdmin) {
+      const { data: d } = await db.from('courses').select('id, name').order('created_at')
+      courses = d || []
+    } else {
+      const { data: d } = await db.from('course_access').select('courses(id, name)').eq('user_id', currentUser.id)
+      courses = (d || []).map(a => a.courses).filter(Boolean)
+    }
+  } catch (e) { console.error(e) }
+
+  document.getElementById('authGate').style.display = 'none'
+
+  if (courses.length === 0) {
+    if (isAdmin) {
+      showCourseSelection([])
+    } else {
+      document.querySelector('main').innerHTML = `<div style="padding:80px 20px;text-align:center"><div style="font-size:2.5rem;margin-bottom:16px">🔒</div><h2 style="margin-bottom:8px">Sem acesso</h2><p style="color:var(--muted)">Você ainda não tem acesso a nenhum curso. Entre em contato com a administradora.</p></div>`
+    }
+    return
+  }
+  if (courses.length === 1) { await selectCourse(courses[0]); return }
+  showCourseSelection(courses)
+}
+
+function showCourseSelection(courses) {
+  document.getElementById('main').style.display = 'none'
+  document.querySelector('aside').style.display = 'none'
+  let p = document.getElementById('courseSelPage')
+  if (!p) {
+    p = document.createElement('div')
+    p.id = 'courseSelPage'
+    p.style.cssText = 'position:fixed;inset:0;top:56px;background:var(--bg);z-index:150;overflow-y:auto;padding:40px 24px'
+    document.body.appendChild(p)
+  }
+  const grid = courses.map(c => `<div onclick="selectCourse({id:'${c.id}',name:${JSON.stringify(c.name)}})" style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:24px 20px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'"><div style="font-size:1.8rem;margin-bottom:10px">📚</div><div style="font-weight:700;font-size:.95rem">${c.name}</div></div>`).join('')
+  p.innerHTML = `<div style="max-width:760px;margin:0 auto"><h1 style="font-size:1.3rem;font-weight:800;margin-bottom:6px">Seus cursos</h1><p style="color:var(--muted);margin-bottom:28px;font-size:.9rem">${isAdmin ? 'Selecione o curso para editar ou crie um novo' : 'Selecione um curso para continuar'}</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">${courses.length ? grid : '<p style="color:var(--muted)">Nenhum curso criado ainda.</p>'}</div>${isAdmin ? `<button onclick="showCreateCourse()" style="margin-top:24px;padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">+ Criar novo curso</button>` : ''}</div>`
+}
+
+async function selectCourse(course) {
+  document.getElementById('courseSelPage')?.remove()
+  currentCourseId = course.id
+  document.getElementById('logo').textContent = course.name || window.SITE_NAME
+  document.getElementById('main').style.display = ''
+  document.querySelector('aside').style.display = ''
+
+  // Carregar conteúdo do curso do Supabase
+  const { data: d } = await db.from('courses').select('data').eq('id', currentCourseId).single()
+  if (d?.data && (d.data.lessons?.length || d.data.modules?.length || d.data.instructor?.name)) {
+    data.instructor = d.data.instructor || structuredClone(DEFAULTS.instructor)
+    data.modules = d.data.modules || []
+    data.lessons = d.data.lessons || []
+  } else if (isAdmin) {
+    // Migrar dados do localStorage para o Supabase (primeira vez)
+    const local = JSON.parse(localStorage.getItem('curso_data') || 'null')
+    if (local) {
+      data.instructor = local.instructor || structuredClone(DEFAULTS.instructor)
+      data.modules = local.modules || []
+      data.lessons = local.lessons || []
+      await syncCourseToSupabase()
+      localStorage.removeItem('curso_data')
+      toast('✅ Dados migrados para a nuvem!')
+    }
+  }
+
+  // Carregar progresso do Supabase
+  data.progress = {}
+  const { data: progRows } = await db.from('user_progress')
+    .select('lesson_id, completed, notes')
+    .eq('user_id', currentUser.id)
+    .eq('course_id', currentCourseId)
+  if (progRows) progRows.forEach(r => {
+    data.progress[r.lesson_id] = { completed: r.completed || false, notes: r.notes || '' }
+  })
+
   render()
 }
+
+async function showCreateCourse() {
+  const name = prompt('Nome do novo curso:')
+  if (!name?.trim()) return
+  const { data: { session } } = await db.auth.getSession()
+  const res = await fetch('/api/courses', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: name.trim() })
+  })
+  const json = await res.json()
+  if (json.course) await selectCourse(json.course)
+  else alert('Erro: ' + (json.erro || 'tente novamente'))
+}
+
+async function saveProgress(lessonId) {
+  if (!currentCourseId || !lessonId || !currentUser) return
+  const prog = data.progress[lessonId] || {}
+  await db.from('user_progress').upsert({
+    user_id: currentUser.id,
+    course_id: currentCourseId,
+    lesson_id: lessonId,
+    completed: prog.completed || false,
+    notes: prog.notes || '',
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'user_id,course_id,lesson_id' })
+}
+
 db.auth.onAuthStateChange((e, s) => { if (e === 'SIGNED_OUT') window.location.replace('login.html') })
 document.getElementById('btnLogout').addEventListener('click', () => db.auth.signOut())
 
@@ -674,8 +787,7 @@ function renderOverview() {
     ? `<div class="banner-photo"><img src="${inst.photo}" alt="${inst.name}" onerror="this.parentElement.innerHTML='<span class=banner-photo-placeholder>👤</span>'" /></div>`
     : `<div class="banner-photo"><span class="banner-photo-placeholder">👤</span></div>`
 
-  const lastLesson = data.lessons.find(l => l.id === localStorage.getItem('lastLesson'))
-    || data.lessons.find(l => !data.progress[l.id]?.completed)
+  const lastLesson = data.lessons.find(l => !data.progress[l.id]?.completed)
     || data.lessons[0]
 
   const modulesHtml = data.modules.length
@@ -796,7 +908,7 @@ function openLesson(id) {
   currentLessonId = id
   activeTab = 'material'
   editingMat = false
-  localStorage.setItem('lastLesson', id)
+  // progresso da última aula salvo no Supabase
   document.getElementById('btnOverview').classList.remove('active')
   document.getElementById('btnStudentsPage').classList.remove('active')
   document.getElementById('overviewPage').style.display = 'none'
@@ -928,7 +1040,7 @@ async function renderLessonPage() {
     if (!data.progress[currentLessonId]) data.progress[currentLessonId] = {}
     data.progress[currentLessonId].completed = !data.progress[currentLessonId].completed
     data.progress[currentLessonId].completedAt = new Date().toISOString()
-    save(); render()
+    save(); render(); saveProgress(currentLessonId)
     toast(data.progress[currentLessonId].completed ? '✅ Aula marcada como concluída!' : 'Aula desmarcada.')
   })
   document.getElementById('btnPrev')?.addEventListener('click', () => prev && openLesson(prev.id))
@@ -988,7 +1100,7 @@ async function renderLessonPage() {
       notesSaveTimer = setTimeout(() => {
         if (!data.progress[currentLessonId]) data.progress[currentLessonId] = {}
         data.progress[currentLessonId].notes = notesEl.value
-        save()
+        save(); saveProgress(currentLessonId)
         const el = document.getElementById('notesSaved')
         if (el) { el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 1500) }
       }, 600)
@@ -1018,24 +1130,43 @@ async function showStudentsPage() {
   page.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">Carregando alunas...</div>`
   closeSidebar()
 
-  // Buscar alunas via API
   const { data: { session } } = await db.auth.getSession()
   const token = session?.access_token
-  let students = []
-  try {
-    const res = await fetch('/api/students', { headers: { Authorization: `Bearer ${token}` } })
-    const json = await res.json()
-    students = json.students || []
-  } catch { students = [] }
 
-  const defaultPass = 'Mentoras@2024'
+  // Buscar alunas, cursos e acessos em paralelo
+  let students = [], allCourses = [], allAccess = []
+  try {
+    const [sRes, cRes, aRes] = await Promise.all([
+      fetch('/api/students', { headers: { Authorization: `Bearer ${token}` } }),
+      fetch('/api/courses', { headers: { Authorization: `Bearer ${token}` } }),
+      fetch('/api/courses?action=access', { headers: { Authorization: `Bearer ${token}` } })
+    ])
+    students = (await sRes.json()).students || []
+    allCourses = (await cRes.json()).courses || []
+    allAccess = (await aRes.json()).access || []
+  } catch {}
+
   const formatDate = d => d ? new Date(d).toLocaleDateString('pt-BR') : '—'
+
+  // Para cada aluna, quais cursos ela tem acesso
+  const accessMap = {}
+  allAccess.forEach(a => {
+    if (!accessMap[a.user_id]) accessMap[a.user_id] = new Set()
+    accessMap[a.user_id].add(a.course_id)
+  })
+
+  const courseBadges = (studentId) => allCourses.map(c => {
+    const has = accessMap[studentId]?.has(c.id)
+    return `<button onclick="toggleAccess('${studentId}','${c.id}',${has},'${token}')" title="${has ? 'Remover acesso' : 'Dar acesso'}" style="padding:3px 9px;border-radius:99px;font-size:.72rem;font-weight:600;cursor:pointer;border:1.5px solid ${has ? 'var(--green)' : 'var(--border)'};background:${has ? 'var(--green-bg)' : 'var(--surface)'};color:${has ? 'var(--green)' : 'var(--muted)'};">${c.name}</button>`
+  }).join(' ')
+
   const rowsHtml = students.length === 0
-    ? `<tr><td colspan="4" class="students-empty">Nenhuma aluna cadastrada ainda.</td></tr>`
+    ? `<tr><td colspan="5" class="students-empty">Nenhuma aluna cadastrada ainda.</td></tr>`
     : students.map(s => `<tr>
         <td><div class="student-email">${s.email}</div>${s.name ? `<div class="student-name">${s.name}</div>` : ''}</td>
         <td class="student-date">${formatDate(s.created_at)}</td>
         <td class="student-date">${s.last_sign_in ? formatDate(s.last_sign_in) : '<span class="badge badge-muted">Nunca acessou</span>'}</td>
+        <td style="white-space:nowrap">${allCourses.length ? courseBadges(s.id) : '<span style="color:var(--muted);font-size:.78rem">—</span>'}</td>
         <td><button class="btn btn-outline" style="font-size:.75rem;padding:5px 10px;color:var(--danger);border-color:#FECACA" data-delstudent="${s.id}" data-email="${s.email}">Remover</button></td>
       </tr>`).join('')
 
@@ -1046,8 +1177,8 @@ async function showStudentsPage() {
     </div>
 
     <div class="students-info">
-      <strong>Senha padrão de acesso:</strong> <code style="background:var(--border);padding:2px 8px;border-radius:4px;font-family:monospace">${defaultPass}</code><br>
-      As alunas podem trocar a senha após o primeiro acesso clicando em "Esqueci minha senha" na tela de login.
+      <strong>Senha padrão de acesso:</strong> <code style="background:var(--border);padding:2px 8px;border-radius:4px;font-family:monospace">Mentoras@2024</code><br>
+      As alunas podem trocar a senha após o primeiro acesso. Clique no nome do curso ao lado de cada aluna para dar ou remover acesso.
     </div>
 
     <div class="add-student-form">
@@ -1058,7 +1189,6 @@ async function showStudentsPage() {
         <button class="btn btn-dark" id="btnAddStudent" style="margin-bottom:0;height:40px;align-self:flex-end">+ Adicionar</button>
       </div>
       <div class="upload-status" id="addStudentStatus" style="margin-top:8px"></div>
-
       <div class="bulk-add" style="margin-top:16px">
         <div style="font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Adicionar várias de uma vez</div>
         <textarea class="bulk-textarea" id="bulkEmails" placeholder="Cole os e-mails, um por linha:&#10;maria@email.com&#10;joana@email.com&#10;ana@email.com"></textarea>
@@ -1072,13 +1202,12 @@ async function showStudentsPage() {
     <div class="students-table-wrap">
       <table class="students-table">
         <thead><tr>
-          <th>Aluna</th><th>Cadastrada em</th><th>Último acesso</th><th></th>
+          <th>Aluna</th><th>Cadastrada em</th><th>Último acesso</th><th>Cursos</th><th></th>
         </tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
     </div>`
 
-  // Eventos
   document.getElementById('btnAddStudent').addEventListener('click', () => addStudent(token))
   document.getElementById('newStudentEmail').addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(token) })
   document.getElementById('btnBulkAdd').addEventListener('click', () => bulkAddStudents(token))
@@ -1094,6 +1223,17 @@ async function showStudentsPage() {
       else toast('Erro ao remover.')
     })
   })
+}
+
+async function toggleAccess(userId, courseId, hasAccess, token) {
+  const method = hasAccess ? 'DELETE' : 'POST'
+  await fetch('/api/courses?action=access', {
+    method,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, courseId })
+  })
+  toast(hasAccess ? 'Acesso removido.' : '✅ Acesso concedido!')
+  showStudentsPage()
 }
 
 async function addStudent(token) {
