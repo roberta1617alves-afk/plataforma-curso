@@ -120,13 +120,13 @@
       <!-- Aba PIX -->
       <div class="tab-content" id="tabContentPix">
         <div class="pix-section">
-          <p>Pague instantaneamente via PIX.<br>O QR Code aparece na tela — sem precisar sair desta página.</p>
-          <div class="fgroup">
-            <label>CPF do pagador</label>
-            <input type="text" id="pixCpf" placeholder="000.000.000-00" maxlength="14"
+          <div class="fgroup" style="margin-bottom:14px">
+            <label>CPF <span style="color:#DC2626">*</span></label>
+            <input type="text" id="pixCpf" placeholder="000.000.000-00" maxlength="14" autocomplete="off"
               oninput="this.value=this.value.replace(/\D/g,'').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')" />
           </div>
-          <button class="btn-pix" id="btnGerarPix" onclick="gerarPix()">⚡ Gerar QR Code PIX</button>
+          <p style="margin-bottom:14px">Você será redirecionada para o Mercado Pago para concluir o pagamento via PIX.</p>
+          <button class="btn-pix" id="btnGerarPix" onclick="gerarPix()">⚡ Ir para pagamento PIX</button>
           <div class="error" id="errPix" style="display:none"></div>
         </div>
       </div>
@@ -135,18 +135,8 @@
     </div>
   </div>
 
-  <!-- STEP 3: PIX QR Code -->
-  <div id="viewPix" style="display:none">
-    <div class="card pix-box">
-      <div style="font-size:2.2rem;margin-bottom:8px;text-align:center">⚡</div>
-      <h2>QR Code PIX gerado!</h2>
-      <div class="sub">Escaneie o QR Code com o app do seu banco<br>ou copie e cole o código abaixo.</div>
-      <img id="pixQrImg" src="" alt="QR Code PIX" />
-      <div class="pix-code" id="pixCodeText"></div>
-      <button class="btn-copy" onclick="copiarPix()">📋 Copiar código PIX</button>
-      <div class="pix-note">⏱ Código válido por 30 minutos.<br>Após pagar, você receberá o e-mail de acesso automaticamente.</div>
-    </div>
-  </div>
+  <!-- STEP 3: PIX aguardando (não mais usado, mantido por compatibilidade) -->
+  <div id="viewPix" style="display:none"></div>
 
 </div>
 <script>
@@ -207,6 +197,13 @@ function switchTab(tab) {
   document.getElementById('tabPix').classList.toggle('active',  tab === 'pix')
   document.getElementById('tabContentCard').classList.toggle('active', tab === 'card')
   document.getElementById('tabContentPix').classList.toggle('active',  tab === 'pix')
+  // Desmonta o Brick ao ir para PIX (evita overlay invisível que bloqueia cliques)
+  if (tab === 'pix' && brickController) {
+    brickController.unmount()
+    brickController = null
+  } else if (tab === 'card' && !brickController) {
+    renderBrick()
+  }
 }
 
 async function renderBrick() {
@@ -249,58 +246,55 @@ async function renderBrick() {
   })
 }
 
-async function gerarPix() {
-  const cpfRaw = (document.getElementById('pixCpf').value || '').replace(/\D/g, '')
-  const errEl  = document.getElementById('errPix')
-  const btn    = document.getElementById('btnGerarPix')
+function gerarPix() {
+  const errEl = document.getElementById('errPix')
+  const btn   = document.getElementById('btnGerarPix')
   errEl.style.display = 'none'
-  if (cpfRaw.length !== 11) { errEl.textContent = 'Informe um CPF válido (11 dígitos).'; errEl.style.display='block'; return }
+  errEl.style.color   = '#DC2626'
 
-  btn.disabled = true; btn.textContent = 'Gerando QR Code...'
-
-  try {
-    // Pegar deviceId do cookie de segurança do MP
-    const deviceId = document.cookie.split(';').map(c=>c.trim())
-      .find(c => c.startsWith('deviceId=') || c.startsWith('MP_DEVICE_SESSION_ID='))
-      ?.split('=').slice(1).join('=') || ''
-
-    const params = new URLSearchParams({
-      courseId, payerName, payerEmail,
-      token: '', paymentMethodId: 'pix', installments: 1,
-      issuerId: '', identificationType: 'CPF', identificationNumber: cpfRaw,
-      deviceId
-    })
-    const res = await fetch('/api/process-payment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString()
-    })
-    const result = await res.json()
-
-    if (result.pixQrCode) {
-      document.getElementById('pixQrImg').src =
-        result.pixQrCodeBase64 ? 'data:image/png;base64,' + result.pixQrCodeBase64 : ''
-      document.getElementById('pixCodeText').textContent = result.pixQrCode
-      show('viewPix')
-    } else {
-      errEl.textContent = result.erro || 'Não foi possível gerar o PIX. Tente novamente.'
-      errEl.style.display = 'block'
-      btn.disabled = false; btn.textContent = '⚡ Gerar QR Code PIX'
-    }
-  } catch {
-    errEl.textContent = 'Erro de conexão. Tente novamente.'
+  // Abrir janela SINCRONAMENTE (antes de qualquer await) para evitar bloqueio de popup
+  const pixWin = window.open('', '_blank')
+  if (!pixWin) {
+    errEl.textContent = 'Seu navegador bloqueou o popup. Permita popups para este site e tente novamente.'
     errEl.style.display = 'block'
-    btn.disabled = false; btn.textContent = '⚡ Gerar QR Code PIX'
+    return
   }
+  pixWin.document.write(`<!DOCTYPE html><html><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#fafaf9;color:#78716C;font-size:1.1rem">⚡ Gerando seu PIX seguro...</body></html>`)
+
+  btn.disabled = true; btn.textContent = 'Gerando...'
+
+  const cpf = document.getElementById('pixCpf')?.value.replace(/\D/g,'') || ''
+  if (!cpf || cpf.length !== 11) {
+    errEl.textContent = 'Informe seu CPF para pagar com PIX.'
+    errEl.style.display = 'block'
+    return
+  }
+  const url = `/api/checkout?courseId=${encodeURIComponent(courseId)}&pixOnly=true&payerEmail=${encodeURIComponent(payerEmail)}&payerName=${encodeURIComponent(payerName)}&payerCpf=${encodeURIComponent(cpf)}`
+  fetch(url)
+    .then(r => r.json())
+    .then(result => {
+      if (result.initPoint) {
+        pixWin.location.href = result.initPoint
+        errEl.style.color = '#16A34A'
+        errEl.textContent = '✅ Janela PIX aberta! Conclua o pagamento lá. Após confirmar, você receberá o e-mail de acesso.'
+        errEl.style.display = 'block'
+      } else {
+        pixWin.close()
+        errEl.style.color = '#DC2626'
+        errEl.textContent = result.erro || 'Não foi possível gerar o PIX. Tente novamente.'
+        errEl.style.display = 'block'
+      }
+      btn.disabled = false; btn.textContent = '⚡ Pagar com PIX'
+    })
+    .catch(() => {
+      pixWin.close()
+      errEl.style.color = '#DC2626'
+      errEl.textContent = 'Erro de conexão. Tente novamente.'
+      errEl.style.display = 'block'
+      btn.disabled = false; btn.textContent = '⚡ Pagar com PIX'
+    })
 }
 
-function copiarPix() {
-  navigator.clipboard.writeText(document.getElementById('pixCodeText').textContent).then(() => {
-    const btn = document.querySelector('.btn-copy')
-    btn.textContent = '✅ Copiado!'
-    setTimeout(() => btn.textContent = '📋 Copiar código PIX', 2500)
-  })
-}
 
 function fatalErr(msg) {
   document.getElementById('viewLoading').innerHTML =
