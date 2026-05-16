@@ -73,10 +73,18 @@ module.exports = async function handler(req, res) {
   }
 
   // Conceder acesso ao curso
-  await supabase.from('course_access').upsert(
+  const { error: accessErr } = await supabase.from('course_access').upsert(
     { user_id: userId, course_id: courseId },
     { onConflict: 'user_id,course_id' }
   )
+  if (accessErr) {
+    console.error('Erro ao conceder acesso:', accessErr)
+    // Tenta insert simples caso upsert falhe
+    const { error: insertErr } = await supabase.from('course_access').insert(
+      { user_id: userId, course_id: courseId }
+    )
+    if (insertErr) console.error('Erro no insert de acesso:', insertErr)
+  }
 
   // Buscar nome do curso
   const { data: course } = await supabase.from('courses').select('name').eq('id', courseId).single()
