@@ -621,6 +621,7 @@ function showCourseSelection(courses) {
         <button data-id="${c.id}" data-name="${c.name.replace(/"/g,'&quot;')}" onclick="renameCourse(this.dataset.id,this.dataset.name)" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">✏️ Renomear curso</button>
         <button data-id="${c.id}" data-price="${price||0}" onclick="savePricePrompt(this.dataset.id,this.dataset.price)" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">💰 ${fmtPrice} — Alterar preço</button>
         <button onclick="navigator.clipboard.writeText('${checkoutLink}');toast('✅ Link copiado!')" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">🔗 Copiar link de checkout</button>
+        <button onclick="goToStudentsPage()" style="padding:7px;background:#1C1917;border:none;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;text-align:left">👩‍🎓 Gerenciar Alunas</button>
       </div>` : ''
     return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:8px">
       <div onclick="selectCourse({id:'${c.id}',name:${JSON.stringify(c.name)}})" style="cursor:pointer">
@@ -631,7 +632,7 @@ function showCourseSelection(courses) {
       ${adminControls}
     </div>`
   }).join('')
-  p.innerHTML = `<div style="max-width:820px;margin:0 auto">${backBtn}<h1 style="font-size:1.3rem;font-weight:800;margin-bottom:6px">Seus cursos</h1><p style="color:var(--muted);margin-bottom:28px;font-size:.9rem">${isAdmin ? 'Clique no curso para editar • defina o preço • copie o link de checkout' : 'Selecione um curso para continuar'}</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">${courses.length ? grid : '<p style="color:var(--muted)">Nenhum curso criado ainda.</p>'}</div>${isAdmin ? `<button onclick="showCreateCourse()" style="margin-top:24px;padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">+ Criar novo curso</button>` : ''}</div>`
+  p.innerHTML = `<div style="max-width:820px;margin:0 auto">${backBtn}<h1 style="font-size:1.3rem;font-weight:800;margin-bottom:6px">Seus cursos</h1><p style="color:var(--muted);margin-bottom:28px;font-size:.9rem">${isAdmin ? 'Clique no curso para editar • defina o preço • copie o link de checkout' : 'Selecione um curso para continuar'}</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">${courses.length ? grid : '<p style="color:var(--muted)">Nenhum curso criado ainda.</p>'}</div>${isAdmin ? `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px"><button onclick="showCreateCourse()" style="padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">+ Criar novo curso</button><button onclick="goToStudentsPage()" style="padding:10px 22px;background:#1C1917;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">👩‍🎓 Gerenciar Alunas</button></div>` : ''}</div>`
 }
 
 async function renameCourse(courseId, currentName) {
@@ -676,6 +677,19 @@ function voltarCursoAtual() {
   document.querySelector('main').style.display = ''
   document.querySelector('aside').style.display = ''
   render()
+}
+
+function goToStudentsPage() {
+  // Fecha a tela de seleção de cursos
+  document.getElementById('courseSelPage')?.remove()
+  // Restaura o layout principal
+  document.querySelector('main').style.display = ''
+  document.querySelector('aside').style.display = ''
+  // Garante que o admin mode esteja ativo
+  document.body.classList.add('admin-mode')
+  isAdmin = true
+  // Abre a página de alunas
+  showStudentsPage()
 }
 
 async function selectCourse(course) {
@@ -1540,7 +1554,10 @@ document.querySelectorAll('.overlay').forEach(el => {
 
 // ── MOBILE SIDEBAR ──
 document.getElementById('btnMenu').addEventListener('click', () => {
-  document.getElementById('sidebar').classList.toggle('open')
+  // Garante que o aside esteja visível (pode ter sido ocultado pelo showCourseSelection)
+  const aside = document.getElementById('sidebar')
+  if (aside.style.display === 'none') aside.style.display = ''
+  aside.classList.toggle('open')
   document.getElementById('backdrop').classList.toggle('open')
 })
 document.getElementById('backdrop').addEventListener('click', closeSidebar)
