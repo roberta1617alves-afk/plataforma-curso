@@ -650,8 +650,12 @@ async function renameCourse(courseId) {
     headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: courseId, name })
   })
-  if (res.ok) { toast('✅ Nome salvo!'); if (currentCourseId === courseId) document.getElementById('logo').textContent = name }
-  else toast('❌ Erro ao renomear.')
+  if (res.ok) {
+    toast('✅ Nome salvo!')
+    if (currentCourseId === courseId) document.getElementById('logo').textContent = name
+    const { data: d } = await db.from('courses').select('id, name, data').order('created_at')
+    showCourseSelection(d || [])
+  } else toast('❌ Erro ao renomear.')
 }
 
 async function savePrice(courseId) {
@@ -667,8 +671,11 @@ async function savePrice(courseId) {
     headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: courseId, data: { ...currentData, price } })
   })
-  if (res.ok) toast('✅ Preço salvo!')
-  else toast('❌ Erro ao salvar preço.')
+  if (res.ok) {
+    toast('✅ Preço salvo!')
+    const { data: d } = await db.from('courses').select('id, name, data').order('created_at')
+    showCourseSelection(d || [])
+  } else toast('❌ Erro ao salvar preço.')
 }
 
 function voltarCursoAtual() {
