@@ -641,10 +641,13 @@ async function savePrice(courseId) {
   const price = parseFloat(input?.value)
   if (!price || price <= 0) { toast('❌ Preço inválido.'); return }
   const { data: { session } } = await db.auth.getSession()
+  // Buscar dados atuais do curso para não sobrescrever o conteúdo
+  const { data: current } = await db.from('courses').select('data').eq('id', courseId).single()
+  const currentData = current?.data || {}
   const res = await fetch('/api/courses', {
     method: 'PUT',
     headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: courseId, data: { ...data, price } })
+    body: JSON.stringify({ id: courseId, data: { ...currentData, price } })
   })
   if (res.ok) toast('✅ Preço salvo!')
   else toast('❌ Erro ao salvar preço.')
@@ -727,7 +730,7 @@ db.auth.onAuthStateChange((e, s) => { if (e === 'SIGNED_OUT') window.location.re
 document.getElementById('btnLogout').addEventListener('click', () => db.auth.signOut())
 document.getElementById('btnCourses').addEventListener('click', async () => {
   let courses = []
-  const { data: d } = await db.from('courses').select('id, name').order('created_at')
+  const { data: d } = await db.from('courses').select('id, name, data').order('created_at')
   courses = d || []
   showCourseSelection(courses)
 })
