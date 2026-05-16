@@ -75,6 +75,6 @@ module.exports = async function handler(req, res) {
 
   } catch (err) {
     console.error('Erro interno checkout:', err)
-    return res.status(500).json({ erro: 'Erro interno. Tente novamente em instantes.' })
+    return res.status(500).json({ erro: 'Erro interno: ' + (err?.message || String(err)) })
   }
 }
