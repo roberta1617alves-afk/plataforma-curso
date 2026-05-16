@@ -344,6 +344,7 @@
         <div class="avatar" id="userAvatar">?</div>
         <span class="user-email" id="userEmail"></span>
       </div>
+      <button class="btn-sm" id="btnCourses" style="display:none">📚 Cursos</button>
       <button class="btn-sm" id="btnAdmin">Editar</button>
       <button class="btn-sm" id="btnLogout">Sair</button>
     </div>
@@ -568,6 +569,7 @@ async function initAuth() {
   document.getElementById('userEmail').textContent = email
   document.getElementById('userAvatar').textContent = (name[0] || '?').toUpperCase()
   document.getElementById('btnAdmin').style.display = isAdmin ? '' : 'none'
+  document.getElementById('btnCourses').style.display = isAdmin ? '' : 'none'
   await loadCourses()
 }
 
@@ -680,6 +682,12 @@ async function saveProgress(lessonId) {
 
 db.auth.onAuthStateChange((e, s) => { if (e === 'SIGNED_OUT') window.location.replace('login.html') })
 document.getElementById('btnLogout').addEventListener('click', () => db.auth.signOut())
+document.getElementById('btnCourses').addEventListener('click', async () => {
+  let courses = []
+  const { data: d } = await db.from('courses').select('id, name').order('created_at')
+  courses = d || []
+  showCourseSelection(courses)
+})
 
 // ── ADMIN ──
 document.getElementById('btnAdmin').addEventListener('click', () => {
