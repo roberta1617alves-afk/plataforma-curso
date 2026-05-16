@@ -7,49 +7,44 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).end()
 
-  // Passo 1: body
-  const { courseId, payerName, payerEmail } = req.body || {}
-  if (!courseId || !payerEmail) return res.status(400).json({ passo: 1, erro: 'courseId e payerEmail obrigatórios' })
-
-  // Passo 2: env vars
-  const supabaseUrl = process.env.SUPABASE_URL
-  const supabaseKey = process.env.SUPABASE_SERVICE_KEY
-  const mpToken = process.env.MP_ACCESS_TOKEN
-  if (!supabaseUrl) return res.status(500).json({ passo: 2, erro: 'SUPABASE_URL ausente' })
-  if (!supabaseKey) return res.status(500).json({ passo: 2, erro: 'SUPABASE_SERVICE_KEY ausente' })
-  if (!mpToken) return res.status(500).json({ passo: 2, erro: 'MP_ACCESS_TOKEN ausente' })
-
-  // Passo 3: criar cliente supabase
-  let supabase
   try {
-    supabase = createClient(supabaseUrl, supabaseKey)
-  } catch (e) {
-    return res.status(500).json({ passo: 3, erro: 'createClient falhou: ' + e.message })
-  }
+    const { courseId, payerName, payerEmail } = req.body || {}
+    if (!courseId || !payerEmail) {
+      return res.status(400).json({ erro: 'courseId e payerEmail são obrigatórios.' })
+    }
 
-  // Passo 4: query curso
-  let course = null
-  try {
-    const { data, error } = await supabase.from('courses').select('name, data').eq('id', courseId).single()
-    if (error) return res.status(404).json({ passo: 4, erro: error.message, code: error.code })
-    course = data
-  } catch (e) {
-    return res.status(500).json({ passo: 4, erro: 'query falhou: ' + e.message })
-  }
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
+    )
 
-  if (!course) return res.status(404).json({ passo: 4, erro: 'curso null' })
+    const { data: course, error } = await supabase
+      .from('courses')
+      .select('name, data')
+      .eq('id', courseId)
+      .single()
 
-  // Passo 5: preço
-  const price = course.data?.price
-  if (!price || price <= 0) return res.status(400).json({ passo: 5, erro: 'Preço não configurado' })
+    if (error || !course) {
+      return res.status(404).json({ erro: 'Curso não encontrado.' })
+    }
 
-  // Passo 6: MP
-  const siteUrl = process.env.SITE_URL || 'https://plataforma-curso-swart.vercel.app'
-  let mpData
-  try {
+    const price = course.data?.price
+    if (!price || price <= 0) {
+      return res.status(400).json({ erro: 'Preço não configurado. Entre em contato com a administradora.' })
+    }
+
+    const siteUrl = process.env.SITE_URL || 'https://plataforma-curso-swart.vercel.app'
+    const mpToken = process.env.MP_ACCESS_TOKEN
+    if (!mpToken) {
+      return res.status(500).json({ erro: 'Configuração de pagamento ausente.' })
+    }
+
     const mpRes = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${mpToken}`, 'Content-Type': 'application/json' },
+      headers: {
+        Authorization: `Bearer ${mpToken}`,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
         items: [{ title: course.name, quantity: 1, unit_price: Number(price), currency_id: 'BRL' }],
         payer: { name: payerName || '', email: payerEmail },
@@ -64,11 +59,16 @@ module.exports = async function handler(req, res) {
         statement_descriptor: 'PLATAFORMA CURSOS'
       })
     })
-    mpData = await mpRes.json()
-    if (!mpRes.ok) return res.status(500).json({ passo: 6, erro: mpData.message || 'Erro MP', detalhe: mpData })
-  } catch (e) {
-    return res.status(500).json({ passo: 6, erro: 'fetch MP falhou: ' + e.message })
-  }
 
-  return res.status(200).json({ initPoint: mpData.init_point })
+    const mpData = await mpRes.json()
+    if (!mpRes.ok) {
+      return res.status(500).json({ erro: mpData.message || 'Erro ao criar preferência no Mercado Pago.' })
+    }
+
+    return res.status(200).json({ initPoint: mpData.init_point })
+
+  } catch (err) {
+    console.error('Erro checkout:', err)
+    return res.status(500).json({ erro: 'Erro interno. Tente novamente.' })
+  }
 }
