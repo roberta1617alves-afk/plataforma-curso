@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Checkout</title>
   <script src="config.js"></script>
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: #FAFAF9; color: #1C1917; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; }
@@ -21,7 +22,6 @@
     .btn { width: 100%; padding: 14px; background: #009EE3; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 20px; transition: opacity .15s; display: flex; align-items: center; justify-content: center; gap: 10px; }
     .btn:hover { opacity: .9; }
     .btn:disabled { opacity: .6; cursor: not-allowed; }
-    .mp-logo { font-size: .75rem; opacity: .7; }
     .error { color: #DC2626; font-size: .82rem; margin-top: 10px; text-align: center; }
     .seguro { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 14px; font-size: .75rem; color: #78716C; }
     .loading { text-align: center; padding: 40px; color: #78716C; }
@@ -35,13 +35,15 @@
 </div>
 
 <script>
+const MP_PUBLIC_KEY = 'APP_USR-eb22defb-977f-481b-875a-447f7c62ceec'
+const mp = new MercadoPago(MP_PUBLIC_KEY, { locale: 'pt-BR' })
+
 const params = new URLSearchParams(location.search)
 const courseId = params.get('course')
 
 async function init() {
   if (!courseId) { showError('Link inválido. Nenhum curso selecionado.'); return }
 
-  // Busca nome e preço via API server-side (sem depender de autenticação)
   let courseData
   try {
     const res = await fetch(`/api/checkout?courseId=${encodeURIComponent(courseId)}`)
@@ -51,7 +53,7 @@ async function init() {
   if (!courseData || courseData.erro) { showError(courseData?.erro || 'Curso não encontrado.'); return }
 
   const price = courseData.price
-  if (!price) { showError('Preço não configurado para este curso. Entre em contato com a administradora.'); return }
+  if (!price) { showError('Preço não configurado. Entre em contato com a administradora.'); return }
 
   const fmt = n => n.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
 
@@ -70,15 +72,15 @@ async function init() {
       <input type="email" id="payerEmail" placeholder="seuemail@email.com" autocomplete="email" />
     </div>
 
-    <button class="btn" id="btnPay" onclick="pagar('${courseId}')">
+    <button class="btn" id="btnPay" onclick="pagar()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="4" fill="#fff" fill-opacity=".2"/><path d="M4 8h16v8H4z" fill="currentColor" opacity=".3"/><path d="M4 8h16" stroke="currentColor" stroke-width="1.5"/></svg>
-      Pagar com Mercado Pago
+      Pagar agora
     </button>
     <div class="error" id="errMsg" style="display:none"></div>
     <div class="seguro">🔒 Pagamento 100% seguro via Mercado Pago</div>`
 }
 
-async function pagar(courseId) {
+async function pagar() {
   const name = document.getElementById('payerName').value.trim()
   const email = document.getElementById('payerEmail').value.trim()
   const errEl = document.getElementById('errMsg')
@@ -89,30 +91,37 @@ async function pagar(courseId) {
   if (!email || !email.includes('@')) { errEl.textContent = 'Por favor, informe um e-mail válido.'; errEl.style.display = 'block'; return }
 
   btn.disabled = true
-  btn.textContent = 'Redirecionando...'
+  btn.textContent = 'Abrindo pagamento...'
 
   try {
-    const params = new URLSearchParams({ courseId, payerName: name, payerEmail: email })
+    const body = new URLSearchParams({ courseId, payerName: name, payerEmail: email })
     const res = await fetch('/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString()
+      body: body.toString()
     })
     let json
     try { json = await res.json() } catch { json = {} }
-    if (json.initPoint) {
-      window.location.href = json.initPoint
+
+    if (json.prefId) {
+      // Abre o checkout do MP como modal (sem sair da página)
+      mp.checkout({
+        preference: { id: json.prefId },
+        autoOpen: true
+      })
+      btn.disabled = false
+      btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="4" fill="#fff" fill-opacity=".2"/><path d="M4 8h16v8H4z" fill="currentColor" opacity=".3"/><path d="M4 8h16" stroke="currentColor" stroke-width="1.5"/></svg> Pagar agora`
     } else {
       errEl.textContent = json.erro || 'Erro ao iniciar pagamento. Tente novamente.'
       errEl.style.display = 'block'
       btn.disabled = false
-      btn.textContent = 'Pagar com Mercado Pago'
+      btn.textContent = 'Pagar agora'
     }
   } catch {
     errEl.textContent = 'Erro de conexão. Tente novamente.'
     errEl.style.display = 'block'
     btn.disabled = false
-    btn.textContent = 'Pagar com Mercado Pago'
+    btn.textContent = 'Pagar agora'
   }
 }
 

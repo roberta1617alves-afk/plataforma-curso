@@ -80,7 +80,7 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ erro: mpData.message || 'Erro ao criar preferência no Mercado Pago.' })
     }
 
-    return res.status(200).json({ initPoint: mpData.init_point })
+    return res.status(200).json({ initPoint: mpData.init_point, prefId: mpData.id })
 
   } catch (err) {
     console.error('Erro checkout:', err)
