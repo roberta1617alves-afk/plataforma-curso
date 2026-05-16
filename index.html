@@ -618,8 +618,8 @@ function showCourseSelection(courses) {
     const checkoutLink = `${siteUrl}/checkout.html?course=${c.id}`
     const adminControls = isAdmin ? `
       <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:8px;display:flex;flex-direction:column;gap:6px">
-        <button onclick="renameCourse('${c.id}',${JSON.stringify(c.name)})" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">✏️ Renomear curso</button>
-        <button onclick="savePricePrompt('${c.id}',${price||0})" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">💰 ${fmtPrice} — Alterar preço</button>
+        <button data-id="${c.id}" data-name="${c.name.replace(/"/g,'&quot;')}" onclick="renameCourse(this.dataset.id,this.dataset.name)" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">✏️ Renomear curso</button>
+        <button data-id="${c.id}" data-price="${price||0}" onclick="savePricePrompt(this.dataset.id,this.dataset.price)" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">💰 ${fmtPrice} — Alterar preço</button>
         <button onclick="navigator.clipboard.writeText('${checkoutLink}');toast('✅ Link copiado!')" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">🔗 Copiar link de checkout</button>
       </div>` : ''
     return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:8px">
