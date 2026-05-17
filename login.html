@@ -235,16 +235,22 @@
   const urlParams = new URLSearchParams(window.location.search)
   const veiuDoLogout = urlParams.get('saiu') === '1'
 
+  // Detecta se é um link de recuperação de senha pelo hash da URL
+  const hashParams = new URLSearchParams(window.location.hash.replace('#', ''))
+  const isRecovery = hashParams.get('type') === 'recovery'
+
   function showView(id) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
     document.getElementById(id).classList.add('active')
   }
 
-  if (veiuDoLogout) {
-    // Força limpeza da sessão e mostra o formulário
+  // Se for link de reset, não faz auto-redirect — aguarda o evento PASSWORD_RECOVERY
+  if (isRecovery) {
+    // não faz nada aqui, o onAuthStateChange vai mostrar a view correta
+  } else if (veiuDoLogout) {
     db.auth.signOut().catch(() => {})
   } else {
-    // Redireciona para plataforma se já estiver logada
+    // Redireciona para plataforma se já estiver logada (apenas se não for recovery)
     db.auth.getSession().then(({ data: { session } }) => {
       if (session) window.location.replace('index.html')
     })
@@ -257,7 +263,7 @@
       showView('viewReset')
       return
     }
-    if (event === 'SIGNED_IN' && session && !veiuDoLogout) {
+    if (event === 'SIGNED_IN' && session && !veiuDoLogout && !isRecovery) {
       window.location.replace('index.html')
     }
     if (event === 'SIGNED_IN' && session && veiuDoLogout) {
