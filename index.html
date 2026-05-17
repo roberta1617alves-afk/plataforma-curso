@@ -1328,7 +1328,21 @@ async function showStudentsPage() {
         <div class="fgroup"><label>Nome (opcional)</label><input type="text" id="newStudentName" placeholder="Ex: Maria Silva" /></div>
         <div class="fgroup"><label>E-mail *</label><input type="email" id="newStudentEmail" placeholder="aluna@email.com" /></div>
         <div class="fgroup"><label>WhatsApp (opcional)</label><input type="text" id="newStudentPhone" placeholder="Ex: 11999998888" /></div>
-        <button class="btn btn-dark" id="btnAddStudent" style="margin-bottom:0;height:40px;align-self:flex-end">+ Adicionar</button>
+      </div>
+      ${allCourses.length > 0 ? `
+      <div style="margin-top:12px">
+        <label style="font-size:.73rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Dar acesso ao(s) curso(s)</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+          ${allCourses.map(c => `
+            <label style="display:flex;align-items:center;gap:7px;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:500;transition:all .12s" id="label_${c.id}">
+              <input type="checkbox" value="${c.id}" name="courseAccess" style="width:15px;height:15px;cursor:pointer;accent-color:#1C1917" onchange="document.getElementById('label_${c.id}').style.borderColor=this.checked?'#1C1917':'var(--border)';document.getElementById('label_${c.id}').style.background=this.checked?'#F5F5F4':'transparent'">
+              ${c.name}
+            </label>
+          `).join('')}
+        </div>
+      </div>` : ''}
+      <div style="margin-top:12px">
+        <button class="btn btn-dark" id="btnAddStudent">+ Adicionar aluna</button>
       </div>
       <div class="upload-status" id="addStudentStatus" style="margin-top:8px"></div>
       <div class="bulk-add" style="margin-top:16px">
@@ -1383,26 +1397,43 @@ async function addStudent(token) {
   const name  = document.getElementById('newStudentName').value.trim()
   const phone = document.getElementById('newStudentPhone').value.trim()
   const status = document.getElementById('addStudentStatus')
+
+  // Cursos selecionados
+  const selectedCourses = [...document.querySelectorAll('input[name="courseAccess"]:checked')].map(el => el.value)
+
   if (!email) { status.textContent = 'Informe o e-mail.'; status.className = 'upload-status err'; return }
   status.textContent = 'Adicionando...'; status.className = 'upload-status'
+
   const res = await fetch('/api/students', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, name, phone })
   })
   const json = await res.json()
+
   if (res.ok) {
-    const waOk  = json.waStatus === 'enviado'
-    const waMsg = !phone.trim()          ? ' | ⚠️ WhatsApp: número não informado'
-                : json.waStatus === 'enviado' ? ' | ✅ WhatsApp enviado'
-                : json.waStatus === 'sem_chave' ? ' | ⚠️ WhatsApp: credenciais não configuradas'
-                : ` | ❌ WhatsApp: ${json.waStatus}`
-    status.textContent = `✓ ${email} adicionada! E-mail enviado.${waMsg}`
+    const userId = json.student?.id
+
+    // Concede acesso aos cursos selecionados
+    if (userId && selectedCourses.length > 0) {
+      status.textContent = 'Liberando acesso aos cursos...'
+      await Promise.all(selectedCourses.map(courseId =>
+        fetch('/api/courses?action=access', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, courseId })
+        })
+      ))
+    }
+
+    const waMsg = !phone              ? ''
+                : json.waStatus === 'enviado'   ? ' | ✅ WhatsApp enviado'
+                : json.waStatus === 'sem_chave' ? ' | ⚠️ WA: credenciais não configuradas'
+                : ` | ❌ WA: ${json.waStatus}`
+    const cursosMsg = selectedCourses.length > 0 ? ` | 📚 ${selectedCourses.length} curso(s) liberado(s)` : ''
+    status.textContent = `✓ ${email} adicionada!${cursosMsg}${waMsg}`
     status.className = 'upload-status ok'
-    document.getElementById('newStudentEmail').value = ''
-    document.getElementById('newStudentName').value = ''
-    document.getElementById('newStudentPhone').value = ''
-    setTimeout(() => showStudentsPage(), 12000)
+    setTimeout(() => showStudentsPage(), 4000)
   } else {
     status.textContent = json.erro || 'Erro ao adicionar.'
     status.className = 'upload-status err'
