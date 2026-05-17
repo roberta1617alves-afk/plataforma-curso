@@ -240,33 +240,34 @@
     document.getElementById(id).classList.add('active')
   }
 
-  // Detecta link de recuperação de senha IMEDIATAMENTE pelo hash da URL
-  // e mostra o formulário antes de qualquer código do Supabase rodar
-  const hashParams = new URLSearchParams(window.location.hash.replace('#', ''))
-  const isRecovery = hashParams.get('type') === 'recovery'
+  // Detecta se a URL contém callback de autenticação (PKCE: ?code= ou hash legacy)
+  const isAuthCallback = window.location.search.includes('code=') ||
+                         window.location.hash.includes('access_token') ||
+                         window.location.hash.includes('type=recovery')
 
-  if (isRecovery) {
-    // Mostra o formulário de nova senha na hora — sem esperar eventos
-    showView('viewReset')
-  } else if (veiuDoLogout) {
-    db.auth.signOut().catch(() => {})
-  } else {
-    // Redireciona para plataforma se já estiver logada
-    db.auth.getSession().then(({ data: { session } }) => {
-      if (session) window.location.replace('index.html')
-    })
-  }
+  // Flag: impede redirect para index enquanto PASSWORD_RECOVERY não disparar
+  let emModoRecovery = false
 
-  // Para login normal e magic link (não recovery)
+  // onAuthStateChange PRIMEIRO — antes de qualquer getSession
   db.auth.onAuthStateChange((event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
+      emModoRecovery = true
       showView('viewReset')
       return
     }
-    if (event === 'SIGNED_IN' && session && !isRecovery && !veiuDoLogout) {
+    if (event === 'SIGNED_IN' && session && !emModoRecovery && !veiuDoLogout) {
       window.location.replace('index.html')
     }
   })
+
+  if (veiuDoLogout) {
+    db.auth.signOut().catch(() => {})
+  } else if (!isAuthCallback) {
+    // Só redireciona automaticamente se NÃO for callback de auth
+    db.auth.getSession().then(({ data: { session } }) => {
+      if (session && !emModoRecovery) window.location.replace('index.html')
+    })
+  }
 
   // Utils
   function showAlert(id, msg, type = 'error') {
