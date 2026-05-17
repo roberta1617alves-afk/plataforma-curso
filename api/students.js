@@ -42,7 +42,7 @@ module.exports = async function handler(req, res) {
 
   // ── CRIAR ALUNA ──
   if (req.method === 'POST') {
-    const { email, name, phone } = req.body || {}
+    const { email, name, phone, courseNames } = req.body || {}
     if (!email) return res.status(400).json({ erro: 'E-mail é obrigatório.' })
 
     const password = process.env.DEFAULT_STUDENT_PASSWORD || 'Mentoras@2024'
@@ -67,7 +67,10 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ erro: msg })
     }
 
-    const nomeCurso = process.env.COURSE_NAME || 'o curso'
+    // Usa o nome do curso selecionado pelo admin; cai no env var como fallback
+    const nomeCurso = (courseNames && courseNames.length > 0)
+      ? courseNames.join(' e ')
+      : (process.env.COURSE_NAME || 'o curso')
     const siteUrl   = process.env.SITE_URL || ''
     const nomAluna  = (name || '').trim().split(' ')[0] || 'Aluna'
 

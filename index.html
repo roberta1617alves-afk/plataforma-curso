@@ -1336,7 +1336,7 @@ async function showStudentsPage() {
           ${allCourses.map(c => `
             <label style="display:flex;align-items:center;gap:7px;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:500;transition:all .12s" id="label_${c.id}">
               <input type="checkbox" value="${c.id}" name="courseAccess" style="width:15px;height:15px;cursor:pointer;accent-color:#1C1917" onchange="document.getElementById('label_${c.id}').style.borderColor=this.checked?'#1C1917':'var(--border)';document.getElementById('label_${c.id}').style.background=this.checked?'#F5F5F4':'transparent'">
-              ${c.name}
+              <span>${c.name}</span>
             </label>
           `).join('')}
         </div>
@@ -1398,16 +1398,20 @@ async function addStudent(token) {
   const phone = document.getElementById('newStudentPhone').value.trim()
   const status = document.getElementById('addStudentStatus')
 
-  // Cursos selecionados
-  const selectedCourses = [...document.querySelectorAll('input[name="courseAccess"]:checked')].map(el => el.value)
+  // Cursos selecionados — pega ID e nome de cada checkbox marcado
+  const selectedCourses = [...document.querySelectorAll('input[name="courseAccess"]:checked')]
+    .map(el => ({ id: el.value, name: el.closest('label')?.querySelector('span')?.textContent?.trim() || el.value }))
 
   if (!email) { status.textContent = 'Informe o e-mail.'; status.className = 'upload-status err'; return }
   status.textContent = 'Adicionando...'; status.className = 'upload-status'
 
+  // Envia nomes dos cursos junto para a mensagem de boas-vindas usar o nome correto
+  const courseNames = selectedCourses.map(c => c.name)
+
   const res = await fetch('/api/students', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, name, phone })
+    body: JSON.stringify({ email, name, phone, courseNames })
   })
   const json = await res.json()
 
@@ -1417,11 +1421,11 @@ async function addStudent(token) {
     // Concede acesso aos cursos selecionados
     if (userId && selectedCourses.length > 0) {
       status.textContent = 'Liberando acesso aos cursos...'
-      await Promise.all(selectedCourses.map(courseId =>
+      const accessResults = await Promise.all(selectedCourses.map(c =>
         fetch('/api/courses?action=access', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, courseId })
+          body: JSON.stringify({ userId, courseId: c.id })
         })
       ))
     }
@@ -1430,7 +1434,9 @@ async function addStudent(token) {
                 : json.waStatus === 'enviado'   ? ' | ✅ WhatsApp enviado'
                 : json.waStatus === 'sem_chave' ? ' | ⚠️ WA: credenciais não configuradas'
                 : ` | ❌ WA: ${json.waStatus}`
-    const cursosMsg = selectedCourses.length > 0 ? ` | 📚 ${selectedCourses.length} curso(s) liberado(s)` : ''
+    const cursosMsg = selectedCourses.length > 0
+      ? ` | 📚 Acesso: ${selectedCourses.map(c => c.name).join(', ')}`
+      : ''
     status.textContent = `✓ ${email} adicionada!${cursosMsg}${waMsg}`
     status.className = 'upload-status ok'
     setTimeout(() => showStudentsPage(), 4000)
