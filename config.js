@@ -6,7 +6,7 @@ window.SUPABASE_URL      = 'https://jqcsketstltcsdtdkdyp.supabase.co'
 window.SUPABASE_ANON_KEY = 'sb_publishable_-USKoiiGQqWycsKiWKxWkQ_COpABKl9'
 
 // Nome que aparece no topo da plataforma
-window.SITE_NAME = 'CLAUDE IA PARA MENTORAS'
+window.SITE_NAME = 'Plataforma Roberta Alves'
 
 // E-mail da administradora — SOMENTE esse e-mail verá o botão "Editar"
 window.ADMIN_EMAIL = 'roberta1617alves@gmail.com'
