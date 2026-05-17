@@ -88,28 +88,55 @@ module.exports = async function handler(req, res) {
         const r = await resend.emails.send({
           from: process.env.FROM_EMAIL || 'onboarding@resend.dev',
           to: email,
-          subject: `Seu acesso ao ${nomeCurso} esta pronto!`,
+          subject: `Bem-vinda ao ${nomeCurso}! Seu acesso esta liberado 🎉`,
           html: `
-<div style="font-family:'Segoe UI',sans-serif;max-width:520px;margin:40px auto;background:#fff;border:1px solid #E7E5E4;border-radius:16px;overflow:hidden">
-  <div style="background:#1C1917;padding:28px 36px;text-align:center">
-    <h1 style="color:#fff;font-size:1.2rem;margin:0;font-weight:800">${nomeCurso}</h1>
+<div style="font-family:'Segoe UI',system-ui,sans-serif;max-width:540px;margin:40px auto;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
+
+  <!-- Header -->
+  <div style="background:#1C1917;padding:36px;text-align:center">
+    <div style="font-size:2rem;margin-bottom:10px">🎓</div>
+    <h1 style="color:#fff;font-size:1.3rem;margin:0 0 6px;font-weight:800;letter-spacing:-.02em">${nomeCurso}</h1>
+    <p style="color:rgba(255,255,255,.6);font-size:.85rem;margin:0">Acesso liberado com sucesso</p>
   </div>
-  <div style="padding:32px 36px">
-    <p style="font-size:1rem;font-weight:600;margin-bottom:12px">Ola, ${nomAluna}!</p>
-    <p style="font-size:.9rem;line-height:1.7;color:#44403C">Seu acesso foi liberado. Entre com os dados abaixo:</p>
-    <div style="background:#F5F5F4;border-radius:10px;padding:16px 20px;margin:16px 0">
-      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#78716C;margin-bottom:6px">E-mail</div>
-      <div style="font-size:.92rem;color:#1C1917;font-weight:500">${email}</div>
+
+  <!-- Body -->
+  <div style="padding:36px">
+    <p style="font-size:1.05rem;font-weight:700;color:#1C1917;margin:0 0 8px">Ola, ${nomAluna}! 👋</p>
+    <p style="font-size:.92rem;line-height:1.75;color:#57534E;margin:0 0 24px">
+      Que alegria ter voce aqui! Seu acesso ao <strong style="color:#1C1917">${nomeCurso}</strong> foi liberado e voce ja pode comecar a estudar agora mesmo. 🚀
+    </p>
+
+    <!-- Dados de acesso -->
+    <div style="background:#FAFAF9;border:1.5px solid #E7E5E4;border-radius:12px;padding:20px;margin-bottom:24px">
+      <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#78716C;margin:0 0 14px">Seus dados de acesso</p>
+      <div style="margin-bottom:12px">
+        <div style="font-size:.75rem;color:#A8A29E;margin-bottom:3px">E-mail</div>
+        <div style="font-size:.9rem;color:#1C1917;font-weight:600">${email}</div>
+      </div>
+      <div>
+        <div style="font-size:.75rem;color:#A8A29E;margin-bottom:3px">Senha de acesso</div>
+        <div style="font-size:.9rem;color:#1C1917;font-weight:600;letter-spacing:.05em">${password}</div>
+      </div>
     </div>
-    <div style="background:#F5F5F4;border-radius:10px;padding:16px 20px;margin:16px 0">
-      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#78716C;margin-bottom:6px">Senha de acesso</div>
-      <div style="font-size:.92rem;color:#1C1917;font-weight:500">${password}</div>
-    </div>
-    <p style="font-size:.82rem;color:#78716C">Voce pode trocar sua senha apos o primeiro acesso.</p>
-    <div style="text-align:center;margin:24px 0">
-      <a href="${siteUrl}/login.html" style="display:inline-block;background:#1C1917;color:#fff;text-decoration:none;padding:13px 30px;border-radius:8px;font-size:.9rem;font-weight:700">Acessar o curso</a>
+
+    <p style="font-size:.82rem;color:#78716C;margin:0 0 24px">
+      💡 <strong>Dica:</strong> voce pode criar uma senha personalizada logo apos o primeiro acesso.
+    </p>
+
+    <!-- CTA -->
+    <div style="text-align:center">
+      <a href="${siteUrl}/login.html"
+         style="display:inline-block;background:#1C1917;color:#fff;text-decoration:none;padding:14px 36px;border-radius:10px;font-size:.95rem;font-weight:700;letter-spacing:.01em">
+        Acessar o curso agora →
+      </a>
     </div>
   </div>
+
+  <!-- Footer -->
+  <div style="background:#F5F5F4;padding:20px 36px;text-align:center;border-top:1px solid #E7E5E4">
+    <p style="font-size:.78rem;color:#A8A29E;margin:0">Qualquer duvida, entre em contato. Estamos aqui para ajudar! 💛</p>
+  </div>
+
 </div>`
         })
         if (r.error) {
@@ -134,7 +161,7 @@ module.exports = async function handler(req, res) {
         const numFinal = numLimpo.startsWith('55') ? numLimpo : `55${numLimpo}`
         console.log('[students] Enviando WA para:', numFinal)
 
-        const msg = `Ola ${nomAluna}! Seu acesso ao ${nomeCurso} esta liberado!\n\nE-mail: ${email.trim().toLowerCase()}\nSenha: ${password}\n\nAcesse: ${siteUrl}/login.html`
+        const msg = `Ola, ${nomAluna}! 🎉\n\nSeu acesso ao *${nomeCurso}* foi liberado!\n\nEstamos muito felizes em ter voce com a gente. Prepare-se para uma experiencia incrivel! 🚀\n\n*Seus dados de acesso:*\n📧 E-mail: ${email.trim().toLowerCase()}\n🔒 Senha: ${password}\n\n👇 Acesse agora:\n${siteUrl}/login.html\n\nQualquer duvida, estamos aqui! 💛`
         const waBody = `token=${encodeURIComponent(process.env.ULTRAMSG_TOKEN)}&to=${encodeURIComponent(numFinal)}&body=${encodeURIComponent(msg)}`
 
         // Limpa espaços/quebras de linha das env vars (causa "unescaped characters")
