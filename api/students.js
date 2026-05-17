@@ -61,10 +61,22 @@ module.exports = async function handler(req, res) {
       user_metadata: { name: (name || '').trim(), phone: phoneClean }
     })
     if (error) {
-      const msg = error.message.includes('already been registered')
-        ? 'Este e-mail já está cadastrado.'
-        : error.message
-      return res.status(400).json({ erro: msg })
+      // Se aluna já existe, retorna os dados dela para que o frontend possa liberar acesso aos cursos
+      if (error.message.includes('already been registered')) {
+        const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+        const existing = (listData?.users || []).find(u => u.email === email.trim().toLowerCase())
+        if (existing) {
+          return res.status(200).json({
+            ok: true,
+            alreadyExists: true,
+            student: { id: existing.id, email: existing.email, name: existing.user_metadata?.name || '' },
+            emailStatus: 'nao_enviado',
+            waStatus: 'nao_enviado'
+          })
+        }
+        return res.status(400).json({ erro: 'Este e-mail já está cadastrado.' })
+      }
+      return res.status(400).json({ erro: error.message })
     }
 
     // Usa o nome do curso selecionado pelo admin; cai no env var como fallback

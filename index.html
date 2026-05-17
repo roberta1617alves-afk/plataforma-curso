@@ -476,6 +476,7 @@ let editingMat = false
 let notesSaveTimer = null
 let currentCourseId = null
 let saveTimer = null
+let studentsPreselectedCourse = null  // Curso pré-selecionado ao abrir a página de alunas
 
 function save() {
   clearTimeout(saveTimer)
@@ -645,7 +646,7 @@ function showCourseSelection(courses) {
         <button data-id="${c.id}" data-name="${c.name.replace(/"/g,'&quot;')}" onclick="renameCourse(this.dataset.id,this.dataset.name)" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">✏️ Renomear curso</button>
         <button data-id="${c.id}" data-price="${price||0}" onclick="savePricePrompt(this.dataset.id,this.dataset.price)" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">💰 ${fmtPrice} — Alterar preço</button>
         <button onclick="navigator.clipboard.writeText('${checkoutLink}');toast('✅ Link copiado!')" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">🔗 Copiar link de checkout</button>
-        <button onclick="goToStudentsPage()" style="padding:7px;background:#1C1917;border:none;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;text-align:left">👩‍🎓 Gerenciar Alunas</button>
+        <button onclick="goToStudentsPage('${c.id}')" style="padding:7px;background:#1C1917;border:none;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;text-align:left">👩‍🎓 Gerenciar Alunas</button>
       </div>` : ''
     return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:8px">
       <div onclick="selectCourse({id:'${c.id}',name:${JSON.stringify(c.name)}})" style="cursor:pointer">
@@ -703,7 +704,9 @@ function voltarCursoAtual() {
   render()
 }
 
-function goToStudentsPage() {
+function goToStudentsPage(courseId) {
+  // Define o curso pré-selecionado (vindo do card de um curso específico)
+  studentsPreselectedCourse = courseId || null
   // Fecha a tela de seleção de cursos
   document.getElementById('courseSelPage')?.remove()
   // Restaura o layout principal
@@ -1364,6 +1367,16 @@ async function showStudentsPage() {
       </table>
     </div>`
 
+  // Pré-seleciona o curso correto no formulário de adicionar aluna
+  if (studentsPreselectedCourse) {
+    const cb = document.querySelector(`input[name="courseAccess"][value="${studentsPreselectedCourse}"]`)
+    if (cb) {
+      cb.checked = true
+      const lbl = document.getElementById(`label_${studentsPreselectedCourse}`)
+      if (lbl) { lbl.style.borderColor = '#1C1917'; lbl.style.background = '#F5F5F4' }
+    }
+  }
+
   document.getElementById('btnAddStudent').addEventListener('click', () => addStudent(token))
   document.getElementById('newStudentEmail').addEventListener('keydown', e => { if (e.key === 'Enter') addStudent(token) })
   document.getElementById('btnBulkAdd').addEventListener('click', () => bulkAddStudents(token))
@@ -1418,10 +1431,10 @@ async function addStudent(token) {
   if (res.ok) {
     const userId = json.student?.id
 
-    // Concede acesso aos cursos selecionados
+    // Concede acesso aos cursos selecionados (funciona tanto para alunas novas quanto existentes)
     if (userId && selectedCourses.length > 0) {
       status.textContent = 'Liberando acesso aos cursos...'
-      const accessResults = await Promise.all(selectedCourses.map(c =>
+      await Promise.all(selectedCourses.map(c =>
         fetch('/api/courses?action=access', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -1430,14 +1443,20 @@ async function addStudent(token) {
       ))
     }
 
-    const waMsg = !phone              ? ''
-                : json.waStatus === 'enviado'   ? ' | ✅ WhatsApp enviado'
-                : json.waStatus === 'sem_chave' ? ' | ⚠️ WA: credenciais não configuradas'
-                : ` | ❌ WA: ${json.waStatus}`
     const cursosMsg = selectedCourses.length > 0
       ? ` | 📚 Acesso: ${selectedCourses.map(c => c.name).join(', ')}`
       : ''
-    status.textContent = `✓ ${email} adicionada!${cursosMsg}${waMsg}`
+
+    if (json.alreadyExists) {
+      // Aluna já existia — apenas liberou acesso aos cursos selecionados
+      status.textContent = `✓ Aluna já cadastrada. Acesso liberado!${cursosMsg}`
+    } else {
+      const waMsg = !phone              ? ''
+                  : json.waStatus === 'enviado'   ? ' | ✅ WhatsApp enviado'
+                  : json.waStatus === 'sem_chave' ? ' | ⚠️ WA: credenciais não configuradas'
+                  : ` | ❌ WA: ${json.waStatus}`
+      status.textContent = `✓ ${email} adicionada!${cursosMsg}${waMsg}`
+    }
     status.className = 'upload-status ok'
     setTimeout(() => showStudentsPage(), 4000)
   } else {
@@ -1589,7 +1608,10 @@ document.getElementById('photoFileInput').addEventListener('change', async (e) =
 document.getElementById('btnNewLesson').addEventListener('click', () => openLessonModal())
 document.getElementById('btnNewModule').addEventListener('click', () => openModuleModal())
 document.getElementById('btnOverview').addEventListener('click', showOverview)
-document.getElementById('btnStudentsPage').addEventListener('click', showStudentsPage)
+document.getElementById('btnStudentsPage').addEventListener('click', () => {
+  studentsPreselectedCourse = currentCourseId  // Pré-seleciona o curso atual do admin
+  showStudentsPage()
+})
 
 // ── UPLOAD DE VÍDEO na modal de aula ──
 document.getElementById('videoFileInput').addEventListener('change', async (e) => {
