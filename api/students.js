@@ -137,16 +137,22 @@ module.exports = async function handler(req, res) {
         const msg = `Ola ${nomAluna}! Seu acesso ao ${nomeCurso} esta liberado!\n\nE-mail: ${email.trim().toLowerCase()}\nSenha: ${password}\n\nAcesse: ${siteUrl}/login.html`
         const waBody = `token=${encodeURIComponent(process.env.ULTRAMSG_TOKEN)}&to=${encodeURIComponent(numFinal)}&body=${encodeURIComponent(msg)}`
 
-        // Usa https nativo do Node (evita problemas com fetch em funções serverless)
+        // Limpa espaços/quebras de linha das env vars (causa "unescaped characters")
         const https = require('https')
+        const instance = (process.env.ULTRAMSG_INSTANCE || '').trim()
+        const waToken  = (process.env.ULTRAMSG_TOKEN  || '').trim()
+
+        const waBodyClean = `token=${encodeURIComponent(waToken)}&to=${encodeURIComponent(numFinal)}&body=${encodeURIComponent(msg)}`
+
         const responseBody = await new Promise((resolve, reject) => {
+          const reqUrl = new URL(`https://api.ultramsg.com/${instance}/messages/chat`)
           const req = https.request({
-            hostname: 'api.ultramsg.com',
-            path: `/${process.env.ULTRAMSG_INSTANCE}/messages/chat`,
+            hostname: reqUrl.hostname,
+            path: reqUrl.pathname,
             method: 'POST',
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
-              'Content-Length': Buffer.byteLength(waBody)
+              'Content-Length': Buffer.byteLength(waBodyClean)
             }
           }, (resp) => {
             let raw = ''
@@ -160,7 +166,7 @@ module.exports = async function handler(req, res) {
             console.log('[students] WA erro de rede:', e.message)
             reject(e)
           })
-          req.write(waBody)
+          req.write(waBodyClean)
           req.end()
         })
 
