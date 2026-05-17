@@ -26,7 +26,7 @@
     /* HEADER */
     header { position:fixed;top:0;left:0;right:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border); }
     .header-main { height:var(--header-h);display:flex;align-items:center;padding:0 16px;gap:10px; }
-    .btn-menu { display:none;background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;color:var(--muted); }
+    .btn-menu { display:flex;align-items:center;background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;color:var(--muted); }
     .btn-menu:hover { background:var(--light); }
     .btn-menu svg { width:20px;height:20px;display:block; }
     .logo { font-size:.95rem;font-weight:800;letter-spacing:-.02em;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
@@ -301,7 +301,6 @@
 
     /* RESPONSIVE */
     @media (max-width:768px) {
-      .btn-menu { display:flex;align-items:center; }
       aside { transform:translateX(-100%);box-shadow:4px 0 24px rgba(0,0,0,.12); }
       aside.open { transform:translateX(0); }
       .backdrop { display:none; }
@@ -314,13 +313,12 @@
       .lesson-header h1 { font-size:1.2rem; }
       .lesson-nav { flex-direction:column; }
       .nav-card.next { flex-direction:row;text-align:left; }
-      .user-email { display:none; }
+      .user-email { display:block;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.65rem; }
       .add-link-row { flex-direction:column; }
       .instructor-card { flex-direction:column;align-items:flex-start; }
       .btn-edit-instructor { margin-left:0; }
     }
     @media (min-width:769px) {
-      .btn-menu { display:none !important; }
       aside { transform:translateX(0) !important; }
       .backdrop { display:none !important; }
     }
@@ -563,13 +561,32 @@ async function initAuth() {
   const { data: { session } } = await db.auth.getSession()
   if (!session) { window.location.replace('login.html'); return }
   currentUser = session.user
-  isAdmin = currentUser.email === window.ADMIN_EMAIL
+  // Verificação de admin feita no SERVIDOR (não pode ser manipulada)
+  try {
+    const meRes = await fetch('/api/me', {
+      headers: { Authorization: `Bearer ${session.access_token}` }
+    })
+    const meData = await meRes.json()
+    isAdmin = meData.isAdmin === true
+  } catch (e) {
+    isAdmin = false
+  }
+
   const email = currentUser.email || ''
   const name = currentUser.user_metadata?.name || email
   document.getElementById('userEmail').textContent = email
   document.getElementById('userAvatar').textContent = (name[0] || '?').toUpperCase()
   document.getElementById('btnAdmin').style.display = isAdmin ? '' : 'none'
   document.getElementById('btnCourses').style.display = isAdmin ? '' : 'none'
+
+  // Garante que admin-mode NUNCA apareça para alunas
+  if (!isAdmin) {
+    document.body.classList.remove('admin-mode')
+    adminMode = false
+    // Esconde qualquer botão admin que possa ter ficado visível
+    document.querySelectorAll('[data-admin-only]').forEach(el => el.style.display = 'none')
+  }
+
   await loadCourses()
 }
 
@@ -581,8 +598,15 @@ async function loadCourses() {
       const { data: d } = await db.from('courses').select('id, name, data').order('created_at')
       courses = d || []
     } else {
-      const { data: d } = await db.from('course_access').select('courses(id, name, data)').eq('user_id', currentUser.id)
-      courses = (d || []).map(a => a.courses).filter(Boolean)
+      // Usa API segura do servidor — não depende de RLS do Supabase
+      const { data: { session } } = await db.auth.getSession()
+      const res = await fetch('/api/student-courses', {
+        headers: { Authorization: `Bearer ${session?.access_token}` }
+      })
+      if (res.ok) {
+        const json = await res.json()
+        courses = json.courses || []
+      }
     }
   } catch (e) { console.error(e) }
 
@@ -693,6 +717,22 @@ function goToStudentsPage() {
 }
 
 async function selectCourse(course) {
+  // Para alunas: verifica acesso no servidor antes de carregar
+  if (!isAdmin) {
+    const { data: { session } } = await db.auth.getSession()
+    const checkRes = await fetch('/api/student-courses', {
+      headers: { Authorization: `Bearer ${session?.access_token}` }
+    })
+    if (checkRes.ok) {
+      const checkJson = await checkRes.json()
+      const allowed = (checkJson.courses || []).some(c => c.id === course.id)
+      if (!allowed) {
+        toast('❌ Você não tem acesso a este curso.')
+        return
+      }
+    }
+  }
+
   document.getElementById('courseSelPage')?.remove()
   currentCourseId = course.id
   document.getElementById('logo').textContent = course.name || window.SITE_NAME
@@ -758,8 +798,11 @@ async function saveProgress(lessonId) {
   }, { onConflict: 'user_id,course_id,lesson_id' })
 }
 
-db.auth.onAuthStateChange((e, s) => { if (e === 'SIGNED_OUT') window.location.replace('login.html') })
-document.getElementById('btnLogout').addEventListener('click', () => db.auth.signOut())
+db.auth.onAuthStateChange((e, s) => { if (e === 'SIGNED_OUT') window.location.replace('login.html?saiu=1') })
+document.getElementById('btnLogout').addEventListener('click', async () => {
+  try { await db.auth.signOut() } catch(e) {}
+  window.location.replace('login.html?saiu=1')
+})
 document.getElementById('btnCourses').addEventListener('click', async () => {
   let courses = []
   const { data: d } = await db.from('courses').select('id, name, data').order('created_at')
@@ -876,28 +919,40 @@ function renderOverview() {
   const lastLesson = data.lessons.find(l => !data.progress[l.id]?.completed)
     || data.lessons[0]
 
+  let globalLessonIdx = 0
   const modulesHtml = data.modules.length
     ? data.modules.map(m => {
         const ml = getModuleLessons(m.id)
         const md = ml.filter(l => data.progress[l.id]?.completed).length
-        return `<div class="module-card" data-module="${m.id}">
-          <div class="module-card-icon">${m.emoji || '📁'}</div>
-          <div class="module-card-info">
-            <div class="module-card-title">${m.title}</div>
-            <div class="module-card-meta">${ml.length} aula${ml.length !== 1 ? 's' : ''}</div>
+        const lessonsInModule = ml.map(l => {
+          globalLessonIdx++
+          const isDone = data.progress[l.id]?.completed
+          return `<div class="module-card" data-lesson="${l.id}" style="margin-top:4px">
+            <div class="module-card-icon" style="font-size:.8rem;width:28px;height:28px">${isDone ? '✅' : '▶️'}</div>
+            <div class="module-card-info">
+              <div class="module-card-title">${l.title}</div>
+              ${l.duration ? `<div class="module-card-meta">⏱ ${l.duration}</div>` : ''}
+            </div>
+            ${isDone ? '<div class="module-card-progress">Concluída</div>' : ''}
+          </div>`
+        }).join('')
+        return `<div style="margin-bottom:16px">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:4px 4px 6px;display:flex;justify-content:space-between;align-items:center">
+            <span>${m.emoji || '📁'} ${m.title}</span>
+            <span>${md}/${ml.length} concluídas</span>
           </div>
-          <div class="module-card-progress">${md}/${ml.length} concluídas</div>
+          ${lessonsInModule || '<div style="padding:6px 4px;font-size:.82rem;color:var(--muted)">Nenhuma aula neste módulo ainda.</div>'}
         </div>`
       }).join('')
     : data.lessons.map((l, i) => {
-        const done = data.progress[l.id]?.completed
+        const isDone = data.progress[l.id]?.completed
         return `<div class="module-card" data-lesson="${l.id}">
-          <div class="module-card-icon">${done ? '✅' : '▶️'}</div>
+          <div class="module-card-icon">${isDone ? '✅' : '▶️'}</div>
           <div class="module-card-info">
             <div class="module-card-title">${i + 1}. ${l.title}</div>
             ${l.duration ? `<div class="module-card-meta">⏱ ${l.duration}</div>` : ''}
           </div>
-          ${done ? '<div class="module-card-progress">Concluída</div>' : ''}
+          ${isDone ? '<div class="module-card-progress">Concluída</div>' : ''}
         </div>`
       }).join('')
 
@@ -968,7 +1023,7 @@ function renderOverview() {
 
     <!-- Modules/Lessons list -->
     ${total > 0 ? `<div class="modules-overview">
-      <h3>${data.modules.length ? 'Módulos do curso' : 'Aulas do curso'}</h3>
+      <h3>Aulas do curso</h3>
       <div class="module-cards">${modulesHtml}</div>
     </div>` : `<div style="text-align:center;padding:40px;color:var(--muted);font-size:.9rem">${adminMode ? 'Clique em <b>+ Nova aula</b> no menu lateral para começar.' : 'Nenhuma aula disponível ainda.'}</div>`}
   `
@@ -1272,6 +1327,7 @@ async function showStudentsPage() {
       <div class="add-student-row">
         <div class="fgroup"><label>Nome (opcional)</label><input type="text" id="newStudentName" placeholder="Ex: Maria Silva" /></div>
         <div class="fgroup"><label>E-mail *</label><input type="email" id="newStudentEmail" placeholder="aluna@email.com" /></div>
+        <div class="fgroup"><label>WhatsApp (opcional)</label><input type="text" id="newStudentPhone" placeholder="Ex: 11999998888" /></div>
         <button class="btn btn-dark" id="btnAddStudent" style="margin-bottom:0;height:40px;align-self:flex-end">+ Adicionar</button>
       </div>
       <div class="upload-status" id="addStudentStatus" style="margin-top:8px"></div>
@@ -1325,21 +1381,28 @@ async function toggleAccess(userId, courseId, hasAccess, token) {
 async function addStudent(token) {
   const email = document.getElementById('newStudentEmail').value.trim()
   const name  = document.getElementById('newStudentName').value.trim()
+  const phone = document.getElementById('newStudentPhone').value.trim()
   const status = document.getElementById('addStudentStatus')
   if (!email) { status.textContent = 'Informe o e-mail.'; status.className = 'upload-status err'; return }
   status.textContent = 'Adicionando...'; status.className = 'upload-status'
   const res = await fetch('/api/students', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, name })
+    body: JSON.stringify({ email, name, phone })
   })
   const json = await res.json()
   if (res.ok) {
-    status.textContent = `✓ ${email} adicionada! E-mail de boas-vindas enviado.`
+    const waOk  = json.waStatus === 'enviado'
+    const waMsg = !phone.trim()          ? ' | ⚠️ WhatsApp: número não informado'
+                : json.waStatus === 'enviado' ? ' | ✅ WhatsApp enviado'
+                : json.waStatus === 'sem_chave' ? ' | ⚠️ WhatsApp: credenciais não configuradas'
+                : ` | ❌ WhatsApp: ${json.waStatus}`
+    status.textContent = `✓ ${email} adicionada! E-mail enviado.${waMsg}`
     status.className = 'upload-status ok'
     document.getElementById('newStudentEmail').value = ''
     document.getElementById('newStudentName').value = ''
-    setTimeout(() => showStudentsPage(), 1200)
+    document.getElementById('newStudentPhone').value = ''
+    setTimeout(() => showStudentsPage(), 3000)
   } else {
     status.textContent = json.erro || 'Erro ao adicionar.'
     status.className = 'upload-status err'
@@ -1554,11 +1617,16 @@ document.querySelectorAll('.overlay').forEach(el => {
 
 // ── MOBILE SIDEBAR ──
 document.getElementById('btnMenu').addEventListener('click', () => {
-  // Garante que o aside esteja visível (pode ter sido ocultado pelo showCourseSelection)
-  const aside = document.getElementById('sidebar')
-  if (aside.style.display === 'none') aside.style.display = ''
-  aside.classList.toggle('open')
-  document.getElementById('backdrop').classList.toggle('open')
+  if (window.innerWidth >= 769) {
+    // Desktop: vai para visão geral (home) com lista de todas as aulas
+    showOverview()
+  } else {
+    // Mobile: abre/fecha sidebar com lista de aulas
+    const aside = document.getElementById('sidebar')
+    if (aside.style.display === 'none') aside.style.display = ''
+    aside.classList.toggle('open')
+    document.getElementById('backdrop').classList.toggle('open')
+  }
 })
 document.getElementById('backdrop').addEventListener('click', closeSidebar)
 function closeSidebar() {

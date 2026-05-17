@@ -207,14 +207,26 @@
   document.getElementById('siteName').textContent = window.SITE_NAME || 'Meu Curso'
   document.title = `Entrar — ${window.SITE_NAME || 'Meu Curso'}`
 
-  // Redirect if already logged in
-  db.auth.getSession().then(({ data: { session } }) => {
-    if (session) window.location.replace('index.html')
-  })
+  // Se veio do logout, garante que a sessão foi limpa antes de qualquer coisa
+  const urlParams = new URLSearchParams(window.location.search)
+  const veiuDoLogout = urlParams.get('saiu') === '1'
+
+  if (veiuDoLogout) {
+    // Força limpeza da sessão e mostra o formulário
+    db.auth.signOut().catch(() => {})
+  } else {
+    // Redireciona para plataforma se já estiver logada
+    db.auth.getSession().then(({ data: { session } }) => {
+      if (session) window.location.replace('index.html')
+    })
+  }
 
   // Handle magic link / password reset callback
   db.auth.onAuthStateChange((event, session) => {
-    if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session) {
+    if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session && !veiuDoLogout) {
+      window.location.replace('index.html')
+    }
+    if (event === 'SIGNED_IN' && session && veiuDoLogout) {
       window.location.replace('index.html')
     }
   })
