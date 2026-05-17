@@ -4,19 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Plataforma Roberta Alves</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #FAFAF9; --surface: #fff; --border: #E7E5E4;
-      --text: #1C1917; --muted: #78716C; --light: #F5F5F4;
-      --accent: #1C1917; --accent-h: #292524;
-      --green: #16A34A; --green-bg: #F0FDF4; --green-border: #BBF7D0;
+      --bg: #F8F4EF; --surface: #FFFFFF; --border: #E3DDD6;
+      --text: #1A1208; --muted: #7A6E65; --light: #F0EAE1;
+      --accent: #25D366; --accent-h: #1DAE52; --accent-light: #E6F9EE;
+      --green: #25D366; --green-bg: #E6F9EE; --green-border: #86EFAC;
       --danger: #DC2626;
-      --sidebar-w: 280px; --header-h: 56px; --radius: 8px;
+      --sidebar-bg: #0D1F15; --sidebar-text: #E2F0E7; --sidebar-muted: #7EA889;
+      --sidebar-border: rgba(255,255,255,0.07); --sidebar-active-bg: rgba(37,211,102,0.12);
+      --num-bg: #B8956A;
+      --sidebar-w: 290px; --header-h: 60px; --radius: 8px;
     }
-    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100dvh; }
+    body { font-family:'Inter','Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100dvh; }
 
     /* AUTH GATE */
     #authGate { position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999; }
@@ -24,17 +30,17 @@
     @keyframes spin { to { transform:rotate(360deg); } }
 
     /* HEADER */
-    header { position:fixed;top:0;left:0;right:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border); }
+    header { position:fixed;top:0;left:0;right:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);box-shadow:0 1px 8px rgba(26,18,8,.06); }
     .header-main { height:var(--header-h);display:flex;align-items:center;padding:0 16px;gap:10px; }
     .btn-menu { display:flex;align-items:center;background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;color:var(--muted); }
     .btn-menu:hover { background:var(--light); }
     .btn-menu svg { width:20px;height:20px;display:block; }
-    .logo { font-size:.95rem;font-weight:800;letter-spacing:-.02em;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .logo { font-family:'Playfair Display',Georgia,serif;font-size:1.05rem;font-weight:700;font-style:italic;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
     .header-right { display:flex;align-items:center;gap:8px; }
     .user-chip { display:flex;align-items:center;gap:7px;padding:4px 10px 4px 5px;border-radius:99px;border:1px solid var(--border); }
-    .avatar { width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;flex-shrink:0; }
+    .avatar { width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;flex-shrink:0; }
     .user-email { font-size:.78rem;color:var(--muted); }
-    .btn-sm { padding:6px 12px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;transition:all .12s; }
+    .btn-sm { padding:6px 13px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;transition:all .12s; }
     .btn-sm:hover { background:var(--light);color:var(--text); }
     .btn-sm.active { background:var(--accent);color:#fff;border-color:var(--accent); }
 
@@ -46,38 +52,51 @@
     .layout { display:flex;padding-top:calc(var(--header-h) + 3px);min-height:100dvh; }
 
     /* SIDEBAR */
-    aside { width:var(--sidebar-w);position:fixed;top:calc(var(--header-h)+3px);left:0;bottom:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;z-index:90;transition:transform .22s ease;display:flex;flex-direction:column; }
-    .sidebar-search { padding:12px 12px 8px; }
-    .search-input { width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem;font-family:inherit;outline:none;background:var(--bg);color:var(--text);transition:border .15s; }
-    .search-input:focus { border-color:var(--accent);background:var(--surface); }
-    .search-input::placeholder { color:#A8A29E; }
+    aside { width:var(--sidebar-w);position:fixed;top:calc(var(--header-h)+3px);left:0;bottom:0;background:var(--sidebar-bg);border-right:none;overflow-y:auto;z-index:90;transition:transform .22s ease;display:flex;flex-direction:column; }
 
-    .sidebar-overview-btn { margin:0 12px 10px;padding:9px 12px;background:var(--light);border:1.5px solid var(--border);border-radius:var(--radius);font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .12s;text-align:left; }
-    .sidebar-overview-btn:hover,.sidebar-overview-btn.active { background:var(--accent);color:#fff;border-color:var(--accent); }
+    /* Sidebar Brand */
+    .sidebar-brand { padding:20px 18px 12px; border-bottom:1px solid var(--sidebar-border); }
+    .sidebar-brand-name { font-family:'Playfair Display',Georgia,serif;font-size:1rem;font-weight:700;font-style:italic;color:#fff;line-height:1.25;margin-bottom:4px; }
+    .sidebar-course-name { font-size:.72rem;color:var(--sidebar-muted);font-weight:500;letter-spacing:.02em;text-transform:uppercase; }
+
+    /* Sidebar Progress */
+    .sidebar-progress-wrap { padding:10px 18px 14px;border-bottom:1px solid var(--sidebar-border); }
+    .sidebar-progress-label-row { display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--sidebar-muted); }
+    .sidebar-prog-bar { height:4px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden; }
+    .sidebar-prog-fill { height:100%;background:var(--accent);border-radius:99px;transition:width .4s ease; }
+
+    .sidebar-search { padding:12px 12px 8px; }
+    .search-input { width:100%;padding:8px 12px;border:1.5px solid rgba(255,255,255,.12);border-radius:6px;font-size:.82rem;font-family:inherit;outline:none;background:rgba(255,255,255,.07);color:var(--sidebar-text);transition:border .15s; }
+    .search-input:focus { border-color:var(--accent);background:rgba(255,255,255,.1); }
+    .search-input::placeholder { color:var(--sidebar-muted); }
+
+    .sidebar-overview-btn { margin:0 12px 6px;padding:9px 12px;background:rgba(255,255,255,.06);border:1px solid var(--sidebar-border);border-radius:var(--radius);font-size:.82rem;font-weight:600;color:var(--sidebar-text);cursor:pointer;font-family:inherit;transition:all .12s;text-align:left; }
+    .sidebar-overview-btn:hover { background:var(--sidebar-active-bg);border-color:rgba(37,211,102,.3); }
+    .sidebar-overview-btn.active { background:var(--sidebar-active-bg);border-color:var(--accent);color:var(--accent); }
 
     .module-section { margin-bottom:4px; }
-    .module-header { padding:8px 14px 4px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:flex;align-items:center;justify-content:space-between; }
-    .module-progress-text { font-size:.68rem;color:var(--muted);font-weight:400;letter-spacing:0; }
+    .module-header { padding:10px 16px 4px;font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--sidebar-muted);display:flex;align-items:center;justify-content:space-between; }
+    .module-progress-text { font-size:.63rem;color:var(--sidebar-muted);font-weight:400;letter-spacing:0; }
     .lesson-list { list-style:none;padding:0 8px; }
-    .lesson-btn { width:100%;background:none;border:none;text-align:left;padding:8px 10px;cursor:pointer;border-radius:6px;display:flex;align-items:flex-start;gap:8px;transition:background .1s;font-family:inherit; }
-    .lesson-btn:hover { background:var(--light); }
-    .lesson-btn.active { background:var(--light); }
-    .lesson-num { min-width:22px;height:22px;margin-top:1px;border-radius:4px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--muted);flex-shrink:0;transition:all .15s; }
+    .lesson-btn { width:100%;background:none;border:none;text-align:left;padding:7px 10px;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:10px;transition:background .1s;font-family:inherit;border-left:3px solid transparent; }
+    .lesson-btn:hover { background:rgba(255,255,255,.06); }
+    .lesson-btn.active { background:var(--sidebar-active-bg);border-left-color:var(--accent); }
+    .lesson-num { min-width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:.63rem;font-weight:700;color:var(--sidebar-muted);flex-shrink:0;transition:all .15s; }
     .lesson-btn.active .lesson-num { background:var(--accent);color:#fff; }
-    .lesson-btn.done .lesson-num { background:var(--green);color:#fff; }
+    .lesson-btn.done .lesson-num { background:var(--accent);color:#fff; }
     .lesson-info { flex:1;min-width:0; }
-    .lesson-name { font-size:.85rem;font-weight:500;color:var(--text);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-    .lesson-meta { font-size:.72rem;color:var(--muted);margin-top:2px; }
+    .lesson-name { font-size:.82rem;font-weight:500;color:var(--sidebar-text);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .lesson-meta { font-size:.7rem;color:var(--sidebar-muted);margin-top:2px; }
     .lesson-actions { display:none;gap:2px; }
     .admin-mode .lesson-actions { display:flex; }
-    .icon-btn { background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:5px;font-size:.8rem;color:var(--muted);line-height:1;transition:all .1s; }
-    .icon-btn:hover { background:var(--border);color:var(--text); }
-    .icon-btn.danger:hover { color:var(--danger); }
+    .icon-btn { background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:5px;font-size:.8rem;color:var(--sidebar-muted);line-height:1;transition:all .1s; }
+    .icon-btn:hover { background:rgba(255,255,255,.1);color:var(--sidebar-text); }
+    .icon-btn.danger:hover { color:#FCA5A5; }
     .sidebar-footer { padding:8px 12px 16px;margin-top:auto; }
-    .btn-new-lesson { display:none;width:100%;padding:8px 12px;background:none;color:var(--muted);border:1.5px dashed var(--border);border-radius:6px;font-size:.82rem;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s;margin-bottom:6px; }
-    .btn-new-lesson:hover { border-color:var(--accent);color:var(--accent);background:var(--light); }
-    .btn-new-module { display:none;width:100%;padding:8px 12px;background:none;color:var(--muted);border:1.5px dashed var(--border);border-radius:6px;font-size:.82rem;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s; }
-    .btn-new-module:hover { border-color:var(--accent);color:var(--accent);background:var(--light); }
+    .btn-new-lesson { display:none;width:100%;padding:8px 12px;background:none;color:var(--sidebar-muted);border:1.5px dashed rgba(255,255,255,.15);border-radius:6px;font-size:.82rem;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s;margin-bottom:6px; }
+    .btn-new-lesson:hover { border-color:var(--accent);color:var(--accent); }
+    .btn-new-module { display:none;width:100%;padding:8px 12px;background:none;color:var(--sidebar-muted);border:1.5px dashed rgba(255,255,255,.15);border-radius:6px;font-size:.82rem;font-weight:500;cursor:pointer;font-family:inherit;transition:all .12s; }
+    .btn-new-module:hover { border-color:var(--accent);color:var(--accent); }
     .admin-mode .btn-new-lesson,.admin-mode .btn-new-module { display:block; }
 
     /* MAIN */
@@ -87,49 +106,73 @@
     .overview { display:flex;flex-direction:column;gap:24px; }
 
     /* Banner */
-    .banner { background:var(--accent);border-radius:16px;padding:36px;display:flex;align-items:center;gap:32px;overflow:hidden;position:relative; }
-    .banner::before { content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");z-index:0; }
+    .banner { background:var(--sidebar-bg);border-radius:16px;padding:36px;display:flex;align-items:center;gap:32px;overflow:hidden;position:relative; }
+    .banner::before { content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(37,211,102,.08) 0%,transparent 60%);z-index:0; }
     .banner-content { flex:1;z-index:1;min-width:0; }
-    .banner-tag { font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.6);margin-bottom:8px; }
-    .banner-title { font-size:1.7rem;font-weight:900;color:#fff;letter-spacing:-.03em;line-height:1.15;margin-bottom:10px; }
-    .banner-instructor { font-size:.9rem;color:rgba(255,255,255,.75);margin-bottom:20px; }
-    .banner-stats { display:flex;gap:20px;flex-wrap:wrap; }
+    .banner-tag { font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:10px; }
+    .banner-title { font-family:'Playfair Display',Georgia,serif;font-size:1.8rem;font-weight:700;font-style:italic;color:#fff;line-height:1.2;margin-bottom:10px; }
+    .banner-instructor { font-size:.88rem;color:rgba(255,255,255,.6);margin-bottom:22px; }
+    .banner-stats { display:flex;gap:24px;flex-wrap:wrap; }
     .banner-stat { text-align:center; }
-    .banner-stat-val { font-size:1.4rem;font-weight:800;color:#fff;line-height:1; }
-    .banner-stat-label { font-size:.7rem;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.06em;margin-top:2px; }
-    .banner-photo { width:120px;height:120px;border-radius:50%;border:4px solid rgba(255,255,255,.2);object-fit:cover;flex-shrink:0;z-index:1;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;overflow:hidden; }
+    .banner-stat-val { font-family:'Playfair Display',Georgia,serif;font-size:1.5rem;font-weight:700;color:#fff;line-height:1; }
+    .banner-stat-label { font-size:.68rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.07em;margin-top:3px; }
+    .banner-photo { width:120px;height:120px;border-radius:50%;border:3px solid rgba(37,211,102,.3);object-fit:cover;flex-shrink:0;z-index:1;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;overflow:hidden; }
     .banner-photo img { width:100%;height:100%;object-fit:cover; }
-    .banner-photo-placeholder { font-size:2.5rem;color:rgba(255,255,255,.4); }
-    .btn-continue { display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--accent);padding:11px 22px;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .15s; }
-    .btn-continue:hover { background:rgba(255,255,255,.9); }
+    .banner-photo-placeholder { font-size:2.5rem;color:rgba(255,255,255,.3); }
+    .btn-continue { display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:11px 22px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:all .15s; }
+    .btn-continue:hover { background:var(--accent-h); }
 
     /* Stats cards */
     .stats-row { display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px; }
     .stat-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px; }
-    .stat-card-val { font-size:1.6rem;font-weight:800;color:var(--text);letter-spacing:-.03em; }
-    .stat-card-label { font-size:.78rem;color:var(--muted);margin-top:4px; }
+    .stat-card-val { font-family:'Playfair Display',Georgia,serif;font-size:1.7rem;font-weight:700;color:var(--text);line-height:1; }
+    .stat-card-label { font-size:.75rem;color:var(--muted);margin-top:6px; }
     .stat-card.green { border-color:var(--green-border);background:var(--green-bg); }
     .stat-card.green .stat-card-val { color:var(--green); }
 
     /* Progress overview */
     .progress-section { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px; }
-    .progress-section h3 { font-size:.9rem;font-weight:700;margin-bottom:14px; }
+    .progress-section h3 { font-size:.85rem;font-weight:600;margin-bottom:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em; }
     .progress-track { background:var(--border);border-radius:99px;height:8px;overflow:hidden;margin-bottom:8px; }
     .progress-track-fill { height:100%;background:var(--green);border-radius:99px;transition:width .4s ease; }
     .progress-label { font-size:.8rem;color:var(--muted); }
 
     /* Instructor card */
-    .instructor-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;display:flex;align-items:center;gap:16px; }
-    .instructor-avatar { width:56px;height:56px;border-radius:50%;background:var(--light);flex-shrink:0;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:var(--muted);overflow:hidden; }
+    .instructor-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;display:flex;align-items:center;gap:18px; }
+    .instructor-avatar { width:60px;height:60px;border-radius:50%;background:var(--light);flex-shrink:0;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:var(--muted);overflow:hidden;border:2px solid var(--border); }
     .instructor-avatar img { width:100%;height:100%;object-fit:cover; }
-    .instructor-name { font-size:1rem;font-weight:700; }
-    .instructor-title { font-size:.8rem;color:var(--muted);margin-top:2px; }
-    .instructor-bio { font-size:.85rem;color:var(--muted);margin-top:8px;line-height:1.6; }
+    .instructor-name { font-family:'Playfair Display',Georgia,serif;font-size:1.05rem;font-weight:700;color:var(--text); }
+    .instructor-title { font-size:.78rem;color:var(--accent);margin-top:3px;font-weight:600; }
+    .instructor-bio { font-size:.85rem;color:var(--muted);margin-top:8px;line-height:1.65; }
     .btn-edit-instructor { display:none;margin-left:auto;flex-shrink:0; }
     .admin-mode .btn-edit-instructor { display:block; }
 
-    /* Modules overview */
-    .modules-overview h3 { font-size:.9rem;font-weight:700;margin-bottom:12px; }
+    /* Lesson cards (overview) */
+    .overview-header { padding-bottom:4px; }
+    .overview-header h1 { font-family:'Playfair Display',Georgia,serif;font-size:1.55rem;font-weight:700;color:var(--text);margin-bottom:4px; }
+    .overview-header p { font-size:.85rem;color:var(--muted); }
+    .module-sep { display:flex;align-items:center;gap:12px;padding:4px 0 8px;margin-top:8px; }
+    .module-sep-label { font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);white-space:nowrap; }
+    .module-sep-line { flex:1;height:1px;background:var(--border); }
+    .lesson-cards-list { display:flex;flex-direction:column;gap:10px; }
+    .lesson-card { background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .15s;position:relative; }
+    .lesson-card:hover { border-color:var(--accent);box-shadow:0 2px 12px rgba(37,211,102,.1);transform:translateY(-1px); }
+    .lesson-card-num-box { display:flex;flex-direction:column;align-items:center;justify-content:center;width:52px;height:60px;background:var(--num-bg);border-radius:8px;flex-shrink:0; }
+    .lesson-card-num-val { font-family:'Playfair Display',Georgia,serif;font-size:1.4rem;font-weight:700;font-style:italic;color:#fff;line-height:1; }
+    .lesson-card-num-label { font-size:.5rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-top:2px; }
+    .lesson-card-body { flex:1;min-width:0; }
+    .lesson-card-module { font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:4px; }
+    .lesson-card-title { font-family:'Playfair Display',Georgia,serif;font-size:.97rem;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:4px; }
+    .lesson-card-desc { font-size:.78rem;color:var(--muted);line-height:1.5; }
+    .lesson-card-footer { display:flex;align-items:center;gap:10px;margin-top:6px; }
+    .lesson-card-badge { display:inline-flex;align-items:center;gap:4px;font-size:.65rem;font-weight:700;color:var(--accent);letter-spacing:.04em; }
+    .lesson-card-arrow { margin-left:auto;font-size:1.2rem;color:var(--muted);flex-shrink:0;transition:transform .15s; }
+    .lesson-card:hover .lesson-card-arrow { transform:translateX(3px);color:var(--accent); }
+    .lesson-card.done-card { opacity:.8; }
+    .lesson-card.done-card .lesson-card-num-box { background:#6B9F7A; }
+
+    /* Modules overview - fallback */
+    .modules-overview h3 { font-size:.85rem;font-weight:600;margin-bottom:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em; }
     .module-cards { display:flex;flex-direction:column;gap:8px; }
     .module-card { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .12s; }
     .module-card:hover { border-color:var(--accent);background:var(--light); }
@@ -142,13 +185,13 @@
     /* Completion */
     .completion-banner { background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:12px;padding:24px;text-align:center;display:none; }
     .completion-banner.show { display:block; }
-    .completion-banner h3 { font-size:1.1rem;font-weight:800;color:var(--green);margin-bottom:6px; }
+    .completion-banner h3 { font-family:'Playfair Display',Georgia,serif;font-size:1.1rem;font-weight:700;color:var(--green);margin-bottom:6px; }
     .completion-banner p { font-size:.875rem;color:#166534; }
 
     /* ── LESSON VIEW ── */
     .lesson-view { display:flex;flex-direction:column;gap:20px; }
     .lesson-header { display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap; }
-    .lesson-header h1 { font-size:1.4rem;font-weight:800;letter-spacing:-.02em;line-height:1.25; }
+    .lesson-header h1 { font-family:'Playfair Display',Georgia,serif;font-size:1.5rem;font-weight:700;line-height:1.25; }
     .lesson-desc-text { font-size:.875rem;color:var(--muted);margin-top:5px; }
     .lesson-duration { font-size:.75rem;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:4px; }
 
@@ -161,7 +204,7 @@
 
     /* Mark complete */
     .complete-bar { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
-    .btn-complete { display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-size:.875rem;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;transition:all .15s; }
+    .btn-complete { display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-family:inherit;transition:all .15s; }
     .btn-complete:hover { border-color:var(--green);color:var(--green);background:var(--green-bg); }
     .btn-complete.done { background:var(--green-bg);border-color:var(--green);color:var(--green); }
     .nav-btns { display:flex;gap:8px; }
@@ -222,7 +265,7 @@
     .edit-row { display:flex;justify-content:flex-end;margin-top:10px; }
 
     /* MODAL */
-    .overlay { position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:none;align-items:center;justify-content:center;padding:20px; }
+    .overlay { position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:center;justify-content:center;padding:20px; }
     .overlay.open { display:flex; }
     .modal { background:var(--surface);border-radius:14px;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,.15);max-height:90dvh;overflow-y:auto; }
     .modal-head { padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1; }
@@ -239,11 +282,11 @@
     .fhint { font-size:.73rem;color:var(--muted); }
 
     /* Toast */
-    .toast { position:fixed;bottom:20px;right:20px;background:var(--accent);color:#fff;padding:11px 18px;border-radius:8px;font-size:.84rem;font-weight:500;opacity:0;transform:translateY(6px);transition:all .2s;z-index:300;pointer-events:none; }
+    .toast { position:fixed;bottom:20px;right:20px;background:var(--sidebar-bg);color:#fff;padding:11px 18px;border-radius:8px;font-size:.84rem;font-weight:500;opacity:0;transform:translateY(6px);transition:all .2s;z-index:300;pointer-events:none;border-left:3px solid var(--accent); }
     .toast.show { opacity:1;transform:translateY(0); }
 
     /* BACKDROP */
-    .backdrop { display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:85; }
+    .backdrop { display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:85; }
 
     /* UPLOAD */
     .upload-area { display:flex;flex-direction:column;gap:8px; }
@@ -272,7 +315,7 @@
     /* STUDENTS PAGE */
     .students-page { display:flex;flex-direction:column;gap:20px; }
     .students-header { display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
-    .students-header h1 { font-size:1.4rem;font-weight:800;letter-spacing:-.02em; }
+    .students-header h1 { font-family:'Playfair Display',Georgia,serif;font-size:1.4rem;font-weight:700; }
     .students-info { background:var(--light);border:1px solid var(--border);border-radius:10px;padding:14px 18px;font-size:.85rem;color:var(--muted);line-height:1.6; }
     .students-info strong { color:var(--text); }
     .students-table-wrap { background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow-x:auto; }
@@ -295,20 +338,21 @@
     .bulk-add { margin-top:12px; }
     .bulk-textarea { width:100%;min-height:80px;padding:10px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:.82rem;font-family:inherit;resize:vertical;outline:none;background:var(--bg); }
     .bulk-textarea:focus { border-color:var(--accent);background:var(--surface); }
-    .sidebar-students-btn { margin:0 12px 10px;padding:9px 12px;background:var(--light);border:1.5px solid var(--border);border-radius:var(--radius);font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .12s;text-align:left;display:none; }
+    .sidebar-students-btn { margin:0 12px 6px;padding:9px 12px;background:rgba(255,255,255,.06);border:1px solid var(--sidebar-border);border-radius:var(--radius);font-size:.82rem;font-weight:600;color:var(--sidebar-text);cursor:pointer;font-family:inherit;transition:all .12s;text-align:left;display:none; }
     .admin-mode .sidebar-students-btn { display:block; }
-    .sidebar-students-btn:hover,.sidebar-students-btn.active { background:var(--accent);color:#fff;border-color:var(--accent); }
+    .sidebar-students-btn:hover { background:var(--sidebar-active-bg);border-color:rgba(37,211,102,.3); }
+    .sidebar-students-btn.active { background:var(--sidebar-active-bg);border-color:var(--accent);color:var(--accent); }
 
     /* RESPONSIVE */
     @media (max-width:768px) {
-      aside { transform:translateX(-100%);box-shadow:4px 0 24px rgba(0,0,0,.12); }
+      aside { transform:translateX(-100%);box-shadow:4px 0 32px rgba(0,0,0,.4); }
       aside.open { transform:translateX(0); }
       .backdrop { display:none; }
       .backdrop.open { display:block; }
       main { margin-left:0;padding:20px 14px; }
       .banner { flex-direction:column;gap:20px;padding:24px; }
       .banner-photo { width:80px;height:80px; }
-      .banner-title { font-size:1.35rem; }
+      .banner-title { font-size:1.4rem; }
       .stats-row { grid-template-columns:1fr 1fr; }
       .lesson-header h1 { font-size:1.2rem; }
       .lesson-nav { flex-direction:column; }
@@ -317,6 +361,7 @@
       .add-link-row { flex-direction:column; }
       .instructor-card { flex-direction:column;align-items:flex-start; }
       .btn-edit-instructor { margin-left:0; }
+      .lesson-card { flex-wrap:wrap; }
     }
     @media (min-width:769px) {
       aside { transform:translateX(0) !important; }
@@ -355,6 +400,19 @@
 <div class="layout">
   <!-- SIDEBAR -->
   <aside id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-name" id="sidebarBrandName">Plataforma Roberta Alves</div>
+      <div class="sidebar-course-name" id="sidebarCourseName"></div>
+    </div>
+    <div class="sidebar-progress-wrap">
+      <div class="sidebar-progress-label-row">
+        <span>Progresso da Aula</span>
+        <span id="sidebarProgressPct">0%</span>
+      </div>
+      <div class="sidebar-prog-bar">
+        <div class="sidebar-prog-fill" id="sidebarProgressFill" style="width:0%"></div>
+      </div>
+    </div>
     <div class="sidebar-search">
       <input class="search-input" id="searchInput" type="text" placeholder="🔍  Buscar aula..." />
     </div>
@@ -739,6 +797,7 @@ async function selectCourse(course) {
   document.getElementById('courseSelPage')?.remove()
   currentCourseId = course.id
   document.getElementById('logo').textContent = course.name || window.SITE_NAME
+  const scn = document.getElementById('sidebarCourseName'); if(scn) scn.textContent = course.name || ''
   document.querySelector('main').style.display = ''
   document.querySelector('aside').style.display = ''
 
@@ -838,6 +897,10 @@ function render() {
 function updateProgressBar() {
   const { pct } = getProgress()
   document.getElementById('progressBarFill').style.width = pct + '%'
+  const fill = document.getElementById('sidebarProgressFill')
+  const pctEl = document.getElementById('sidebarProgressPct')
+  if (fill) fill.style.width = pct + '%'
+  if (pctEl) pctEl.textContent = pct + '%'
 }
 
 // ── SIDEBAR ──
@@ -922,44 +985,113 @@ function renderOverview() {
   const lastLesson = data.lessons.find(l => !data.progress[l.id]?.completed)
     || data.lessons[0]
 
-  let globalLessonIdx = 0
-  const modulesHtml = data.modules.length
-    ? data.modules.map(m => {
-        const ml = getModuleLessons(m.id)
-        const md = ml.filter(l => data.progress[l.id]?.completed).length
-        const lessonsInModule = ml.map(l => {
-          globalLessonIdx++
-          const isDone = data.progress[l.id]?.completed
-          return `<div class="module-card" data-lesson="${l.id}" style="margin-top:4px">
-            <div class="module-card-icon" style="font-size:.8rem;width:28px;height:28px">${isDone ? '✅' : '▶️'}</div>
-            <div class="module-card-info">
-              <div class="module-card-title">${l.title}</div>
-              ${l.duration ? `<div class="module-card-meta">⏱ ${l.duration}</div>` : ''}
-            </div>
-            ${isDone ? '<div class="module-card-progress">Concluída</div>' : ''}
-          </div>`
-        }).join('')
-        return `<div style="margin-bottom:16px">
-          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:4px 4px 6px;display:flex;justify-content:space-between;align-items:center">
-            <span>${m.emoji || '📁'} ${m.title}</span>
-            <span>${md}/${ml.length} concluídas</span>
-          </div>
-          ${lessonsInModule || '<div style="padding:6px 4px;font-size:.82rem;color:var(--muted)">Nenhuma aula neste módulo ainda.</div>'}
-        </div>`
-      }).join('')
-    : data.lessons.map((l, i) => {
-        const isDone = data.progress[l.id]?.completed
-        return `<div class="module-card" data-lesson="${l.id}">
-          <div class="module-card-icon">${isDone ? '✅' : '▶️'}</div>
-          <div class="module-card-info">
-            <div class="module-card-title">${i + 1}. ${l.title}</div>
-            ${l.duration ? `<div class="module-card-meta">⏱ ${l.duration}</div>` : ''}
-          </div>
-          ${isDone ? '<div class="module-card-progress">Concluída</div>' : ''}
-        </div>`
-      }).join('')
-
   const allDone = total > 0 && done === total
+
+  // Build lesson cards grouped by module
+  let globalLessonIdx = 0
+  let lessonCardsHtml = ''
+
+  if (data.modules.length) {
+    data.modules.forEach(m => {
+      const ml = getModuleLessons(m.id)
+      if (!ml.length && !adminMode) return
+      const moduleName = (m.emoji ? m.emoji + ' ' : '') + m.title
+      lessonCardsHtml += `
+        <div class="module-sep">
+          <span class="module-sep-label">${moduleName}</span>
+          <span class="module-sep-line"></span>
+        </div>
+        <div class="lesson-cards-list">`
+      ml.forEach(l => {
+        globalLessonIdx++
+        const isDone = data.progress[l.id]?.completed
+        const numStr = String(globalLessonIdx).padStart(2, '0')
+        lessonCardsHtml += `
+          <div class="lesson-card${isDone ? ' done-card' : ''}" data-lesson="${l.id}">
+            <div class="lesson-card-num-box">
+              <div class="lesson-card-num-val">${numStr}</div>
+              <div class="lesson-card-num-label">AULA</div>
+            </div>
+            <div class="lesson-card-body">
+              <div class="lesson-card-module">${moduleName}</div>
+              <div class="lesson-card-title">${l.title}</div>
+              ${l.desc ? `<div class="lesson-card-desc">${l.desc}</div>` : ''}
+              <div class="lesson-card-footer">
+                ${isDone
+                  ? `<span class="lesson-card-badge" style="color:var(--green)">✓ CONCLUÍDA</span>`
+                  : `<span class="lesson-card-badge">● DISPONÍVEL</span>`}
+                ${l.duration ? `<span style="font-size:.68rem;color:var(--muted)">⏱ ${l.duration}</span>` : ''}
+              </div>
+            </div>
+            <span class="lesson-card-arrow">→</span>
+          </div>`
+      })
+      lessonCardsHtml += `</div>`
+    })
+    // Unassigned lessons
+    const unassigned = data.lessons.filter(l => !l.moduleId)
+    if (unassigned.length) {
+      lessonCardsHtml += `
+        <div class="module-sep">
+          <span class="module-sep-label">Aulas Avulsas</span>
+          <span class="module-sep-line"></span>
+        </div>
+        <div class="lesson-cards-list">`
+      unassigned.forEach(l => {
+        globalLessonIdx++
+        const isDone = data.progress[l.id]?.completed
+        const numStr = String(globalLessonIdx).padStart(2, '0')
+        lessonCardsHtml += `
+          <div class="lesson-card${isDone ? ' done-card' : ''}" data-lesson="${l.id}">
+            <div class="lesson-card-num-box">
+              <div class="lesson-card-num-val">${numStr}</div>
+              <div class="lesson-card-num-label">AULA</div>
+            </div>
+            <div class="lesson-card-body">
+              <div class="lesson-card-title">${l.title}</div>
+              ${l.desc ? `<div class="lesson-card-desc">${l.desc}</div>` : ''}
+              <div class="lesson-card-footer">
+                ${isDone
+                  ? `<span class="lesson-card-badge" style="color:var(--green)">✓ CONCLUÍDA</span>`
+                  : `<span class="lesson-card-badge">● DISPONÍVEL</span>`}
+                ${l.duration ? `<span style="font-size:.68rem;color:var(--muted)">⏱ ${l.duration}</span>` : ''}
+              </div>
+            </div>
+            <span class="lesson-card-arrow">→</span>
+          </div>`
+      })
+      lessonCardsHtml += `</div>`
+    }
+  } else {
+    // No modules — flat list
+    if (data.lessons.length) {
+      lessonCardsHtml += `<div class="lesson-cards-list">`
+      data.lessons.forEach(l => {
+        globalLessonIdx++
+        const isDone = data.progress[l.id]?.completed
+        const numStr = String(globalLessonIdx).padStart(2, '0')
+        lessonCardsHtml += `
+          <div class="lesson-card${isDone ? ' done-card' : ''}" data-lesson="${l.id}">
+            <div class="lesson-card-num-box">
+              <div class="lesson-card-num-val">${numStr}</div>
+              <div class="lesson-card-num-label">AULA</div>
+            </div>
+            <div class="lesson-card-body">
+              <div class="lesson-card-title">${l.title}</div>
+              ${l.desc ? `<div class="lesson-card-desc">${l.desc}</div>` : ''}
+              <div class="lesson-card-footer">
+                ${isDone
+                  ? `<span class="lesson-card-badge" style="color:var(--green)">✓ CONCLUÍDA</span>`
+                  : `<span class="lesson-card-badge">● DISPONÍVEL</span>`}
+                ${l.duration ? `<span style="font-size:.68rem;color:var(--muted)">⏱ ${l.duration}</span>` : ''}
+              </div>
+            </div>
+            <span class="lesson-card-arrow">→</span>
+          </div>`
+      })
+      lessonCardsHtml += `</div>`
+    }
+  }
 
   page.innerHTML = `
     <!-- Banner -->
@@ -973,7 +1105,7 @@ function renderOverview() {
           <div class="banner-stat"><div class="banner-stat-val">${done}</div><div class="banner-stat-label">Concluídas</div></div>
           <div class="banner-stat"><div class="banner-stat-val">${pct}%</div><div class="banner-stat-label">Progresso</div></div>
         </div>
-        ${lastLesson ? `<br><button class="btn-continue" id="btnContinue">▶ ${done === 0 ? 'Começar' : 'Continuar de onde parou'}</button>` : ''}
+        ${lastLesson ? `<br><button class="btn-continue" id="btnContinue">▶ ${done === 0 ? 'Começar agora' : 'Continuar de onde parou'}</button>` : ''}
       </div>
       ${photoEl}
     </div>
@@ -982,26 +1114,6 @@ function renderOverview() {
     <div class="completion-banner ${allDone ? 'show' : ''}">
       <h3>🎉 Parabéns! Você concluiu o curso!</h3>
       <p>Você completou todas as ${total} aulas. Continue praticando e aplicando o que aprendeu!</p>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-card ${done > 0 ? 'green' : ''}">
-        <div class="stat-card-val">${done}</div>
-        <div class="stat-card-label">Aulas concluídas</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-val">${total - done}</div>
-        <div class="stat-card-label">Aulas restantes</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-val">${data.modules.length || '—'}</div>
-        <div class="stat-card-label">Módulos</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-val">${total}</div>
-        <div class="stat-card-label">Total de aulas</div>
-      </div>
     </div>
 
     <!-- Progress -->
@@ -1024,11 +1136,14 @@ function renderOverview() {
       <button class="btn btn-outline btn-edit-instructor" id="btnEditInstructor">✏️ Editar</button>
     </div>
 
-    <!-- Modules/Lessons list -->
-    ${total > 0 ? `<div class="modules-overview">
-      <h3>Aulas do curso</h3>
-      <div class="module-cards">${modulesHtml}</div>
-    </div>` : `<div style="text-align:center;padding:40px;color:var(--muted);font-size:.9rem">${adminMode ? 'Clique em <b>+ Nova aula</b> no menu lateral para começar.' : 'Nenhuma aula disponível ainda.'}</div>`}
+    <!-- Lessons list -->
+    ${total > 0 ? `
+      <div class="overview-header">
+        <h1>Aulas do Curso</h1>
+        <p>${total} aula${total !== 1 ? 's' : ''} · ${done} concluída${done !== 1 ? 's' : ''}</p>
+      </div>
+      ${lessonCardsHtml}
+    ` : `<div style="text-align:center;padding:48px 20px;color:var(--muted);font-size:.9rem">${adminMode ? 'Clique em <b>+ Nova aula</b> no menu lateral para começar.' : 'Nenhuma aula disponível ainda.'}</div>`}
   `
 
   // events
@@ -1036,12 +1151,6 @@ function renderOverview() {
     if (lastLesson) openLesson(lastLesson.id)
   })
   document.getElementById('btnEditInstructor')?.addEventListener('click', openInstructorModal)
-  page.querySelectorAll('[data-module]').forEach(el => {
-    el.addEventListener('click', () => {
-      const first = getModuleLessons(el.dataset.module)[0]
-      if (first) openLesson(first.id)
-    })
-  })
   page.querySelectorAll('[data-lesson]').forEach(el => {
     el.addEventListener('click', () => openLesson(el.dataset.lesson))
   })
