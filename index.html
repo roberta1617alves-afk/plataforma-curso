@@ -1402,7 +1402,7 @@ async function addStudent(token) {
     document.getElementById('newStudentEmail').value = ''
     document.getElementById('newStudentName').value = ''
     document.getElementById('newStudentPhone').value = ''
-    setTimeout(() => showStudentsPage(), 3000)
+    setTimeout(() => showStudentsPage(), 12000)
   } else {
     status.textContent = json.erro || 'Erro ao adicionar.'
     status.className = 'upload-status err'
