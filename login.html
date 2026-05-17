@@ -198,18 +198,47 @@
     </form>
   </div>
 
+  <!-- VIEW: NOVA SENHA (após clicar no link do e-mail) -->
+  <div class="view" id="viewReset">
+    <div class="brand">
+      <div class="brand-name" id="siteNameReset">Meu Curso</div>
+      <div class="brand-sub">Crie sua nova senha</div>
+    </div>
+
+    <div class="alert" id="resetAlert"></div>
+
+    <form class="form" id="resetForm" novalidate>
+      <div class="field">
+        <label>Nova senha</label>
+        <input type="password" id="resetPassword" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required />
+      </div>
+      <div class="field">
+        <label>Confirmar nova senha</label>
+        <input type="password" id="resetPasswordConfirm" placeholder="Repita a senha" autocomplete="new-password" required />
+      </div>
+      <button class="btn-submit" type="submit" id="btnReset">Salvar nova senha</button>
+    </form>
+  </div>
+
 </div>
 
 <script>
   const { createClient } = supabase
   const db = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
 
-  document.getElementById('siteName').textContent = window.SITE_NAME || 'Meu Curso'
-  document.title = `Entrar — ${window.SITE_NAME || 'Meu Curso'}`
+  const siteName = window.SITE_NAME || 'Meu Curso'
+  document.getElementById('siteName').textContent = siteName
+  document.getElementById('siteNameReset').textContent = siteName
+  document.title = `Entrar — ${siteName}`
 
   // Se veio do logout, garante que a sessão foi limpa antes de qualquer coisa
   const urlParams = new URLSearchParams(window.location.search)
   const veiuDoLogout = urlParams.get('saiu') === '1'
+
+  function showView(id) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
+    document.getElementById(id).classList.add('active')
+  }
 
   if (veiuDoLogout) {
     // Força limpeza da sessão e mostra o formulário
@@ -223,7 +252,12 @@
 
   // Handle magic link / password reset callback
   db.auth.onAuthStateChange((event, session) => {
-    if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session && !veiuDoLogout) {
+    if (event === 'PASSWORD_RECOVERY' && session) {
+      // Mostrar formulário de nova senha em vez de redirecionar
+      showView('viewReset')
+      return
+    }
+    if (event === 'SIGNED_IN' && session && !veiuDoLogout) {
       window.location.replace('index.html')
     }
     if (event === 'SIGNED_IN' && session && veiuDoLogout) {
@@ -281,6 +315,35 @@
     document.getElementById('viewLogin').classList.add('active')
   })
 
+  // NOVA SENHA (após clicar no link do e-mail)
+  document.getElementById('resetForm').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    hideAlert('resetAlert')
+    const password = document.getElementById('resetPassword').value
+    const confirm  = document.getElementById('resetPasswordConfirm').value
+    if (!password || password.length < 6) {
+      showAlert('resetAlert', 'A senha deve ter pelo menos 6 caracteres.')
+      return
+    }
+    if (password !== confirm) {
+      showAlert('resetAlert', 'As senhas não coincidem.')
+      return
+    }
+
+    const btn = document.getElementById('btnReset')
+    setLoading(btn, true, 'Salvar nova senha')
+
+    const { error } = await db.auth.updateUser({ password })
+    setLoading(btn, false, 'Salvar nova senha')
+
+    if (error) {
+      showAlert('resetAlert', 'Erro ao salvar a senha. Tente novamente.')
+    } else {
+      showAlert('resetAlert', 'Senha atualizada com sucesso! Redirecionando...', 'success')
+      setTimeout(() => window.location.replace('index.html'), 1500)
+    }
+  })
+
   // FORGOT PASSWORD
   document.getElementById('forgotForm').addEventListener('submit', async (e) => {
     e.preventDefault()
@@ -292,7 +355,7 @@
     setLoading(btn, true, 'Enviar link')
 
     const { error } = await db.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/index.html'
+      redirectTo: window.location.origin + '/login.html'
     })
     setLoading(btn, false, 'Enviar link')
 
