@@ -535,6 +535,7 @@ let notesSaveTimer = null
 let currentCourseId = null
 let saveTimer = null
 let studentsPreselectedCourse = null  // Curso pré-selecionado ao abrir a página de alunas
+let coursesCache = []  // Cache dos cursos carregados (inclui data, evita re-fetch com RLS)
 
 function save() {
   clearTimeout(saveTimer)
@@ -545,11 +546,15 @@ async function syncCourseToSupabase() {
   if (!currentCourseId || !isAdmin) return
   try {
     const { data: { session } } = await db.auth.getSession()
+    const payload = { instructor: data.instructor, modules: data.modules, lessons: data.lessons }
     await fetch('/api/courses', {
       method: 'PUT',
       headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: currentCourseId, data: { instructor: data.instructor, modules: data.modules, lessons: data.lessons } })
+      body: JSON.stringify({ id: currentCourseId, data: payload })
     })
+    // Atualiza cache local para que selectCourse use dados frescos
+    const cached = coursesCache.find(c => c.id === currentCourseId)
+    if (cached) cached.data = payload
   } catch (e) { console.error('Erro ao salvar no servidor:', e) }
 }
 const uid  = () => Date.now().toString(36) + Math.random().toString(36).slice(2)
@@ -677,6 +682,8 @@ async function loadCourses() {
     }
   } catch (e) { console.error(e) }
 
+  coursesCache = courses  // Salva em cache para uso em selectCourse sem precisar re-fetch
+
   document.getElementById('authGate').style.display = 'none'
 
   if (courses.length === 0) {
@@ -793,19 +800,13 @@ function goToStudentsPage(courseId) {
 }
 
 async function selectCourse(course) {
-  // Para alunas: verifica acesso no servidor antes de carregar
-  if (!isAdmin) {
-    const { data: { session } } = await db.auth.getSession()
-    const checkRes = await fetch('/api/student-courses', {
-      headers: { Authorization: `Bearer ${session?.access_token}` }
-    })
-    if (checkRes.ok) {
-      const checkJson = await checkRes.json()
-      const allowed = (checkJson.courses || []).some(c => c.id === course.id)
-      if (!allowed) {
-        toast('❌ Você não tem acesso a este curso.')
-        return
-      }
+  // Para alunas: verifica acesso via cache (já validado em loadCourses)
+  // Para segurança extra, só bloqueia se o cache estiver populado e o curso não estiver nele
+  if (!isAdmin && coursesCache.length > 0) {
+    const cached = coursesCache.find(c => c.id === course.id)
+    if (!cached) {
+      toast('❌ Você não tem acesso a este curso.')
+      return
     }
   }
 
@@ -816,22 +817,30 @@ async function selectCourse(course) {
   document.querySelector('main').style.display = ''
   document.querySelector('aside').style.display = ''
 
-  // Carregar conteúdo do curso do Supabase
-  const { data: d } = await db.from('courses').select('data').eq('id', currentCourseId).single()
-  if (d?.data && (d.data.lessons?.length || d.data.modules?.length || d.data.instructor?.name)) {
-    data.instructor = d.data.instructor || structuredClone(DEFAULTS.instructor)
-    data.modules = d.data.modules || []
-    data.lessons = d.data.lessons || []
-  } else if (isAdmin) {
-    // Migrar dados do localStorage para o Supabase (primeira vez)
-    const local = JSON.parse(localStorage.getItem('curso_data') || 'null')
-    if (local) {
-      data.instructor = local.instructor || structuredClone(DEFAULTS.instructor)
-      data.modules = local.modules || []
-      data.lessons = local.lessons || []
-      await syncCourseToSupabase()
-      localStorage.removeItem('curso_data')
-      toast('✅ Dados migrados para a nuvem!')
+  // 1) Primeiro tenta usar o cache (já tem os dados, sem re-fetch)
+  const cached = coursesCache.find(c => c.id === course.id)
+  if (cached?.data && (cached.data.lessons?.length || cached.data.modules?.length || cached.data.instructor?.name)) {
+    data.instructor = cached.data.instructor || structuredClone(DEFAULTS.instructor)
+    data.modules    = cached.data.modules    || []
+    data.lessons    = cached.data.lessons    || []
+  } else {
+    // 2) Fallback: busca diretamente no Supabase (funciona para admin com RLS aberta)
+    const { data: d } = await db.from('courses').select('data').eq('id', currentCourseId).single()
+    if (d?.data && (d.data.lessons?.length || d.data.modules?.length || d.data.instructor?.name)) {
+      data.instructor = d.data.instructor || structuredClone(DEFAULTS.instructor)
+      data.modules    = d.data.modules    || []
+      data.lessons    = d.data.lessons    || []
+    } else if (isAdmin) {
+      // Migrar dados do localStorage para o Supabase (primeira vez)
+      const local = JSON.parse(localStorage.getItem('curso_data') || 'null')
+      if (local) {
+        data.instructor = local.instructor || structuredClone(DEFAULTS.instructor)
+        data.modules    = local.modules    || []
+        data.lessons    = local.lessons    || []
+        await syncCourseToSupabase()
+        localStorage.removeItem('curso_data')
+        toast('✅ Dados migrados para a nuvem!')
+      }
     }
   }
 
