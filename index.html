@@ -715,7 +715,7 @@ function showCourseSelection(courses) {
         <button onclick="goToStudentsPage('${c.id}')" style="padding:7px;background:#1C1917;border:none;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;text-align:left">👩‍🎓 Gerenciar Alunas</button>
       </div>` : ''
     return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:8px">
-      <div onclick="selectCourse({id:'${c.id}',name:${JSON.stringify(c.name)}})" style="cursor:pointer">
+      <div class="course-sel-card" data-cid="${c.id}" data-cname="${c.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}" style="cursor:pointer;transition:transform .12s">
         <div style="font-size:1.5rem;margin-bottom:6px">📚</div>
         <div style="font-weight:700;font-size:.95rem;margin-bottom:2px">${c.name}</div>
         <div style="font-size:.82rem;color:var(--muted)">${fmtPrice}</div>
@@ -724,6 +724,13 @@ function showCourseSelection(courses) {
     </div>`
   }).join('')
   p.innerHTML = `<div style="max-width:820px;margin:0 auto">${backBtn}<h1 style="font-size:1.3rem;font-weight:800;margin-bottom:6px">Seus cursos</h1><p style="color:var(--muted);margin-bottom:28px;font-size:.9rem">${isAdmin ? 'Clique no curso para editar • defina o preço • copie o link de checkout' : 'Selecione um curso para continuar'}</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">${courses.length ? grid : '<p style="color:var(--muted)">Nenhum curso criado ainda.</p>'}</div>${isAdmin ? `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px"><button onclick="showCreateCourse()" style="padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">+ Criar novo curso</button><button onclick="goToStudentsPage()" style="padding:10px 22px;background:#1C1917;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">👩‍🎓 Gerenciar Alunas</button></div>` : ''}</div>`
+
+  // Usa event listener em vez de onclick inline para evitar quebra por aspas no nome do curso
+  p.querySelectorAll('.course-sel-card').forEach(el => {
+    el.addEventListener('click', () => selectCourse({ id: el.dataset.cid, name: el.dataset.cname }))
+    el.addEventListener('mouseenter', () => { el.style.transform = 'translateY(-2px)'; el.style.opacity = '.85' })
+    el.addEventListener('mouseleave', () => { el.style.transform = ''; el.style.opacity = '' })
+  })
 }
 
 async function renameCourse(courseId, currentName) {
