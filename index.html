@@ -586,21 +586,29 @@ function getModuleLessons(moduleId) {
     : data.lessons.filter(l => l.moduleId === moduleId)
 }
 
-// ── UPLOAD (usa servidor para gerar URL assinada, bypassa RLS) ──
+// ── UPLOAD direto via servidor (service key, bypassa RLS e config de bucket) ──
 async function uploadFile(file, path, bucket = window.STORAGE_BUCKET) {
+  const MAX_MB = 4
+  if (file.size > MAX_MB * 1024 * 1024) {
+    throw new Error(`Arquivo muito grande (máximo ${MAX_MB} MB). Para vídeos use o campo de link do YouTube/Vimeo ou suba o arquivo pela seção de vídeo.`)
+  }
+  // Converte para base64
+  const base64 = await new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload  = e => resolve(e.target.result.split(',')[1])
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
   const { data: { session } } = await db.auth.getSession()
   const accessToken = session?.access_token
-  const res = await fetch('/api/upload-token', {
+  const res = await fetch('/api/upload', {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ bucket, path })
+    body: JSON.stringify({ bucket, path, base64, contentType: file.type })
   })
-  if (!res.ok) throw new Error('Erro ao obter permissão de upload')
-  const { token: uploadToken, path: uploadPath } = await res.json()
-  const { error } = await db.storage.from(bucket).uploadToSignedUrl(uploadPath, uploadToken, file, { contentType: file.type })
-  if (error) throw error
-  const { data } = db.storage.from(bucket).getPublicUrl(path)
-  return data.publicUrl
+  const json = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(json.erro || 'Erro ao fazer upload')
+  return json.url
 }
 
 // ── VIDEO URL (signed, expira em 2h) ──
@@ -1737,36 +1745,49 @@ document.getElementById('videoFileInput').addEventListener('change', async (e) =
   statusEl.textContent = 'Enviando vídeo... (pode levar alguns minutos)'; statusEl.className = 'upload-status'
   progressEl.style.display = 'block'
 
-  // Simula progresso visual enquanto faz upload
-  let fakeProgress = 0
-  const fakeTimer = setInterval(() => {
-    fakeProgress = Math.min(fakeProgress + Math.random() * 3, 85)
-    fillEl.style.width = fakeProgress + '%'
-  }, 400)
-
   try {
     const safeName = file.name.replace(/\s+/g, '_').replace(/[^\w.-]/g, '')
     const path = `aulas/${Date.now()}_${safeName}`
     const { data: { session } } = await db.auth.getSession()
     const accessToken = session?.access_token
+
+    // Obtém URL assinada para upload direto ao Supabase Storage
     const tokenRes = await fetch('/api/upload-token', {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ bucket: 'videos', path })
     })
-    if (!tokenRes.ok) throw new Error('Erro ao obter permissão de upload')
-    const { token: uploadToken, path: uploadPath } = await tokenRes.json()
-    const { error } = await db.storage.from('videos').uploadToSignedUrl(uploadPath, uploadToken, file)
-    clearInterval(fakeTimer)
-    if (error) throw error
+    if (!tokenRes.ok) {
+      const errData = await tokenRes.json().catch(() => ({}))
+      throw new Error(errData.erro || 'Erro ao obter permissão de upload. Verifique se o bucket "videos" existe no Supabase.')
+    }
+    const { signedUrl } = await tokenRes.json()
+
+    // Upload via XHR para ter barra de progresso real
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open('PUT', signedUrl)
+      xhr.setRequestHeader('Content-Type', file.type)
+      xhr.upload.addEventListener('progress', (ev) => {
+        if (ev.lengthComputable) {
+          fillEl.style.width = Math.round((ev.loaded / ev.total) * 100) + '%'
+        }
+      })
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve()
+        else reject(new Error(`Upload falhou (HTTP ${xhr.status}). Verifique o bucket "videos" no Supabase.`))
+      })
+      xhr.addEventListener('error', () => reject(new Error('Erro de rede durante upload do vídeo.')))
+      xhr.send(file)
+    })
+
     fillEl.style.width = '100%'
     document.getElementById('fVideo').value = path   // guarda o path, não URL
     statusEl.textContent = '✅ Vídeo enviado! Clique em Salvar.'
     statusEl.className = 'upload-status ok'
   } catch (err) {
-    clearInterval(fakeTimer)
     progressEl.style.display = 'none'
-    statusEl.textContent = '❌ Erro ao enviar: ' + (err.message || 'tente novamente.')
+    statusEl.textContent = '❌ ' + (err.message || 'Erro ao enviar. Tente novamente.')
     statusEl.className = 'upload-status err'
   }
 })
