@@ -103,14 +103,8 @@ module.exports = async function handler(req, res) {
       })
     }
 
-    // Debug: expor resposta completa do MP
-    console.log('MP rejected:', JSON.stringify({ status: payment.status, detail: payment.status_detail, cause: payment.cause, message: payment.message, error: payment.error }))
-    return res.status(200).json({
-      status: payment.status || 'rejected',
-      erro: `[DEBUG] status=${payment.status} detail=${payment.status_detail} cause=${JSON.stringify(payment.cause)} msg=${payment.message}`
-    })
-
     // Recusado — traduz a causa
+    console.log('MP rejected:', JSON.stringify({ status: payment.status, detail: payment.status_detail, cause: payment.cause }))
     const erros = {
       cc_rejected_insufficient_amount: 'Saldo insuficiente no cartão.',
       cc_rejected_bad_filled_card_number: 'Número do cartão incorreto.',

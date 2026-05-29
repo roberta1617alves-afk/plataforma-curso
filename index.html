@@ -17,8 +17,8 @@
       --accent: #25D366; --accent-h: #1DAE52; --accent-light: #E6F9EE;
       --green: #25D366; --green-bg: #E6F9EE; --green-border: #86EFAC;
       --danger: #DC2626;
-      --sidebar-bg: #0D1F15; --sidebar-text: #E2F0E7; --sidebar-muted: #7EA889;
-      --sidebar-border: rgba(255,255,255,0.07); --sidebar-active-bg: rgba(37,211,102,0.12);
+      --sidebar-bg: #515132; --sidebar-text: #F5F5E8; --sidebar-muted: #C8C8A0;
+      --sidebar-border: rgba(255,255,255,0.12); --sidebar-active-bg: rgba(255,255,255,0.13);
       --num-bg: #B8956A;
       --sidebar-w: 290px; --header-h: 60px; --radius: 8px;
     }
@@ -106,8 +106,8 @@
     .overview { display:flex;flex-direction:column;gap:24px; }
 
     /* Banner */
-    .banner { background:var(--sidebar-bg);border-radius:16px;padding:36px;display:flex;align-items:center;gap:32px;overflow:hidden;position:relative; }
-    .banner::before { content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(37,211,102,.08) 0%,transparent 60%);z-index:0; }
+    .banner { background:#35351F;border-radius:16px;padding:36px;display:flex;align-items:center;gap:32px;overflow:hidden;position:relative; }
+    .banner::before { content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.06) 0%,transparent 60%);z-index:0; }
     .banner-content { flex:1;z-index:1;min-width:0; }
     .banner-tag { font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:10px; }
     .banner-title { font-family:'Playfair Display',Georgia,serif;font-size:1.8rem;font-weight:700;font-style:italic;color:#fff;line-height:1.2;margin-bottom:10px; }
@@ -170,6 +170,10 @@
     .lesson-card:hover .lesson-card-arrow { transform:translateX(3px);color:var(--accent); }
     .lesson-card.done-card { opacity:.8; }
     .lesson-card.done-card .lesson-card-num-box { background:#6B9F7A; }
+    .lesson-card.locked-card { opacity:.5;cursor:not-allowed; }
+    .lesson-card.locked-card:hover { border-color:var(--border);box-shadow:none;transform:none; }
+    .lesson-card.locked-card .lesson-card-num-box { background:#aaa; }
+    .lesson-card.locked-card .lesson-card-arrow { transform:none!important;color:var(--muted)!important; }
 
     /* Modules overview - fallback */
     .modules-overview h3 { font-size:.85rem;font-weight:600;margin-bottom:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em; }
@@ -181,6 +185,77 @@
     .module-card-title { font-size:.875rem;font-weight:600; }
     .module-card-meta { font-size:.75rem;color:var(--muted);margin-top:2px; }
     .module-card-progress { font-size:.75rem;font-weight:700;color:var(--green); }
+
+    /* ── STUDENT HERO ── */
+    .student-hero { background:linear-gradient(160deg,#35351F 0%,#515132 50%,#6A6A42 100%);margin:-24px -24px 0;padding:52px 28px 44px;text-align:center;position:relative;overflow:hidden; }
+    @media(max-width:640px){ .student-hero { margin:-16px -16px 0;padding:44px 20px 36px; } }
+    .student-hero::before { content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(255,255,255,.07) 0%,transparent 65%);pointer-events:none; }
+    .hero-brand { font-size:.6rem;font-weight:700;letter-spacing:.22em;color:rgba(255,255,255,.45);text-transform:uppercase;display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:28px; }
+    .hero-brand::before,.hero-brand::after { content:'';flex:1;max-width:36px;height:1px;background:rgba(255,255,255,.22); }
+    .hero-eyebrow { font-size:.62rem;font-weight:700;letter-spacing:.16em;color:rgba(255,255,255,.5);text-transform:uppercase;margin-bottom:10px; }
+    .hero-title { font-family:'Playfair Display',Georgia,serif;font-size:2rem;font-weight:900;color:#fff;line-height:1.18;margin-bottom:18px; }
+    .hero-title em { font-style:italic;font-weight:400; }
+    @media(max-width:400px){ .hero-title { font-size:1.6rem; } }
+    .hero-desc { font-size:.88rem;color:rgba(255,255,255,.68);line-height:1.75;max-width:460px;margin:0 auto 32px; }
+    .hero-instructor { display:flex;flex-direction:column;align-items:center;gap:10px; }
+    .hero-avatar { width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.18);border:2.5px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;color:#fff;overflow:hidden;flex-shrink:0; }
+    .hero-avatar img { width:100%;height:100%;object-fit:cover; }
+    .hero-instructor-name { font-size:.84rem;color:rgba(255,255,255,.7); }
+    .hero-btn-continue { margin:0 auto 28px;display:block;padding:12px 28px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.35);border-radius:99px;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.02em;transition:all .15s;backdrop-filter:blur(4px); }
+    .hero-btn-continue:hover { background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.6); }
+
+    /* ── STUDENT PROGRESS ── */
+    .student-body { padding:28px 0 0; }
+    .s-progress-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:8px; }
+    .s-progress-label { font-size:.6rem;font-weight:700;letter-spacing:.14em;color:var(--muted);text-transform:uppercase; }
+    .s-progress-pct { font-size:.85rem;font-weight:700;color:#515132; }
+    .s-progress-bar { height:5px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:22px; }
+    .s-progress-fill { height:100%;background:#515132;border-radius:99px;transition:width .4s ease; }
+    /* Module dots */
+    .module-dots { display:flex;overflow-x:auto;padding-bottom:8px;scrollbar-width:none; }
+    .module-dots::-webkit-scrollbar { display:none; }
+    .mod-dot-item { display:flex;flex-direction:column;align-items:center;gap:5px;min-width:56px;flex:1; }
+    .mod-dot { width:34px;height:34px;border-radius:50%;background:var(--light);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;border:2px solid var(--border);transition:all .2s;cursor:pointer; }
+    .mod-dot:hover { border-color:#515132; }
+    .mod-dot.done { background:#EAEBDA;color:#515132;border-color:#515132; }
+    .mod-dot.active { background:#515132;color:#fff;border-color:#515132; }
+    .mod-dot-label { font-size:.5rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:center;line-height:1.2; }
+    /* Student lesson cards */
+    .s-module-sep { font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);padding:20px 0 10px;border-bottom:1px solid var(--border);margin-bottom:12px; }
+    .s-lesson-card { background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .15s;margin-bottom:10px; }
+    .s-lesson-card:hover { border-color:#515132;box-shadow:0 2px 12px rgba(81,81,50,.1);transform:translateY(-1px); }
+    .s-lesson-num { display:flex;flex-direction:column;align-items:center;justify-content:center;width:50px;height:58px;background:#515132;border-radius:8px;flex-shrink:0; }
+    .s-lesson-num.done { background:#8A8A60; }
+    .s-lesson-num-val { font-family:'Playfair Display',Georgia,serif;font-size:1.3rem;font-weight:700;font-style:italic;color:#fff;line-height:1; }
+    .s-lesson-num-lbl { font-size:.45rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-top:2px; }
+    .s-lesson-body { flex:1;min-width:0; }
+    .s-lesson-mod { font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#515132;margin-bottom:3px; }
+    .s-lesson-title { font-family:'Playfair Display',Georgia,serif;font-size:.95rem;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:4px; }
+    .s-lesson-desc { font-size:.76rem;color:var(--muted);line-height:1.5; }
+    .s-lesson-badge { font-size:.6rem;font-weight:700;color:#515132;letter-spacing:.04em;margin-top:5px; }
+    .s-lesson-badge.done { color:#8A8A60; }
+    .s-lesson-arrow { font-size:1.1rem;color:var(--muted);flex-shrink:0;transition:transform .15s; }
+    .s-lesson-card:hover .s-lesson-arrow { transform:translateX(3px);color:#515132; }
+    .s-lesson-card.locked { opacity:.55;cursor:not-allowed; }
+    .s-lesson-card.locked:hover { border-color:var(--border);box-shadow:none;transform:none; }
+    .s-lesson-card.locked .s-lesson-num { background:#aaa; }
+    .s-lesson-badge.locked-badge { color:#aaa; }
+
+    /* ── ACESSO RÁPIDO ── */
+    .quick-section { margin-top:24px; }
+    .quick-section-title { font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border); }
+    .quick-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,120px));gap:10px; }
+    .quick-card { background:var(--surface);border:1.5px dashed var(--border);border-radius:12px;width:100%;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:all .15s;text-align:center;text-decoration:none;padding:8px; }
+    .quick-card:hover { border-color:#515132;background:#F5F5E8;transform:translateY(-2px);box-shadow:0 4px 16px rgba(81,81,50,.1); }
+    .quick-card-icon { font-size:1.6rem;line-height:1; }
+    .quick-card-title { font-size:.68rem;font-weight:700;color:var(--text);line-height:1.3; }
+    /* Admin: edição dos quick links */
+    .quick-admin-row { display:flex;align-items:center;gap:8px;margin-bottom:8px; }
+    .quick-admin-card { background:var(--surface);border:1.5px dashed var(--border);border-radius:10px;padding:12px 14px;flex:1;display:flex;align-items:center;gap:10px;min-width:0; }
+    .quick-admin-icon { font-size:1.4rem;width:32px;text-align:center;flex-shrink:0; }
+    .quick-admin-info { flex:1;min-width:0; }
+    .quick-admin-title { font-size:.82rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .quick-admin-url { font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 
     /* Completion */
     .completion-banner { background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:12px;padding:24px;text-align:center;display:none; }
@@ -218,10 +293,35 @@
     /* Card */
     .card { background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden; }
     .card-body { padding:20px; }
-    .mat-text { font-size:.9rem;line-height:1.75;color:var(--text);white-space:pre-wrap; }
+    .mat-text { font-size:.9rem;line-height:1.75;color:var(--text); }
+    .mat-text br { display:block;content:"";margin-top:2px; }
     .mat-empty { color:var(--muted);font-size:.875rem; }
     .mat-textarea { width:100%;min-height:130px;padding:12px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:.875rem;line-height:1.65;font-family:inherit;resize:vertical;outline:none;background:var(--bg);color:var(--text);transition:border .15s; }
     .mat-textarea:focus { border-color:var(--accent);background:var(--surface); }
+    /* Editor rico de material */
+    .mat-toolbar { display:flex;gap:4px;padding:8px 10px;background:var(--light);border:1.5px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;flex-wrap:wrap;align-items:center; }
+    .mat-tool-btn { padding:4px 9px;border:1px solid var(--border);background:var(--surface);border-radius:5px;cursor:pointer;font-size:.8rem;font-family:inherit;transition:background .12s;line-height:1.5;user-select:none; }
+    .mat-tool-btn:hover { background:var(--accent-light);border-color:var(--green-border); }
+    .mat-tool-sep { width:1px;height:18px;background:var(--border);margin:0 3px;flex-shrink:0; }
+    .mat-color-wrap { position:relative;display:inline-flex; }
+    .mat-color-btn { padding:4px 9px;border:1px solid var(--border);background:var(--surface);border-radius:5px;cursor:pointer;font-size:.8rem;font-family:inherit;transition:background .12s;line-height:1.5;user-select:none;display:flex;align-items:center;gap:5px; }
+    .mat-color-btn:hover { background:var(--accent-light);border-color:var(--green-border); }
+    .mat-color-indicator { display:inline-block;width:14px;height:4px;border-radius:2px;background:#222;flex-shrink:0; }
+    .mat-color-palette { position:absolute;top:calc(100% + 6px);left:0;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:10px;z-index:300;box-shadow:0 6px 24px rgba(0,0,0,.16);width:220px; }
+    .mat-color-palette.hidden { display:none; }
+    .mat-palette-label { font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;margin-top:4px; }
+    .mat-palette-label:first-child { margin-top:0; }
+    .mat-swatches-grid { display:grid;grid-template-columns:repeat(8,20px);gap:4px;margin-bottom:2px; }
+    .mat-color-swatch { width:20px;height:20px;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:transform .1s,border-color .1s; }
+    .mat-color-swatch:hover { transform:scale(1.2);border-color:rgba(0,0,0,.3); }
+    .mat-select-btn { padding:4px 8px;border:1px solid var(--border);background:var(--surface);border-radius:5px;cursor:pointer;font-size:.78rem;font-family:inherit;line-height:1.5;user-select:none;transition:background .12s; }
+    .mat-select-btn:hover { background:var(--accent-light);border-color:var(--green-border); }
+    .mat-editor { width:100%;min-height:160px;padding:14px;border:1.5px solid var(--border);border-radius:0 0 8px 8px;font-size:.875rem;line-height:1.65;font-family:inherit;outline:none;background:var(--surface);color:var(--text);transition:border .15s; }
+    .mat-editor:focus { border-color:var(--accent); }
+    .mat-editor:empty::before { content:attr(data-placeholder);color:var(--muted);pointer-events:none; }
+    /* Caixa de destaque (callout) */
+    .callout { background:#E8F8F0;border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;margin:12px 0; }
+    .callout p, .callout div { margin:2px 0; }
 
     /* Links */
     .links-list { list-style:none;display:flex;flex-direction:column;gap:6px; }
@@ -282,7 +382,7 @@
     .fhint { font-size:.73rem;color:var(--muted); }
 
     /* Toast */
-    .toast { position:fixed;bottom:20px;right:20px;background:var(--sidebar-bg);color:#fff;padding:11px 18px;border-radius:8px;font-size:.84rem;font-weight:500;opacity:0;transform:translateY(6px);transition:all .2s;z-index:300;pointer-events:none;border-left:3px solid var(--accent); }
+    .toast { position:fixed;bottom:20px;right:20px;background:#3D3D20;color:#fff;padding:11px 18px;border-radius:8px;font-size:.84rem;font-weight:500;opacity:0;transform:translateY(6px);transition:all .2s;z-index:300;pointer-events:none;border-left:3px solid var(--accent); }
     .toast.show { opacity:1;transform:translateY(0); }
 
     /* BACKDROP */
@@ -388,7 +488,8 @@
         <span class="user-email" id="userEmail"></span>
       </div>
       <button class="btn-sm" id="btnCourses" style="display:none">📚 Cursos</button>
-      <button class="btn-sm" id="btnAdmin">Editar</button>
+      <button class="btn-sm" id="btnStudentView" style="display:none">👁 Ver como aluna</button>
+      <button class="btn-sm" id="btnAdmin">✏️ Editar</button>
       <button class="btn-sm" id="btnLogout">Sair</button>
     </div>
   </div>
@@ -533,6 +634,7 @@ let activeTab = 'material'
 let editingMat = false
 let notesSaveTimer = null
 let currentCourseId = null
+let currentCourseName = null
 let saveTimer = null
 let studentsPreselectedCourse = null  // Curso pré-selecionado ao abrir a página de alunas
 let coursesCache = []  // Cache dos cursos carregados (inclui data, evita re-fetch com RLS)
@@ -546,7 +648,10 @@ async function syncCourseToSupabase() {
   if (!currentCourseId || !isAdmin) return
   try {
     const { data: { session } } = await db.auth.getSession()
-    const payload = { instructor: data.instructor, modules: data.modules, lessons: data.lessons }
+    // Preserva o preço salvo no cache ao sincronizar conteúdo do curso
+    const cachedPrice = coursesCache.find(c => c.id === currentCourseId)?.data?.price
+    const payload = { instructor: data.instructor, modules: data.modules, lessons: data.lessons, quickLinks: data.quickLinks || [], courseDesc: data.courseDesc || '' }
+    if (cachedPrice) payload.price = cachedPrice
     await fetch('/api/courses', {
       method: 'PUT',
       headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
@@ -650,6 +755,7 @@ async function initAuth() {
   document.getElementById('userAvatar').textContent = (name[0] || '?').toUpperCase()
   document.getElementById('btnAdmin').style.display = isAdmin ? '' : 'none'
   document.getElementById('btnCourses').style.display = isAdmin ? '' : 'none'
+  document.getElementById('btnStudentView').style.display = isAdmin ? '' : 'none'
 
   // Garante que admin-mode NUNCA apareça para alunas
   if (!isAdmin) {
@@ -715,11 +821,11 @@ function showCourseSelection(courses) {
     const fmtPrice = price ? `R$ ${Number(price).toLocaleString('pt-BR',{minimumFractionDigits:2})}` : 'Sem preço'
     const checkoutLink = `${siteUrl}/checkout.html?course=${c.id}`
     const adminControls = isAdmin ? `
-      <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:8px;display:flex;flex-direction:column;gap:6px">
-        <button data-id="${c.id}" data-name="${c.name.replace(/"/g,'&quot;')}" onclick="renameCourse(this.dataset.id,this.dataset.name)" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">✏️ Renomear curso</button>
-        <button data-id="${c.id}" data-price="${price||0}" onclick="savePricePrompt(this.dataset.id,this.dataset.price)" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">💰 ${fmtPrice} — Alterar preço</button>
-        <button onclick="navigator.clipboard.writeText('${checkoutLink}');toast('✅ Link copiado!')" style="padding:7px;background:var(--light);border:1.5px solid var(--border);border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);text-align:left">🔗 Copiar link de checkout</button>
-        <button onclick="goToStudentsPage('${c.id}')" style="padding:7px;background:#1C1917;border:none;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;text-align:left">👩‍🎓 Gerenciar Alunas</button>
+      <div style="border-top:1px solid #D8D8C0;padding-top:10px;margin-top:8px;display:flex;flex-direction:column;gap:6px">
+        <button data-id="${c.id}" data-name="${c.name.replace(/"/g,'&quot;')}" onclick="renameCourse(this.dataset.id,this.dataset.name)" style="padding:7px;background:#F5F5E8;border:1.5px solid #C8C8A0;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:#515132;text-align:left">✏️ Renomear curso</button>
+        <button data-id="${c.id}" data-price="${price||0}" onclick="savePricePrompt(this.dataset.id,this.dataset.price)" style="padding:7px;background:#F5F5E8;border:1.5px solid #C8C8A0;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:#515132;text-align:left">💰 ${fmtPrice} — Alterar preço</button>
+        <button onclick="navigator.clipboard.writeText('${checkoutLink}');toast('✅ Link copiado!')" style="padding:7px;background:#F5F5E8;border:1.5px solid #C8C8A0;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;color:#515132;text-align:left">🔗 Copiar link de checkout</button>
+        <button onclick="goToStudentsPage('${c.id}')" style="padding:7px;background:#515132;border:none;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;text-align:left">👩‍🎓 Gerenciar Alunas</button>
       </div>` : ''
     return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:8px">
       <div class="course-sel-card" data-cid="${c.id}" data-cname="${c.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}" style="cursor:pointer;transition:transform .12s">
@@ -730,7 +836,7 @@ function showCourseSelection(courses) {
       ${adminControls}
     </div>`
   }).join('')
-  p.innerHTML = `<div style="max-width:820px;margin:0 auto">${backBtn}<h1 style="font-size:1.3rem;font-weight:800;margin-bottom:6px">Seus cursos</h1><p style="color:var(--muted);margin-bottom:28px;font-size:.9rem">${isAdmin ? 'Clique no curso para editar • defina o preço • copie o link de checkout' : 'Selecione um curso para continuar'}</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">${courses.length ? grid : '<p style="color:var(--muted)">Nenhum curso criado ainda.</p>'}</div>${isAdmin ? `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px"><button onclick="showCreateCourse()" style="padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">+ Criar novo curso</button><button onclick="goToStudentsPage()" style="padding:10px 22px;background:#1C1917;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">👩‍🎓 Gerenciar Alunas</button></div>` : ''}</div>`
+  p.innerHTML = `<div style="max-width:820px;margin:0 auto">${backBtn}<h1 style="font-size:1.3rem;font-weight:800;margin-bottom:6px">Seus cursos</h1><p style="color:var(--muted);margin-bottom:28px;font-size:.9rem">${isAdmin ? 'Clique no curso para editar • defina o preço • copie o link de checkout' : 'Selecione um curso para continuar'}</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">${courses.length ? grid : '<p style="color:var(--muted)">Nenhum curso criado ainda.</p>'}</div>${isAdmin ? `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px"><button onclick="showCreateCourse()" style="padding:10px 22px;background:#515132;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">+ Criar novo curso</button><button onclick="goToStudentsPage()" style="padding:10px 22px;background:#35351F;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">👩‍🎓 Gerenciar Alunas</button></div>` : ''}</div>`
 
   // Usa event listener em vez de onclick inline para evitar quebra por aspas no nome do curso
   p.querySelectorAll('.course-sel-card').forEach(el => {
@@ -762,15 +868,19 @@ async function savePricePrompt(courseId, currentPrice) {
   const price = parseFloat(val)
   if (!price || price <= 0) return
   const { data: { session } } = await db.auth.getSession()
-  const { data: current } = await db.from('courses').select('data').eq('id', courseId).single()
-  const currentData = current?.data || {}
+  // Usa o cache para não sobrescrever aulas/módulos já salvos
+  const cached = coursesCache.find(c => c.id === courseId)
+  const currentData = cached?.data || {}
   const res = await fetch('/api/courses', {
     method: 'PUT',
     headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: courseId, data: { ...currentData, price } })
   })
   if (res.ok) {
+    // Atualiza o cache com o novo preço
+    if (cached) cached.data = { ...currentData, price }
     const { data: d } = await db.from('courses').select('id, name, data').order('created_at')
+    coursesCache = d || []
     showCourseSelection(d || [])
     toast('✅ Preço salvo!')
   } else toast('❌ Erro ao salvar preço.')
@@ -812,6 +922,7 @@ async function selectCourse(course) {
 
   document.getElementById('courseSelPage')?.remove()
   currentCourseId = course.id
+  currentCourseName = course.name || null
   document.getElementById('logo').textContent = course.name || window.SITE_NAME
   const scn = document.getElementById('sidebarCourseName'); if(scn) scn.textContent = course.name || ''
   document.querySelector('main').style.display = ''
@@ -820,16 +931,20 @@ async function selectCourse(course) {
   // 1) Primeiro tenta usar o cache (já tem os dados, sem re-fetch)
   const cached = coursesCache.find(c => c.id === course.id)
   if (cached?.data && (cached.data.lessons?.length || cached.data.modules?.length || cached.data.instructor?.name)) {
-    data.instructor = cached.data.instructor || structuredClone(DEFAULTS.instructor)
-    data.modules    = cached.data.modules    || []
-    data.lessons    = cached.data.lessons    || []
+    data.instructor  = cached.data.instructor  || structuredClone(DEFAULTS.instructor)
+    data.modules     = cached.data.modules     || []
+    data.lessons     = cached.data.lessons     || []
+    data.quickLinks  = cached.data.quickLinks  || []
+    data.courseDesc  = cached.data.courseDesc  || ''
   } else {
     // 2) Fallback: busca diretamente no Supabase (funciona para admin com RLS aberta)
     const { data: d } = await db.from('courses').select('data').eq('id', currentCourseId).single()
     if (d?.data && (d.data.lessons?.length || d.data.modules?.length || d.data.instructor?.name)) {
-      data.instructor = d.data.instructor || structuredClone(DEFAULTS.instructor)
-      data.modules    = d.data.modules    || []
-      data.lessons    = d.data.lessons    || []
+      data.instructor  = d.data.instructor  || structuredClone(DEFAULTS.instructor)
+      data.modules     = d.data.modules     || []
+      data.lessons     = d.data.lessons     || []
+      data.quickLinks  = d.data.quickLinks  || []
+      data.courseDesc  = d.data.courseDesc  || ''
     } else if (isAdmin) {
       // Migrar dados do localStorage para o Supabase (primeira vez)
       const local = JSON.parse(localStorage.getItem('curso_data') || 'null')
@@ -900,8 +1015,33 @@ document.getElementById('btnCourses').addEventListener('click', async () => {
 document.getElementById('btnAdmin').addEventListener('click', () => {
   adminMode = !adminMode
   document.getElementById('btnAdmin').classList.toggle('active', adminMode)
-  document.getElementById('btnAdmin').textContent = adminMode ? 'Editando ✓' : 'Editar'
+  document.getElementById('btnAdmin').textContent = adminMode ? '✏️ Editando ✓' : '✏️ Editar'
   document.body.classList.toggle('admin-mode', adminMode)
+  editingMat = false; render()
+})
+
+// ── VER COMO ALUNA ──
+let studentViewMode = false
+document.getElementById('btnStudentView').addEventListener('click', () => {
+  studentViewMode = !studentViewMode
+  const adminBtns = ['btnAdmin', 'btnCourses']
+  if (studentViewMode) {
+    // Entra no modo aluna: esconde botões de admin, desativa edição
+    adminBtns.forEach(id => document.getElementById(id).style.display = 'none')
+    if (adminMode) {
+      adminMode = false
+      document.body.classList.remove('admin-mode')
+    }
+    document.getElementById('btnStudentView').textContent = '← Sair da visualização'
+    document.getElementById('btnStudentView').classList.add('active')
+    toast('👁 Visualizando como aluna')
+  } else {
+    // Volta ao modo admin
+    adminBtns.forEach(id => document.getElementById(id).style.display = '')
+    document.getElementById('btnStudentView').textContent = '👁 Ver como aluna'
+    document.getElementById('btnStudentView').classList.remove('active')
+    toast('✅ Voltando ao modo admin')
+  }
   editingMat = false; render()
 })
 
@@ -1006,8 +1146,10 @@ function renderOverview() {
     ? `<div class="banner-photo"><img src="${inst.photo}" alt="${inst.name}" onerror="this.parentElement.innerHTML='<span class=banner-photo-placeholder>👤</span>'" /></div>`
     : `<div class="banner-photo"><span class="banner-photo-placeholder">👤</span></div>`
 
-  const lastLesson = data.lessons.find(l => !data.progress[l.id]?.completed)
-    || data.lessons[0]
+  const isStudentMode = !isAdmin || studentViewMode
+  const lastLesson = isStudentMode
+    ? (data.lessons.find(l => !l.locked && !data.progress[l.id]?.completed) || data.lessons.find(l => !l.locked) || data.lessons[0])
+    : (data.lessons.find(l => !data.progress[l.id]?.completed) || data.lessons[0])
 
   const allDone = total > 0 && done === total
 
@@ -1029,11 +1171,12 @@ function renderOverview() {
       ml.forEach(l => {
         globalLessonIdx++
         const isDone = data.progress[l.id]?.completed
+        const isLocked = !!l.locked && (!isAdmin || studentViewMode)
         const numStr = String(globalLessonIdx).padStart(2, '0')
         lessonCardsHtml += `
-          <div class="lesson-card${isDone ? ' done-card' : ''}" data-lesson="${l.id}">
+          <div class="lesson-card${isDone ? ' done-card' : ''}${isLocked ? ' locked-card' : ''}" data-lesson="${l.id}">
             <div class="lesson-card-num-box">
-              <div class="lesson-card-num-val">${numStr}</div>
+              <div class="lesson-card-num-val">${isLocked ? '🔒' : numStr}</div>
               <div class="lesson-card-num-label">AULA</div>
             </div>
             <div class="lesson-card-body">
@@ -1041,13 +1184,15 @@ function renderOverview() {
               <div class="lesson-card-title">${l.title}</div>
               ${l.desc ? `<div class="lesson-card-desc">${l.desc}</div>` : ''}
               <div class="lesson-card-footer">
-                ${isDone
-                  ? `<span class="lesson-card-badge" style="color:var(--green)">✓ CONCLUÍDA</span>`
-                  : `<span class="lesson-card-badge">● DISPONÍVEL</span>`}
-                ${l.duration ? `<span style="font-size:.68rem;color:var(--muted)">⏱ ${l.duration}</span>` : ''}
+                ${isLocked
+                  ? `<span class="lesson-card-badge" style="color:#aaa">🔒 EM BREVE</span>`
+                  : isDone
+                    ? `<span class="lesson-card-badge" style="color:var(--green)">✓ CONCLUÍDA</span>`
+                    : `<span class="lesson-card-badge">● DISPONÍVEL</span>`}
+                ${!isLocked && l.duration ? `<span style="font-size:.68rem;color:var(--muted)">⏱ ${l.duration}</span>` : ''}
               </div>
             </div>
-            <span class="lesson-card-arrow">→</span>
+            <span class="lesson-card-arrow">${isLocked ? '🔒' : '→'}</span>
           </div>`
       })
       lessonCardsHtml += `</div>`
@@ -1117,6 +1262,207 @@ function renderOverview() {
     }
   }
 
+  // ── VISÃO ALUNA: hero + progresso estilizado ──────────────────────
+  if (!adminMode) {
+    const initials = inst.name ? inst.name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase() : '👤'
+    const avatarEl = inst.photo
+      ? `<div class="hero-avatar"><img src="${inst.photo}" alt="${inst.name}" onerror="this.innerHTML='${initials}'"></div>`
+      : `<div class="hero-avatar">${initials}</div>`
+
+    // Module dots
+    const modulesForDots = data.modules.length ? data.modules : []
+    let dotsHtml = ''
+    modulesForDots.forEach((m, i) => {
+      const ml = getModuleLessons(m.id)
+      const modDone = ml.length > 0 && ml.every(l => data.progress[l.id]?.completed)
+      const label = (m.emoji ? m.emoji + ' ' : '') + (m.title || `Módulo ${i+1}`)
+      const shortLabel = m.title ? m.title.substring(0,8) : `MÓD ${i+1}`
+      dotsHtml += `<div class="mod-dot-item"><div class="mod-dot${modDone?' done':''}" data-modid="${m.id}">${i}</div><div class="mod-dot-label">${shortLabel}</div></div>`
+    })
+    if (!dotsHtml && total > 0) {
+      dotsHtml = `<div class="mod-dot-item"><div class="mod-dot active">●</div><div class="mod-dot-label">Aulas</div></div>`
+    }
+
+    // Lesson cards para aluna (usa .s-lesson-card)
+    let sLessonHtml = ''
+    let sIdx = 0
+    if (data.modules.length) {
+      data.modules.forEach(m => {
+        const ml = getModuleLessons(m.id)
+        if (!ml.length) return
+        const modLabel = (m.emoji ? m.emoji + ' ' : '') + (m.title || '')
+        sLessonHtml += `<div class="s-module-sep">MÓDULO — ${modLabel.toUpperCase()}</div>`
+        ml.forEach(l => {
+          sIdx++
+          const isDone = !!data.progress[l.id]?.completed
+          const isLocked = !!l.locked && (!isAdmin || studentViewMode)
+          const numStr = String(sIdx).padStart(2,'0')
+          sLessonHtml += `
+            <div class="s-lesson-card${isLocked?' locked':''}" data-lesson="${l.id}">
+              <div class="s-lesson-num${isDone?' done':''}">
+                <div class="s-lesson-num-val">${isLocked ? '🔒' : numStr}</div>
+                <div class="s-lesson-num-lbl">AULA</div>
+              </div>
+              <div class="s-lesson-body">
+                <div class="s-lesson-mod">${modLabel}</div>
+                <div class="s-lesson-title">${l.title}</div>
+                ${l.desc ? `<div class="s-lesson-desc">${l.desc}</div>` : ''}
+                <div class="s-lesson-badge${isLocked?' locked-badge':isDone?' done':''}">
+                  ${isLocked ? '🔒 EM BREVE' : isDone ? '✓ CONCLUÍDA' : '● DISPONÍVEL'}
+                  ${!isLocked && l.duration ? ` · ⏱ ${l.duration}` : ''}
+                </div>
+              </div>
+              <span class="s-lesson-arrow">${isLocked ? '🔒' : '→'}</span>
+            </div>`
+        })
+      })
+      const unassigned = data.lessons.filter(l => !l.moduleId)
+      unassigned.forEach(l => {
+        sIdx++
+        const isDone = !!data.progress[l.id]?.completed
+        const numStr = String(sIdx).padStart(2,'0')
+        sLessonHtml += `
+          <div class="s-lesson-card" data-lesson="${l.id}">
+            <div class="s-lesson-num${isDone?' done':''}">
+              <div class="s-lesson-num-val">${numStr}</div>
+              <div class="s-lesson-num-lbl">AULA</div>
+            </div>
+            <div class="s-lesson-body">
+              <div class="s-lesson-title">${l.title}</div>
+              ${l.desc ? `<div class="s-lesson-desc">${l.desc}</div>` : ''}
+              <div class="s-lesson-badge${isDone?' done':''}">
+                ${isDone ? '✓ CONCLUÍDA' : '● DISPONÍVEL'}
+                ${l.duration ? ` · ⏱ ${l.duration}` : ''}
+              </div>
+            </div>
+            <span class="s-lesson-arrow">→</span>
+          </div>`
+      })
+    } else {
+      data.lessons.forEach(l => {
+        sIdx++
+        const isDone = !!data.progress[l.id]?.completed
+        const numStr = String(sIdx).padStart(2,'0')
+        sLessonHtml += `
+          <div class="s-lesson-card" data-lesson="${l.id}">
+            <div class="s-lesson-num${isDone?' done':''}">
+              <div class="s-lesson-num-val">${numStr}</div>
+              <div class="s-lesson-num-lbl">AULA</div>
+            </div>
+            <div class="s-lesson-body">
+              <div class="s-lesson-title">${l.title}</div>
+              ${l.desc ? `<div class="s-lesson-desc">${l.desc}</div>` : ''}
+              <div class="s-lesson-badge${isDone?' done':''}">
+                ${isDone ? '✓ CONCLUÍDA' : '● DISPONÍVEL'}
+                ${l.duration ? ` · ⏱ ${l.duration}` : ''}
+              </div>
+            </div>
+            <span class="s-lesson-arrow">→</span>
+          </div>`
+      })
+    }
+
+    const courseName = currentCourseName || window.SITE_NAME || 'Meu Curso'
+    const [nameFirst, ...nameRest] = courseName.split(' ')
+
+    const heroDesc = data.courseDesc || inst.bio || ''
+    const heroDescHtml = heroDesc
+      ? `<div class="hero-desc">${heroDesc}</div>`
+      : ''
+    const heroContinueBtn = lastLesson
+      ? `<button class="hero-btn-continue" id="heroBtnContinue">${done === 0 ? '▶ Começar agora' : '▶ Continuar de onde parou'}</button>`
+      : ''
+
+    page.innerHTML = `
+      <!-- Hero -->
+      <div class="student-hero">
+        <div class="hero-brand">${inst.name || 'Roberta Alves'}</div>
+        <div class="hero-eyebrow">Treinamento Completo</div>
+        <div class="hero-title"><em>${nameFirst}</em> ${nameRest.join(' ')}</div>
+        ${heroDescHtml}
+        ${heroContinueBtn}
+        <div class="hero-instructor">
+          ${avatarEl}
+          <div class="hero-instructor-name">${inst.name}${inst.title ? ' — ' + inst.title : ''}</div>
+        </div>
+      </div>
+
+      <!-- Progresso -->
+      <div class="student-body">
+        <div class="s-progress-header">
+          <div class="s-progress-label">Seu progresso no treinamento</div>
+          <div class="s-progress-pct">${pct}%</div>
+        </div>
+        <div class="s-progress-bar"><div class="s-progress-fill" style="width:${pct}%"></div></div>
+        ${dotsHtml ? `<div class="module-dots">${dotsHtml}</div>` : ''}
+      </div>
+
+      <!-- Acesso Rápido -->
+      ${(data.quickLinks||[]).length > 0 ? `
+      <div class="quick-section">
+        <div class="quick-section-title">Acesso Rápido</div>
+        <div class="quick-grid">
+          ${(data.quickLinks||[]).map(ql => `
+            <a class="quick-card" href="${ql.url||'#'}" target="_blank" rel="noopener">
+              <div class="quick-card-icon">${ql.icon||'🔗'}</div>
+              <div class="quick-card-title">${ql.title||''}</div>
+            </a>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <!-- Aulas -->
+      <div style="margin-top:8px">
+        ${total > 0 ? sLessonHtml : `<div style="text-align:center;padding:48px 20px;color:var(--muted);font-size:.9rem">Nenhuma aula disponível ainda.</div>`}
+      </div>
+
+      ${allDone ? `<div class="completion-banner show"><h3>🎉 Parabéns! Você concluiu o curso!</h3><p>Você completou todas as ${total} aulas!</p></div>` : ''}
+
+      <!-- Seção de dúvidas da aluna -->
+      <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border)">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:16px">💬 Minhas Dúvidas</div>
+        <div id="studentDoubtsArea"><div style="color:var(--muted);font-size:.85rem">Carregando suas dúvidas...</div></div>
+        <div style="margin-top:16px">
+          <textarea id="studentDoubtInput" placeholder="Escreva sua dúvida aqui... seja sobre qualquer aula ou conteúdo do curso." rows="3" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.87rem;resize:vertical;outline:none;line-height:1.65;transition:border .15s"></textarea>
+          <button id="studentDoubtBtn" style="margin-top:8px;padding:10px 22px;background:#515132;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem">Enviar dúvida</button>
+          <div id="studentDoubtStatus" style="margin-top:8px;font-size:.82rem"></div>
+        </div>
+      </div>
+    `
+    page.querySelectorAll('[data-lesson]').forEach(el => {
+      el.addEventListener('click', () => openLesson(el.dataset.lesson))
+    })
+    document.getElementById('heroBtnContinue')?.addEventListener('click', () => {
+      if (lastLesson) openLesson(lastLesson.id)
+    })
+    // Carregar e enviar dúvidas da aluna
+    loadStudentDoubts(null, null, 'studentDoubtsArea')
+    document.getElementById('studentDoubtBtn')?.addEventListener('click', async () => {
+      const question = document.getElementById('studentDoubtInput').value.trim()
+      const status = document.getElementById('studentDoubtStatus')
+      if (!question) { status.textContent = 'Escreva sua dúvida antes de enviar.'; status.style.color = 'var(--danger)'; return }
+      const btn = document.getElementById('studentDoubtBtn')
+      btn.disabled = true; btn.textContent = 'Enviando...'
+      const { data: { session } } = await db.auth.getSession()
+      const r = await fetch('/api/admin-data?action=doubt', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId: currentCourseId, question })
+      })
+      const json = await r.json()
+      btn.disabled = false; btn.textContent = 'Enviar dúvida'
+      if (json.ok) {
+        document.getElementById('studentDoubtInput').value = ''
+        status.textContent = '✅ Dúvida enviada! Responderei em breve.'; status.style.color = '#515132'
+        loadStudentDoubts(null, null, 'studentDoubtsArea')
+      } else {
+        status.textContent = json.needsSetup ? '⚠️ Sistema de dúvidas em configuração. Tente mais tarde.' : (json.erro || 'Erro ao enviar.')
+        status.style.color = 'var(--danger)'
+      }
+    })
+    return
+  }
+
+  // ── VISÃO ADMIN (mantida igual) ──────────────────────────────────
   page.innerHTML = `
     <!-- Banner -->
     <div class="banner">
@@ -1147,6 +1493,24 @@ function renderOverview() {
       <div class="progress-label">${pct}% concluído — ${done} de ${total} aulas</div>
     </div>
 
+    <!-- Course Description (admin edit) -->
+    <div class="progress-section" style="margin-top:16px">
+      <h3 style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        Apresentação do curso <small style="font-size:.72rem;font-weight:400;color:var(--muted)">(texto visível para as alunas)</small>
+        <button class="btn btn-outline" id="btnEditCourseDesc" style="font-size:.72rem;padding:4px 10px">✏️ Editar</button>
+      </h3>
+      <div id="courseDescDisplay" style="font-size:.87rem;color:var(--muted);line-height:1.75">
+        ${data.courseDesc
+          ? data.courseDesc
+          : `<em>Nenhuma descrição ainda. Clique em ✏️ Editar para adicionar.</em>`}
+      </div>
+      <div id="courseDescEdit" style="display:none;margin-top:8px">
+        <textarea id="courseDescInput" rows="4" style="width:100%;padding:10px 12px;border:1.5px solid #E3DDD6;border-radius:8px;font-family:inherit;font-size:.87rem;resize:vertical;outline:none;line-height:1.75;background:var(--light)">${data.courseDesc || ''}</textarea>
+        <button id="btnSaveCourseDesc" style="margin-top:8px;padding:9px 22px;background:#515132;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.85rem">Salvar</button>
+        <button id="btnCancelCourseDesc" style="margin-top:8px;margin-left:8px;padding:9px 16px;background:none;border:1.5px solid #E3DDD6;border-radius:8px;font-weight:600;cursor:pointer;font-family:inherit;font-size:.85rem;color:var(--muted)">Cancelar</button>
+      </div>
+    </div>
+
     <!-- Instructor -->
     <div class="instructor-card">
       <div class="instructor-avatar">
@@ -1158,6 +1522,30 @@ function renderOverview() {
         ${inst.bio ? `<div class="instructor-bio">${inst.bio}</div>` : ''}
       </div>
       <button class="btn btn-outline btn-edit-instructor" id="btnEditInstructor">✏️ Editar</button>
+    </div>
+
+    <!-- Acesso Rápido (admin) -->
+    <div class="progress-section" style="margin-top:0">
+      <h3 style="display:flex;align-items:center;justify-content:space-between">
+        Acesso Rápido (links para alunas)
+        <button class="btn btn-outline" id="btnAddQuickLink" style="font-size:.75rem;padding:5px 10px">+ Adicionar card</button>
+      </h3>
+      <div id="quickLinksAdmin" style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+        ${(data.quickLinks||[]).length === 0
+          ? `<p style="font-size:.82rem;color:var(--muted)">Nenhum card ainda. Clique em "+ Adicionar card" para criar.</p>`
+          : (data.quickLinks||[]).map((ql,i) => `
+            <div class="quick-admin-row">
+              <div class="quick-admin-card">
+                <div class="quick-admin-icon">${ql.icon||'🔗'}</div>
+                <div class="quick-admin-info">
+                  <div class="quick-admin-title">${ql.title||'Sem título'}</div>
+                  <div class="quick-admin-url">${ql.url||'Sem link'}</div>
+                </div>
+              </div>
+              <button class="icon-btn" data-editql="${i}" title="Editar">✏️</button>
+              <button class="icon-btn danger" data-delql="${i}" title="Remover">✕</button>
+            </div>`).join('')}
+      </div>
     </div>
 
     <!-- Lessons list -->
@@ -1175,13 +1563,135 @@ function renderOverview() {
     if (lastLesson) openLesson(lastLesson.id)
   })
   document.getElementById('btnEditInstructor')?.addEventListener('click', openInstructorModal)
+
+  // Course description (admin)
+  document.getElementById('btnEditCourseDesc')?.addEventListener('click', () => {
+    document.getElementById('courseDescDisplay').style.display = 'none'
+    document.getElementById('courseDescEdit').style.display = ''
+    document.getElementById('courseDescInput').focus()
+  })
+  document.getElementById('btnCancelCourseDesc')?.addEventListener('click', () => {
+    document.getElementById('courseDescDisplay').style.display = ''
+    document.getElementById('courseDescEdit').style.display = 'none'
+  })
+  document.getElementById('btnSaveCourseDesc')?.addEventListener('click', () => {
+    data.courseDesc = document.getElementById('courseDescInput').value.trim()
+    const display = document.getElementById('courseDescDisplay')
+    display.innerHTML = data.courseDesc || `<em>Nenhuma descrição ainda. Clique em ✏️ Editar para adicionar.</em>`
+    display.style.display = ''
+    document.getElementById('courseDescEdit').style.display = 'none'
+    save(); toast('Apresentação salva!')
+  })
   page.querySelectorAll('[data-lesson]').forEach(el => {
     el.addEventListener('click', () => openLesson(el.dataset.lesson))
+  })
+
+  // Quick Links (admin)
+  document.getElementById('btnAddQuickLink')?.addEventListener('click', () => openQuickLinkModal())
+  page.querySelectorAll('[data-editql]').forEach(el => {
+    el.addEventListener('click', () => openQuickLinkModal(Number(el.dataset.editql)))
+  })
+  page.querySelectorAll('[data-delql]').forEach(el => {
+    el.addEventListener('click', () => {
+      const i = Number(el.dataset.delql)
+      if (!confirm('Remover este card?')) return
+      data.quickLinks.splice(i, 1)
+      save(); renderOverview()
+    })
+  })
+}
+
+// ── DÚVIDAS DA ALUNA ──
+async function loadStudentDoubts(lessonId, lessonTitle, containerId) {
+  const container = document.getElementById(containerId)
+  if (!container) return
+  const { data: { session } } = await db.auth.getSession()
+  const url = `/api/admin-data?action=doubts${currentCourseId ? '&courseId=' + currentCourseId : ''}`
+  try {
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${session?.access_token}` } })
+    const json = await r.json()
+    if (json.needsSetup) { container.innerHTML = ''; return }
+    const doubts = (json.doubts || []).filter(d => !lessonId || d.lesson_id === lessonId)
+    if (!doubts.length) { container.innerHTML = `<div style="font-size:.82rem;color:var(--muted);font-style:italic">Nenhuma dúvida enviada ainda.</div>`; return }
+    container.innerHTML = doubts.map(d => `
+      <div style="background:var(--bg);border-radius:10px;padding:14px 16px;margin-bottom:10px;border:1px solid var(--border)">
+        <div style="font-size:.82rem;line-height:1.65;color:var(--text);margin-bottom:${d.answer ? '10px' : '0'}">💬 ${d.question}</div>
+        ${d.answer ? `<div style="background:#F5F5E8;border-left:3px solid #515132;border-radius:0 8px 8px 0;padding:10px 14px;font-size:.82rem;line-height:1.65;color:#35351F">✏️ <strong>Resposta:</strong> ${d.answer}</div>` : '<div style="font-size:.75rem;color:var(--muted);margin-top:6px">⏳ Aguardando resposta...</div>'}
+      </div>`).join('')
+  } catch { container.innerHTML = '' }
+}
+
+function openQuickLinkModal(idx) {
+  const ql = idx !== undefined ? (data.quickLinks||[])[idx] : null
+  const icon  = ql?.icon  || ''
+  const title = ql?.title || ''
+  const url   = ql?.url   || ''
+
+  // Modal simples inline
+  const existing = document.getElementById('qlModal')
+  if (existing) existing.remove()
+
+  const modal = document.createElement('div')
+  modal.id = 'qlModal'
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px'
+  const EMOJI_LIST = ['📄','📝','📚','📖','🎓','🎯','⭐','💡','🔗','📌','📎','🗂️','📋','✅','🚀','💎','🏆','🎁','💬','📣','🔔','📊','📈','🖊️','💪','🌟','🎨','🎧','📷','🔍']
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:28px 24px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:14px">
+      <div style="font-size:1rem;font-weight:700;color:#1A1208">${idx !== undefined ? 'Editar card' : 'Novo card de acesso rápido'}</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-size:.75rem;font-weight:600;color:#7A6E65;text-transform:uppercase;letter-spacing:.04em">Ícone (emoji)</label>
+        <input id="qlIcon" value="${icon}" placeholder="Cole ou clique abaixo" style="padding:9px 12px;border:1.5px solid #E3DDD6;border-radius:8px;font-size:1.3rem;font-family:inherit;outline:none" />
+        <div style="display:flex;flex-wrap:wrap;gap:5px;padding:8px;background:#F8F4EF;border-radius:8px;border:1px solid #E3DDD6">
+          ${EMOJI_LIST.map(e => `<button type="button" data-emo="${e}" style="font-size:1.3rem;background:none;border:none;cursor:pointer;padding:2px 4px;border-radius:6px;line-height:1;transition:background .1s" title="${e}">${e}</button>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:.75rem;font-weight:600;color:#7A6E65;text-transform:uppercase;letter-spacing:.04em">Título do card</label>
+        <input id="qlTitle" value="${title}" placeholder="Ex: Guia Prático PDF" style="padding:9px 12px;border:1.5px solid #E3DDD6;border-radius:8px;font-size:.9rem;font-family:inherit;outline:none" />
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:.75rem;font-weight:600;color:#7A6E65;text-transform:uppercase;letter-spacing:.04em">Link (URL)</label>
+        <input id="qlUrl" value="${url}" placeholder="https://..." style="padding:9px 12px;border:1.5px solid #E3DDD6;border-radius:8px;font-size:.9rem;font-family:inherit;outline:none" />
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button id="qlCancel" style="flex:1;padding:10px;border:1.5px solid #E3DDD6;background:#fff;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
+        <button id="qlSave"   style="flex:1;padding:10px;border:none;background:#515132;color:#fff;border-radius:8px;font-size:.875rem;font-weight:700;cursor:pointer;font-family:inherit">Salvar</button>
+      </div>
+    </div>`
+  document.body.appendChild(modal)
+
+  // Emoji picker buttons
+  modal.querySelectorAll('[data-emo]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('qlIcon').value = btn.dataset.emo
+      modal.querySelectorAll('[data-emo]').forEach(b => b.style.background = 'none')
+      btn.style.background = '#E3DDD6'
+    })
+  })
+  document.getElementById('qlCancel').addEventListener('click', () => modal.remove())
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove() })
+  document.getElementById('qlSave').addEventListener('click', () => {
+    const newQl = {
+      id: ql?.id || uid(),
+      icon:  document.getElementById('qlIcon').value.trim()  || '🔗',
+      title: document.getElementById('qlTitle').value.trim() || 'Link',
+      url:   document.getElementById('qlUrl').value.trim()   || '#'
+    }
+    if (!data.quickLinks) data.quickLinks = []
+    if (idx !== undefined) data.quickLinks[idx] = newQl
+    else data.quickLinks.push(newQl)
+    modal.remove()
+    save(); renderOverview()
   })
 }
 
 // ── LESSON PAGE ──
 function openLesson(id) {
+  const lessonCheck = data.lessons.find(l => l.id === id)
+  if (lessonCheck?.locked && (!isAdmin || studentViewMode)) {
+    toast('🔒 Esta aula ainda não está disponível.')
+    return
+  }
   currentLessonId = id
   activeTab = 'material'
   editingMat = false
@@ -1235,13 +1745,116 @@ async function renderLessonPage() {
   const links = lesson.links || []
   let tabContent = ''
   if (activeTab === 'material') {
+    // Converte texto simples (sem tags HTML) para HTML com quebras de linha preservadas
+    const rawMat = lesson.materials || ''
+    const hasHtml = /<[a-z][^>]*>/i.test(rawMat)
+    const displayMat = hasHtml ? rawMat : rawMat.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')
+    // Editor: carrega HTML direto (já está em HTML) ou converte plain text
+    const editorContent = hasHtml ? rawMat : rawMat.replace(/\n/g,'<br>')
     tabContent = editingMat
-      ? `<textarea class="mat-textarea" id="matEditor">${lesson.materials || ''}</textarea>
+      ? `<div class="mat-toolbar">
+           <button class="mat-tool-btn" id="tbUndo" title="Desfazer (Ctrl+Z)" style="font-size:.9rem">↩</button>
+           <button class="mat-tool-btn" id="tbRedo" title="Refazer (Ctrl+Y)" style="font-size:.9rem">↪</button>
+           <span class="mat-tool-sep"></span>
+           <button class="mat-tool-btn" id="tbBold" title="Negrito"><b>N</b></button>
+           <button class="mat-tool-btn" id="tbItalic" title="Itálico"><i>I</i></button>
+           <span class="mat-tool-sep"></span>
+           <select class="mat-select-btn" id="tbHeading" title="Estilo do texto">
+             <option value="">Parágrafo</option>
+             <option value="h1">Título grande</option>
+             <option value="h2">Título médio</option>
+             <option value="h3">Título pequeno</option>
+           </select>
+           <span class="mat-tool-sep"></span>
+           <div class="mat-color-wrap" id="colorWrap">
+             <button class="mat-color-btn" id="tbColorBtn" title="Cor do texto">
+               A <span class="mat-color-indicator" id="colorIndicator" style="background:#222"></span>
+             </button>
+             <div class="mat-color-palette hidden" id="colorPalette">
+               <div class="mat-palette-label">Cor do texto</div>
+               <div class="mat-swatches-grid">
+                 <span class="mat-color-swatch" data-color="#000000" style="background:#000000" title="Preto"></span>
+                 <span class="mat-color-swatch" data-color="#333333" style="background:#333333" title="Quase preto"></span>
+                 <span class="mat-color-swatch" data-color="#555555" style="background:#555555" title="Cinza escuro"></span>
+                 <span class="mat-color-swatch" data-color="#888888" style="background:#888888" title="Cinza"></span>
+                 <span class="mat-color-swatch" data-color="#AAAAAA" style="background:#AAAAAA" title="Cinza claro"></span>
+                 <span class="mat-color-swatch" data-color="#CCCCCC" style="background:#CCCCCC;border-color:#bbb" title="Prata"></span>
+                 <span class="mat-color-swatch" data-color="#FFFFFF" style="background:#FFFFFF;border-color:#bbb" title="Branco"></span>
+                 <span class="mat-color-swatch" data-color="#35351F" style="background:#35351F" title="Verde escuro marca"></span>
+                 <span class="mat-color-swatch" data-color="#515132" style="background:#515132" title="Verde marca"></span>
+                 <span class="mat-color-swatch" data-color="#6A6A42" style="background:#6A6A42" title="Verde médio marca"></span>
+                 <span class="mat-color-swatch" data-color="#0E7340" style="background:#0E7340" title="Verde"></span>
+                 <span class="mat-color-swatch" data-color="#15803D" style="background:#15803D" title="Verde vivo"></span>
+                 <span class="mat-color-swatch" data-color="#16A34A" style="background:#16A34A" title="Verde claro"></span>
+                 <span class="mat-color-swatch" data-color="#4ADE80" style="background:#4ADE80" title="Verde menta"></span>
+                 <span class="mat-color-swatch" data-color="#E53935" style="background:#E53935" title="Vermelho"></span>
+                 <span class="mat-color-swatch" data-color="#C62828" style="background:#C62828" title="Vermelho escuro"></span>
+                 <span class="mat-color-swatch" data-color="#B03060" style="background:#B03060" title="Vinho"></span>
+                 <span class="mat-color-swatch" data-color="#F06292" style="background:#F06292" title="Rosa"></span>
+                 <span class="mat-color-swatch" data-color="#1D6FA4" style="background:#1D6FA4" title="Azul"></span>
+                 <span class="mat-color-swatch" data-color="#1565C0" style="background:#1565C0" title="Azul escuro"></span>
+                 <span class="mat-color-swatch" data-color="#0288D1" style="background:#0288D1" title="Azul claro"></span>
+                 <span class="mat-color-swatch" data-color="#00ACC1" style="background:#00ACC1" title="Ciano"></span>
+                 <span class="mat-color-swatch" data-color="#7B3FAF" style="background:#7B3FAF" title="Roxo"></span>
+                 <span class="mat-color-swatch" data-color="#6A1B9A" style="background:#6A1B9A" title="Roxo escuro"></span>
+                 <span class="mat-color-swatch" data-color="#C65D2E" style="background:#C65D2E" title="Laranja"></span>
+                 <span class="mat-color-swatch" data-color="#E65100" style="background:#E65100" title="Laranja escuro"></span>
+                 <span class="mat-color-swatch" data-color="#CC8800" style="background:#CC8800" title="Dourado"></span>
+                 <span class="mat-color-swatch" data-color="#F59E0B" style="background:#F59E0B" title="Âmbar"></span>
+                 <span class="mat-color-swatch" data-color="#854D0E" style="background:#854D0E" title="Marrom"></span>
+                 <span class="mat-color-swatch" data-color="#7C3AED" style="background:#7C3AED" title="Violeta"></span>
+                 <span class="mat-color-swatch" data-color="#DB2777" style="background:#DB2777" title="Pink"></span>
+                 <span class="mat-color-swatch" data-color="#0F766E" style="background:#0F766E" title="Verde-azul"></span>
+               </div>
+             </div>
+           </div>
+           <div class="mat-color-wrap" id="bgColorWrap">
+             <button class="mat-color-btn" id="tbBgColorBtn" title="Cor de fundo do texto">
+               <span style="font-size:.75rem;font-weight:700">🖌</span>
+               <span class="mat-color-indicator" id="bgColorIndicator" style="background:#FFFF00"></span>
+             </button>
+             <div class="mat-color-palette hidden" id="bgColorPalette">
+               <div class="mat-palette-label">Cor de fundo</div>
+               <div class="mat-swatches-grid">
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="transparent" style="background:linear-gradient(135deg,#fff 45%,#f00 45%,#f00 55%,#fff 55%);border-color:#bbb" title="Sem fundo"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#FFFF99" style="background:#FFFF99" title="Amarelo"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#FFF3CD" style="background:#FFF3CD" title="Bege claro"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#FFE0B2" style="background:#FFE0B2" title="Pêssego"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#FFCCBC" style="background:#FFCCBC" title="Salmão claro"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#F8BBD9" style="background:#F8BBD9" title="Rosa claro"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#E1BEE7" style="background:#E1BEE7" title="Lavanda"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#D1C4E9" style="background:#D1C4E9" title="Lilás"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#BBDEFB" style="background:#BBDEFB" title="Azul bebê"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#B3E5FC" style="background:#B3E5FC" title="Azul claro"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#B2EBF2" style="background:#B2EBF2" title="Ciano claro"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#C8E6C9" style="background:#C8E6C9" title="Verde claro"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#DCEDC8" style="background:#DCEDC8" title="Verde lima"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#F0F4C3" style="background:#F0F4C3" title="Verde amarelado"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#F5F5E8" style="background:#F5F5E8" title="Bege marca"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#E8F5E9" style="background:#E8F5E9" title="Verde suave"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#FFF9C4" style="background:#FFF9C4" title="Amarelo suave"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#FCE4EC" style="background:#FCE4EC" title="Rosa suave"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#EDE7F6" style="background:#EDE7F6" title="Roxo suave"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#E3F2FD" style="background:#E3F2FD" title="Azul suave"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#FFECB3" style="background:#FFECB3" title="Mel"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#D7CCC8" style="background:#D7CCC8" title="Cinza rosado"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#CFD8DC" style="background:#CFD8DC" title="Cinza azulado"></span>
+                 <span class="mat-color-swatch mat-bg-swatch" data-bg="#ECEFF1" style="background:#ECEFF1" title="Cinza suave"></span>
+               </div>
+             </div>
+           </div>
+           <span class="mat-tool-sep"></span>
+           <button class="mat-tool-btn" id="tbUppercase" title="MAIÚSCULAS">AA</button>
+           <button class="mat-tool-btn" id="tbLowercase" title="minúsculas">aa</button>
+           <span class="mat-tool-sep"></span>
+           <button class="mat-tool-btn" id="tbCallout" title="Caixa de destaque" style="background:#E8F8F0;border-color:#86EFAC">🟩 Destaque</button>
+         </div>
+         <div class="mat-editor" id="matEditor" contenteditable="true" data-placeholder="Escreva o material da aula aqui...">${editorContent}</div>
          <div class="save-row">
            <button class="btn btn-outline" id="btnCancelMat">Cancelar</button>
            <button class="btn btn-dark" id="btnSaveMat">Salvar</button>
          </div>`
-      : `<div class="${lesson.materials ? 'mat-text' : 'mat-empty'}">${lesson.materials || 'Nenhum material adicionado ainda.'}</div>
+      : `<div class="${displayMat ? 'mat-text' : 'mat-empty'}">${displayMat || 'Nenhum material adicionado ainda.'}</div>
          ${adminMode ? `<div class="edit-row"><button class="btn btn-outline" id="btnEditMat">✏️ Editar material</button></div>` : ''}`
   } else if (activeTab === 'links') {
     const linksHtml = links.length === 0
@@ -1331,8 +1944,184 @@ async function renderLessonPage() {
   document.getElementById('btnEditMat')?.addEventListener('click', () => { editingMat = true; renderLessonPage() })
   document.getElementById('btnCancelMat')?.addEventListener('click', () => { editingMat = false; renderLessonPage() })
   document.getElementById('btnSaveMat')?.addEventListener('click', () => {
-    lesson.materials = document.getElementById('matEditor').value
+    lesson.materials = document.getElementById('matEditor').innerHTML
     save(); editingMat = false; renderLessonPage(); toast('Material salvo!')
+  })
+  // Toolbar de formatação
+  document.getElementById('tbUndo')?.addEventListener('mousedown', e => {
+    e.preventDefault(); document.execCommand('undo'); document.getElementById('matEditor').focus()
+  })
+  document.getElementById('tbRedo')?.addEventListener('mousedown', e => {
+    e.preventDefault(); document.execCommand('redo'); document.getElementById('matEditor').focus()
+  })
+  document.getElementById('tbBold')?.addEventListener('mousedown', e => {
+    e.preventDefault(); document.execCommand('bold'); document.getElementById('matEditor').focus()
+  })
+  document.getElementById('tbItalic')?.addEventListener('mousedown', e => {
+    e.preventDefault(); document.execCommand('italic'); document.getElementById('matEditor').focus()
+  })
+
+  // Heading / estilo do texto
+  document.getElementById('tbHeading')?.addEventListener('mousedown', e => { e.stopPropagation() })
+  document.getElementById('tbHeading')?.addEventListener('change', e => {
+    const editor = document.getElementById('matEditor')
+    const val = e.target.value
+    if (!val) {
+      document.execCommand('formatBlock', false, 'p')
+    } else {
+      document.execCommand('formatBlock', false, val)
+    }
+    editor.focus()
+    e.target.value = ''
+  })
+
+  // Fechar todas as paletas ao clicar fora
+  document.addEventListener('mousedown', e => {
+    if (!document.getElementById('colorWrap')?.contains(e.target))
+      document.getElementById('colorPalette')?.classList.add('hidden')
+    if (!document.getElementById('bgColorWrap')?.contains(e.target))
+      document.getElementById('bgColorPalette')?.classList.add('hidden')
+  }, { capture: true })
+
+  // Cor do texto — abrir/fechar paleta
+  document.getElementById('tbColorBtn')?.addEventListener('mousedown', e => {
+    e.preventDefault()
+    document.getElementById('bgColorPalette')?.classList.add('hidden')
+    document.getElementById('colorPalette').classList.toggle('hidden')
+  })
+  document.getElementById('colorPalette')?.querySelectorAll('.mat-color-swatch').forEach(sw => {
+    sw.addEventListener('mousedown', e => {
+      e.preventDefault()
+      const color = sw.dataset.color
+      document.execCommand('foreColor', false, color)
+      document.getElementById('colorIndicator').style.background = color
+      document.getElementById('colorPalette').classList.add('hidden')
+      document.getElementById('matEditor').focus()
+    })
+  })
+
+  // Cor de fundo — abrir/fechar paleta
+  document.getElementById('tbBgColorBtn')?.addEventListener('mousedown', e => {
+    e.preventDefault()
+    document.getElementById('colorPalette')?.classList.add('hidden')
+    document.getElementById('bgColorPalette').classList.toggle('hidden')
+  })
+  document.getElementById('bgColorPalette')?.querySelectorAll('.mat-bg-swatch').forEach(sw => {
+    sw.addEventListener('mousedown', e => {
+      e.preventDefault()
+      const bg = sw.dataset.bg
+      const editor = document.getElementById('matEditor')
+      editor.focus()
+      const sel = window.getSelection()
+      if (!sel || sel.rangeCount === 0) { document.getElementById('bgColorPalette').classList.add('hidden'); return }
+      const range = sel.getRangeAt(0)
+      // Pega o HTML selecionado
+      const tmp = document.createElement('div')
+      tmp.appendChild(range.cloneContents())
+      const selectedHTML = tmp.innerHTML || sel.toString()
+      if (!selectedHTML) { document.getElementById('bgColorPalette').classList.add('hidden'); return }
+      if (bg === 'transparent') {
+        // Remove fundo: insere o conteúdo sem background (rastreado no desfazer)
+        const clean = selectedHTML.replace(/background(-color)?:[^;"]+(;)?/gi, '')
+        document.execCommand('insertHTML', false, clean)
+        document.getElementById('bgColorIndicator').style.background = '#FFFF00'
+      } else {
+        // Aplica cor de fundo via insertHTML — entra no histórico de desfazer
+        document.execCommand('insertHTML', false, `<span style="background-color:${bg}">${selectedHTML}</span>`)
+        document.getElementById('bgColorIndicator').style.background = bg
+      }
+      document.getElementById('bgColorPalette').classList.add('hidden')
+      editor.focus()
+    })
+  })
+
+  // Enter: remove cor de fundo da nova linha automaticamente
+  document.getElementById('matEditor')?.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return
+    // Deixa o navegador criar a linha normalmente, depois limpa o fundo herdado
+    setTimeout(() => {
+      const editor = document.getElementById('matEditor')
+      const sel = window.getSelection()
+      if (!sel || sel.rangeCount === 0) return
+      // Sobe a partir do cursor procurando qualquer elemento com background-color
+      let node = sel.anchorNode
+      if (node && node.nodeType === 3) node = node.parentNode
+      while (node && node !== editor) {
+        if (node.nodeType === 1 && node.style && node.style.backgroundColor && node.style.backgroundColor !== '') {
+          node.style.backgroundColor = ''
+          node.style.background = ''
+          // Se o span ficou sem nenhum estilo, remove a tag mantendo o conteúdo
+          if (node.tagName === 'SPAN') {
+            const attr = node.getAttribute('style')
+            if (!attr || !attr.trim()) {
+              const parent = node.parentNode
+              if (parent) {
+                while (node.firstChild) parent.insertBefore(node.firstChild, node)
+                parent.removeChild(node)
+              }
+            }
+          }
+          break
+        }
+        node = node.parentNode
+      }
+    }, 0)
+  })
+
+  // Maiúsculas / minúsculas
+  document.getElementById('tbUppercase')?.addEventListener('mousedown', e => {
+    e.preventDefault()
+    const editor = document.getElementById('matEditor')
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+      const range = sel.getRangeAt(0)
+      const text = range.toString()
+      document.execCommand('insertText', false, text.toUpperCase())
+    }
+    editor.focus()
+  })
+  document.getElementById('tbLowercase')?.addEventListener('mousedown', e => {
+    e.preventDefault()
+    const editor = document.getElementById('matEditor')
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+      const range = sel.getRangeAt(0)
+      const text = range.toString()
+      document.execCommand('insertText', false, text.toLowerCase())
+    }
+    editor.focus()
+  })
+
+  document.getElementById('tbCallout')?.addEventListener('mousedown', e => {
+    e.preventDefault()
+    const editor = document.getElementById('matEditor')
+    const sel = window.getSelection()
+    const callout = document.createElement('div')
+    callout.className = 'callout'
+    if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+      // Envolve a seleção na caixa de destaque
+      try {
+        const range = sel.getRangeAt(0)
+        const fragment = range.extractContents()
+        callout.appendChild(fragment)
+        range.insertNode(callout)
+        // Posiciona cursor após o callout
+        const after = document.createRange()
+        after.setStartAfter(callout); after.collapse(true)
+        sel.removeAllRanges(); sel.addRange(after)
+      } catch(err) { editor.appendChild(callout) }
+    } else {
+      // Insere caixa vazia na posição do cursor
+      callout.innerHTML = '<br>'
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0)
+        range.insertNode(callout)
+        const inside = document.createRange()
+        inside.setStart(callout, 0); inside.collapse(true)
+        sel.removeAllRanges(); sel.addRange(inside)
+      } else { editor.appendChild(callout) }
+    }
+    editor.focus()
   })
   document.getElementById('btnAddLink')?.addEventListener('click', () => {
     const label = document.getElementById('linkLabel').value.trim()
@@ -1447,7 +2236,15 @@ async function showStudentsPage() {
         <td><button class="btn btn-outline" style="font-size:.75rem;padding:5px 10px;color:var(--danger);border-color:#FECACA" data-delstudent="${s.id}" data-email="${s.email}">Remover</button></td>
       </tr>`).join('')
 
-  page.innerHTML = `
+  // Tabs para navegação admin
+  const tabsHtml = `
+    <div style="display:flex;gap:6px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0">
+      <button id="tabBtnAlunas" onclick="showStudentsPage()" style="padding:10px 18px;border:none;background:none;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;color:#515132;border-bottom:2px solid #515132;margin-bottom:-2px">👩‍🎓 Alunas</button>
+      <button id="tabBtnProgress" onclick="showProgressTab()" style="padding:10px 18px;border:none;background:none;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px">📊 Progresso</button>
+      <button id="tabBtnDoubts" onclick="showDoubtsTab()" style="padding:10px 18px;border:none;background:none;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px">💬 Dúvidas</button>
+    </div>`
+
+  page.innerHTML = tabsHtml + `
     <div class="students-header">
       <h1>👩‍🎓 Alunas</h1>
       <span style="font-size:.85rem;color:var(--muted)">${students.length} cadastrada${students.length !== 1 ? 's' : ''}</span>
@@ -1523,6 +2320,199 @@ async function showStudentsPage() {
       })
       if (res.ok) { toast('Aluna removida.'); showStudentsPage() }
       else toast('Erro ao remover.')
+    })
+  })
+}
+
+// ── ABA PROGRESSO ──
+async function showProgressTab() {
+  currentLessonId = null
+  document.getElementById('lessonPage').style.display = 'none'
+  document.getElementById('overviewPage').style.display = 'none'
+  document.getElementById('btnOverview').classList.remove('active')
+  document.getElementById('btnStudentsPage').classList.add('active')
+  const page = document.getElementById('studentsPage')
+  page.style.display = 'flex'
+  closeSidebar()
+
+  if (!currentCourseId) {
+    page.innerHTML = `<div style="padding:40px;color:var(--muted);text-align:center">Selecione um curso primeiro para ver o progresso das alunas.</div>`
+    return
+  }
+
+  page.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">Carregando progresso...</div>`
+
+  const { data: { session } } = await db.auth.getSession()
+  const token = session?.access_token
+
+  const tabsHtml = `
+    <div style="display:flex;gap:6px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0">
+      <button onclick="showStudentsPage()" style="padding:10px 18px;border:none;background:none;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px">👩‍🎓 Alunas</button>
+      <button style="padding:10px 18px;border:none;background:none;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;color:#515132;border-bottom:2px solid #515132;margin-bottom:-2px">📊 Progresso</button>
+      <button onclick="showDoubtsTab()" style="padding:10px 18px;border:none;background:none;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px">💬 Dúvidas</button>
+    </div>`
+
+  let students = [], progress = []
+  try {
+    const r = await fetch(`/api/admin-data?action=progress&courseId=${currentCourseId}`, { headers: { Authorization: `Bearer ${token}` } })
+    const json = await r.json()
+    students = json.students || []
+    progress = json.progress || []
+  } catch { page.innerHTML = tabsHtml + `<div style="padding:40px;color:var(--muted);text-align:center">Erro ao carregar progresso.</div>`; return }
+
+  // Monta mapa: userId -> Set de lessons completadas
+  const completedMap = {}
+  progress.forEach(p => {
+    if (!completedMap[p.user_id]) completedMap[p.user_id] = new Set()
+    if (p.completed) completedMap[p.user_id].add(p.lesson_id)
+  })
+
+  const totalLessons = data.lessons.length
+  const rows = students.map(s => {
+    const done = completedMap[s.id]?.size || 0
+    const pct  = totalLessons ? Math.round(done / totalLessons * 100) : 0
+    const barColor = pct >= 100 ? '#22C55E' : pct > 50 ? '#515132' : '#C8C8A0'
+    return `<tr>
+      <td>
+        <div style="font-weight:600;font-size:.88rem">${s.name || '—'}</div>
+        <div style="font-size:.75rem;color:var(--muted)">${s.email}</div>
+      </td>
+      <td style="min-width:160px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1;height:8px;background:var(--border);border-radius:99px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:99px;transition:width .4s"></div>
+          </div>
+          <div style="font-size:.8rem;font-weight:700;color:${barColor};min-width:36px">${pct}%</div>
+        </div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:3px">${done} de ${totalLessons} aula${totalLessons !== 1 ? 's' : ''} concluída${done !== 1 ? 's' : ''}</div>
+      </td>
+      <td style="text-align:center">
+        ${pct >= 100 ? '<span style="color:#22C55E;font-weight:700;font-size:.82rem">✓ Concluído</span>' : pct > 0 ? '<span style="color:#515132;font-size:.82rem">Em andamento</span>' : '<span style="color:var(--muted);font-size:.82rem">Não iniciou</span>'}
+      </td>
+    </tr>`
+  }).join('')
+
+  page.innerHTML = tabsHtml + `
+    <div class="students-header">
+      <h1>📊 Progresso das Alunas</h1>
+      <span style="font-size:.85rem;color:var(--muted)">${students.length} aluna${students.length !== 1 ? 's' : ''} · ${data.lessons.length} aula${data.lessons.length !== 1 ? 's' : ''}</span>
+    </div>
+    <div class="students-table-wrap">
+      <table class="students-table">
+        <thead><tr><th>Aluna</th><th>Progresso</th><th>Status</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="3" class="students-empty">Nenhuma aluna cadastrada.</td></tr>'}</tbody>
+      </table>
+    </div>`
+}
+
+// ── ABA DÚVIDAS (admin) ──
+async function showDoubtsTab() {
+  currentLessonId = null
+  document.getElementById('lessonPage').style.display = 'none'
+  document.getElementById('overviewPage').style.display = 'none'
+  document.getElementById('btnOverview').classList.remove('active')
+  document.getElementById('btnStudentsPage').classList.add('active')
+  const page = document.getElementById('studentsPage')
+  page.style.display = 'flex'
+  closeSidebar()
+  page.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">Carregando dúvidas...</div>`
+
+  const { data: { session } } = await db.auth.getSession()
+  const token = session?.access_token
+
+  const tabsHtml = `
+    <div style="display:flex;gap:6px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0">
+      <button onclick="showStudentsPage()" style="padding:10px 18px;border:none;background:none;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px">👩‍🎓 Alunas</button>
+      <button onclick="showProgressTab()" style="padding:10px 18px;border:none;background:none;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px">📊 Progresso</button>
+      <button style="padding:10px 18px;border:none;background:none;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;color:#515132;border-bottom:2px solid #515132;margin-bottom:-2px">💬 Dúvidas</button>
+    </div>`
+
+  let doubts = []
+  try {
+    const url = `/api/admin-data?action=doubts${currentCourseId ? '&courseId=' + currentCourseId : ''}`
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+    const json = await r.json()
+    if (json.needsSetup) {
+      page.innerHTML = tabsHtml + `
+        <div style="background:#FFF7ED;border:1.5px solid #FED7AA;border-radius:12px;padding:24px;max-width:560px">
+          <div style="font-weight:700;margin-bottom:8px;color:#C2410C">⚙️ Configuração necessária (apenas uma vez)</div>
+          <p style="font-size:.87rem;color:#92400E;line-height:1.7;margin-bottom:16px">Para usar as dúvidas, crie a tabela no Supabase. Acesse <strong>Supabase → SQL Editor</strong> e execute:</p>
+          <pre style="background:#1E1E1E;color:#D4D4D4;padding:16px;border-radius:8px;font-size:.75rem;overflow-x:auto;line-height:1.7">CREATE TABLE IF NOT EXISTS doubts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  course_id UUID,
+  lesson_id TEXT,
+  lesson_title TEXT,
+  user_id UUID NOT NULL,
+  user_email TEXT,
+  user_name TEXT,
+  question TEXT NOT NULL,
+  answer TEXT,
+  answered_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE doubts DISABLE ROW LEVEL SECURITY;</pre>
+          <button onclick="showDoubtsTab()" style="margin-top:16px;padding:10px 20px;background:#515132;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit">🔄 Já criei — atualizar</button>
+        </div>`
+      return
+    }
+    doubts = json.doubts || []
+  } catch { page.innerHTML = tabsHtml + `<div style="padding:40px;color:var(--muted);text-align:center">Erro ao carregar dúvidas.</div>`; return }
+
+  const fmtDate = d => d ? new Date(d).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—'
+
+  const cardsHtml = doubts.length === 0
+    ? `<div style="padding:48px;text-align:center;color:var(--muted);font-size:.9rem">Nenhuma dúvida enviada ainda.</div>`
+    : doubts.map(d => `
+      <div style="background:var(--surface);border:1.5px solid ${d.answer ? '#C8C8A0' : 'var(--border)'};border-radius:12px;padding:20px 22px;display:flex;flex-direction:column;gap:12px" data-dbtid="${d.id}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+          <div>
+            <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">${d.user_name || d.user_email}${d.lesson_title ? ' · <span style="color:#515132">' + d.lesson_title + '</span>' : ''}</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:2px">${fmtDate(d.created_at)}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            ${d.answer ? '<span style="font-size:.7rem;background:#F0F5EB;color:#515132;padding:3px 10px;border-radius:99px;font-weight:700">✓ Respondida</span>' : '<span style="font-size:.7rem;background:#FFF7ED;color:#C2410C;padding:3px 10px;border-radius:99px;font-weight:700">Pendente</span>'}
+            <button data-delid="${d.id}" style="background:none;border:none;cursor:pointer;font-size:.85rem;color:var(--muted);padding:2px 6px;border-radius:4px" title="Excluir">✕</button>
+          </div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px 14px;font-size:.87rem;line-height:1.65;color:var(--text)">💬 ${d.question}</div>
+        ${d.answer ? `<div style="background:#F5F5E8;border-left:3px solid #515132;border-radius:0 8px 8px 0;padding:12px 14px;font-size:.87rem;line-height:1.65;color:#35351F">✏️ <strong>Sua resposta:</strong> ${d.answer}</div>` : ''}
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <textarea data-answerid="${d.id}" placeholder="Digite sua resposta aqui..." rows="2" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:.85rem;resize:vertical;outline:none;line-height:1.6">${d.answer || ''}</textarea>
+          <button data-saveid="${d.id}" style="padding:9px 16px;background:#515132;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:.82rem;white-space:nowrap">${d.answer ? 'Atualizar' : 'Responder'}</button>
+        </div>
+      </div>`).join('')
+
+  page.innerHTML = tabsHtml + `
+    <div class="students-header" style="margin-bottom:20px">
+      <h1>💬 Dúvidas das Alunas</h1>
+      <span style="font-size:.85rem;color:var(--muted)">${doubts.length} dúvida${doubts.length !== 1 ? 's' : ''} · ${doubts.filter(d=>!d.answer).length} pendente${doubts.filter(d=>!d.answer).length !== 1 ? 's' : ''}</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">${cardsHtml}</div>`
+
+  // Listeners de responder e excluir
+  page.querySelectorAll('[data-saveid]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.saveid
+      const ta = page.querySelector(`[data-answerid="${id}"]`)
+      const answer = ta?.value.trim() || ''
+      btn.disabled = true; btn.textContent = '...'
+      await fetch('/api/admin-data?action=answer', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, answer })
+      })
+      toast('✅ Resposta salva!'); showDoubtsTab()
+    })
+  })
+  page.querySelectorAll('[data-delid]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Excluir esta dúvida?')) return
+      await fetch('/api/admin-data?action=doubt', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: btn.dataset.delid })
+      })
+      toast('Dúvida excluída.'); showDoubtsTab()
     })
   })
 }

@@ -233,7 +233,7 @@
 
   // Se veio do logout, garante que a sessão foi limpa antes de qualquer coisa
   const urlParams = new URLSearchParams(window.location.search)
-  const veiuDoLogout = urlParams.get('saiu') === '1'
+  let veiuDoLogout = urlParams.get('saiu') === '1'
 
   function showView(id) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
@@ -261,7 +261,10 @@
   })
 
   if (veiuDoLogout) {
-    db.auth.signOut().catch(() => {})
+    db.auth.signOut().then(() => {
+      veiuDoLogout = false  // libera o redirect após o logout ser concluído
+      window.history.replaceState({}, '', '/login.html')
+    }).catch(() => { veiuDoLogout = false })
   } else if (!isAuthCallback) {
     // Só redireciona automaticamente se NÃO for callback de auth
     db.auth.getSession().then(({ data: { session } }) => {

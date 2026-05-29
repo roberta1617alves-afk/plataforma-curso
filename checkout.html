@@ -106,29 +106,9 @@
       <button class="btn-back" onclick="voltarStep1()">← Alterar dados</button>
       <div class="buyer-summary" id="buyerSummary"></div>
 
-      <!-- Abas -->
-      <div class="tabs">
-        <button class="tab active" id="tabCard" onclick="switchTab('card')">💳 Cartão de crédito</button>
-        <button class="tab" id="tabPix"  onclick="switchTab('pix')">⚡ PIX</button>
-      </div>
-
-      <!-- Aba cartão -->
-      <div class="tab-content active" id="tabContentCard">
+      <!-- Cartão de crédito -->
+      <div id="tabContentCard">
         <div id="paymentBrick_container"></div>
-      </div>
-
-      <!-- Aba PIX -->
-      <div class="tab-content" id="tabContentPix">
-        <div class="pix-section">
-          <div class="fgroup" style="margin-bottom:14px">
-            <label>CPF <span style="color:#DC2626">*</span></label>
-            <input type="text" id="pixCpf" placeholder="000.000.000-00" maxlength="14" autocomplete="off"
-              oninput="this.value=this.value.replace(/\D/g,'').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')" />
-          </div>
-          <p style="margin-bottom:14px">Você será redirecionada para o Mercado Pago para concluir o pagamento via PIX.</p>
-          <button class="btn-pix" id="btnGerarPix" onclick="gerarPix()">⚡ Ir para pagamento PIX</button>
-          <div class="error" id="errPix" style="display:none"></div>
-        </div>
       </div>
 
       <div class="seguro">🔒 Pagamento 100% seguro via Mercado Pago</div>
@@ -208,8 +188,7 @@ function switchTab(tab) {
 
 async function renderBrick() {
   if (brickController) { brickController.unmount(); brickController = null }
-  document.getElementById('paymentBrick_container').innerHTML =
-    '<div class="spinner-wrap"><div class="spinner"></div>Carregando...</div>'
+  document.getElementById('paymentBrick_container').innerHTML = ''
 
   const bricksBuilder = mp.bricks()
   brickController = await bricksBuilder.create('payment', 'paymentBrick_container', {

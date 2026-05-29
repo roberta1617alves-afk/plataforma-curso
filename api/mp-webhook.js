@@ -129,5 +129,27 @@ module.exports = async function handler(req, res) {
     } catch (e) { console.error('Erro ao enviar e-mail:', e) }
   }
 
+  // Enviar WhatsApp via UltraMsg
+  if (process.env.ULTRAMSG_INSTANCE && process.env.ULTRAMSG_TOKEN) {
+    try {
+      const siteUrl2 = process.env.SITE_URL || ''
+      const payerPhone = payment.payer?.phone?.number || ''
+      const phone = payerPhone.replace(/\D/g, '').replace(/^0+/, '')
+      if (phone) {
+        const senhaTexto = existingUser ? '(use sua senha atual)' : senhaGerada
+        const msg = `Olá ${nomAluna}! 🎉\n\nSeu acesso ao *${nomeCurso}* está liberado!\n\n📧 *E-mail:* ${payerEmail}\n🔑 *Senha:* ${senhaTexto}\n\n👉 Acesse agora: ${siteUrl2}/login.html\n\nQualquer dúvida é só chamar! 😊`
+        const numFinal = phone.startsWith('55') ? phone : `55${phone}`
+        const waBody = `token=${encodeURIComponent(process.env.ULTRAMSG_TOKEN)}&to=${encodeURIComponent(numFinal)}&body=${encodeURIComponent(msg)}`
+        const waRes = await fetch(`https://api.ultramsg.com/${process.env.ULTRAMSG_INSTANCE}/messages/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: waBody
+        })
+        const waData = await waRes.json().catch(() => ({}))
+        console.log('MP webhook: WhatsApp para', numFinal, JSON.stringify(waData))
+      }
+    } catch (e) { console.error('MP webhook: erro ao enviar WhatsApp', e) }
+  }
+
   return res.status(200).json({ ok: true })
 }
