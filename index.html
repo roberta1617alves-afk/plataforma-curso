@@ -932,6 +932,14 @@ async function selectCourse(course) {
   document.querySelector('main').style.display = ''
   document.querySelector('aside').style.display = ''
 
+  // Limpa dados do curso anterior antes de carregar o novo
+  data.instructor = structuredClone(DEFAULTS.instructor)
+  data.modules    = []
+  data.lessons    = []
+  data.quickLinks = []
+  data.courseDesc = ''
+  data.progress   = {}
+
   // 1) Primeiro tenta usar o cache (já tem os dados, sem re-fetch)
   const cached = coursesCache.find(c => c.id === course.id)
   if (cached?.data && (cached.data.lessons?.length || cached.data.modules?.length || cached.data.instructor?.name)) {
