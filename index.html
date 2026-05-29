@@ -52,7 +52,8 @@
     .layout { display:flex;padding-top:calc(var(--header-h) + 3px);min-height:100dvh; }
 
     /* SIDEBAR */
-    aside { width:var(--sidebar-w);position:fixed;top:calc(var(--header-h)+3px);left:0;bottom:0;background:var(--sidebar-bg);border-right:none;overflow-y:auto;z-index:90;transition:transform .22s ease;display:flex;flex-direction:column; }
+    aside { width:var(--sidebar-w);position:fixed;top:calc(var(--header-h)+3px);left:0;bottom:0;background:var(--sidebar-bg);border-right:none;overflow-y:hidden;z-index:90;transition:transform .22s ease;display:flex;flex-direction:column; }
+    #modulesNav { flex:1;min-height:0;overflow-y:auto; }
 
     /* Sidebar Brand */
     .sidebar-brand { padding:20px 18px 12px; border-bottom:1px solid var(--sidebar-border); }
@@ -1102,13 +1103,14 @@ function renderModulesNav(search = '') {
     lessons.forEach(l => {
       globalIdx++
       const done = data.progress[l.id]?.completed
+      const isLocked = !!l.locked && (!isAdmin || studentViewMode)
       const li = document.createElement('li')
       li.innerHTML = `
-        <button class="lesson-btn${currentLessonId === l.id ? ' active' : ''}${done ? ' done' : ''}" data-id="${l.id}">
-          <span class="lesson-num">${done ? '✓' : globalIdx}</span>
+        <button class="lesson-btn${currentLessonId === l.id ? ' active' : ''}${done ? ' done' : ''}${isLocked ? ' locked-nav' : ''}" data-id="${l.id}" style="${isLocked ? 'opacity:.5;cursor:not-allowed' : ''}">
+          <span class="lesson-num">${isLocked ? '🔒' : done ? '✓' : globalIdx}</span>
           <span class="lesson-info">
             <span class="lesson-name">${l.title}</span>
-            ${l.duration ? `<span class="lesson-meta">⏱ ${l.duration}</span>` : ''}
+            ${isLocked ? `<span class="lesson-meta">Em breve</span>` : l.duration ? `<span class="lesson-meta">⏱ ${l.duration}</span>` : ''}
           </span>
           <span class="lesson-actions">
             <button class="icon-btn" data-edit="${l.id}" title="Editar">✏️</button>
@@ -1126,6 +1128,10 @@ function renderModulesNav(search = '') {
   nav.querySelectorAll('.lesson-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       if (e.target.closest('[data-edit],[data-del]')) return
+      if (btn.classList.contains('locked-nav')) {
+        toast('🔒 Esta aula ainda não está disponível.')
+        return
+      }
       openLesson(btn.dataset.id); closeSidebar()
     })
   })
@@ -1429,7 +1435,13 @@ function renderOverview() {
       </div>
     `
     page.querySelectorAll('[data-lesson]').forEach(el => {
-      el.addEventListener('click', () => openLesson(el.dataset.lesson))
+      el.addEventListener('click', () => {
+        if (el.classList.contains('locked') || el.classList.contains('locked-card')) {
+          toast('🔒 Esta aula ainda não está disponível.')
+          return
+        }
+        openLesson(el.dataset.lesson)
+      })
     })
     document.getElementById('heroBtnContinue')?.addEventListener('click', () => {
       if (lastLesson) openLesson(lastLesson.id)
@@ -1583,7 +1595,13 @@ function renderOverview() {
     save(); toast('Apresentação salva!')
   })
   page.querySelectorAll('[data-lesson]').forEach(el => {
-    el.addEventListener('click', () => openLesson(el.dataset.lesson))
+    el.addEventListener('click', () => {
+      if (el.classList.contains('locked') || el.classList.contains('locked-card')) {
+        toast('🔒 Esta aula ainda não está disponível.')
+        return
+      }
+      openLesson(el.dataset.lesson)
+    })
   })
 
   // Quick Links (admin)
