@@ -52,7 +52,12 @@
     .layout { display:flex;padding-top:calc(var(--header-h) + 3px);min-height:100dvh; }
 
     /* SIDEBAR */
-    aside { width:var(--sidebar-w);position:fixed;top:calc(var(--header-h)+3px);left:0;bottom:0;background:var(--sidebar-bg);border-right:none;overflow-y:auto;overflow-x:hidden;z-index:90;transition:transform .22s ease; }
+    aside { width:var(--sidebar-w);position:fixed;top:calc(var(--header-h)+3px);left:0;bottom:0;background:var(--sidebar-bg);border-right:none;overflow:hidden;z-index:90;transition:transform .22s ease; }
+    #sidebarScroll { position:absolute;inset:0;overflow-y:auto;overflow-x:hidden; }
+    #sidebarScroll::-webkit-scrollbar { width:4px; }
+    #sidebarScroll::-webkit-scrollbar-track { background:transparent; }
+    #sidebarScroll::-webkit-scrollbar-thumb { background:rgba(200,200,160,.35);border-radius:4px; }
+    #sidebarScroll::-webkit-scrollbar-thumb:hover { background:rgba(200,200,160,.65); }
 
     /* Sidebar Brand */
     .sidebar-brand { padding:20px 18px 12px; border-bottom:1px solid var(--sidebar-border); }
@@ -501,28 +506,30 @@
 <div class="layout">
   <!-- SIDEBAR -->
   <aside id="sidebar">
-    <div class="sidebar-brand">
-      <div class="sidebar-brand-name" id="sidebarBrandName">Plataforma Roberta Alves</div>
-      <div class="sidebar-course-name" id="sidebarCourseName"></div>
-    </div>
-    <div class="sidebar-progress-wrap">
-      <div class="sidebar-progress-label-row">
-        <span>Progresso da Aula</span>
-        <span id="sidebarProgressPct">0%</span>
+    <div id="sidebarScroll">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-name" id="sidebarBrandName">Plataforma Roberta Alves</div>
+        <div class="sidebar-course-name" id="sidebarCourseName"></div>
       </div>
-      <div class="sidebar-prog-bar">
-        <div class="sidebar-prog-fill" id="sidebarProgressFill" style="width:0%"></div>
+      <div class="sidebar-progress-wrap">
+        <div class="sidebar-progress-label-row">
+          <span>Progresso da Aula</span>
+          <span id="sidebarProgressPct">0%</span>
+        </div>
+        <div class="sidebar-prog-bar">
+          <div class="sidebar-prog-fill" id="sidebarProgressFill" style="width:0%"></div>
+        </div>
       </div>
-    </div>
-    <div class="sidebar-search">
-      <input class="search-input" id="searchInput" type="text" placeholder="🔍  Buscar aula..." />
-    </div>
-    <button class="sidebar-overview-btn active" id="btnOverview">🏠  Visão geral</button>
-    <button class="sidebar-students-btn" id="btnStudentsPage">👩‍🎓  Alunas</button>
-    <div id="modulesNav"></div>
-    <div class="sidebar-footer">
-      <button class="btn-new-lesson" id="btnNewLesson">+ Nova aula</button>
-      <button class="btn-new-module" id="btnNewModule">+ Novo módulo</button>
+      <div class="sidebar-search">
+        <input class="search-input" id="searchInput" type="text" placeholder="🔍  Buscar aula..." />
+      </div>
+      <button class="sidebar-overview-btn active" id="btnOverview">🏠  Visão geral</button>
+      <button class="sidebar-students-btn" id="btnStudentsPage">👩‍🎓  Alunas</button>
+      <div id="modulesNav"></div>
+      <div class="sidebar-footer">
+        <button class="btn-new-lesson" id="btnNewLesson">+ Nova aula</button>
+        <button class="btn-new-module" id="btnNewModule">+ Novo módulo</button>
+      </div>
     </div>
   </aside>
 
