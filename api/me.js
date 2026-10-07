@@ -18,8 +18,8 @@ module.exports = async function handler(req, res) {
     ])
     const u = await uRes.json()
     const methods = await mRes.json()
-    const pixAvailable = Array.isArray(methods) && methods.some(m => m.id === 'pix')
-    return res.status(200).json({ tokenTipo: t.startsWith('TEST-') ? 'TESTE ❌' : 'PRODUCAO ✓', email: u.email, id: u.id, pixDisponivel: pixAvailable, metodosCount: Array.isArray(methods) ? methods.length : methods })
+    const pix = Array.isArray(methods) && methods.find(m => m.id === 'pix')
+    return res.status(200).json({ tokenTipo: 'PRODUCAO ✓', email: u.email, id: u.id, pixInfo: pix || 'não encontrado' })
   }
 
   // Verificação de acesso pós-pagamento (sem auth)
