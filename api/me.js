@@ -10,6 +10,13 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   if (req.method === 'OPTIONS') return res.status(200).end()
 
+  if (req.method === 'GET' && req.query.mpcheck) {
+    const t = (process.env.MP_ACCESS_TOKEN || '').replace(/﻿/g,'').trim()
+    const r = await fetch('https://api.mercadopago.com/users/me', { headers: { Authorization: `Bearer ${t}` } })
+    const d = await r.json()
+    return res.status(200).json({ tokenTipo: t.startsWith('TEST-') ? 'TESTE ❌' : t.startsWith('APP_USR-') ? 'PRODUCAO ✓' : 'OUTRO', email: d.email, id: d.id })
+  }
+
   // Verificação de acesso pós-pagamento (sem auth)
   const { courseId, email } = req.query || {}
   if (req.method === 'GET' && courseId && email) {
