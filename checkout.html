@@ -120,12 +120,8 @@
       <!-- PIX -->
       <div class="tab-content" id="tabContentPix">
         <div class="pix-section">
-          <p>Pague com PIX de qualquer banco. Escaneie o QR code ou copie o código.</p>
-          <div class="fgroup" style="margin-bottom:12px;text-align:left">
-            <label>CPF do pagador</label>
-            <input type="text" id="pixCpf" placeholder="000.000.000-00" maxlength="14" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/,'$1.$2.$3-$4').slice(0,14)" />
-          </div>
-          <button class="btn-pix" id="btnGerarPix" onclick="gerarPixDireto()">⚡ Gerar QR Code PIX</button>
+          <p>Você será redirecionada para o Mercado Pago onde verá o QR Code PIX para escanear com qualquer banco.</p>
+          <button class="btn-pix" id="btnGerarPix" onclick="gerarPixDireto()">⚡ Pagar com PIX</button>
           <div class="error" id="errPix" style="display:none;margin-top:10px"></div>
         </div>
       </div>
@@ -205,52 +201,33 @@ function switchTab(tab) {
 }
 
 async function gerarPixDireto() {
-  const errEl  = document.getElementById('errPix')
-  const btn    = document.getElementById('btnGerarPix')
-  const cpfRaw = document.getElementById('pixCpf').value.replace(/\D/g, '')
+  const errEl = document.getElementById('errPix')
+  const btn   = document.getElementById('btnGerarPix')
   errEl.style.display = 'none'
-
-  if (!cpfRaw || cpfRaw.length !== 11) {
-    errEl.textContent = 'Informe seu CPF para pagar com PIX.'
-    errEl.style.display = 'block'
-    return
-  }
-
   btn.disabled = true
-  btn.textContent = '⏳ Gerando QR Code...'
-
-  // Aguarda device fingerprint do security.js (até 5s, múltiplas fontes)
-  const getDevId = () => window.MP_DEVICE_SESSION_ID || window.deviceId || ''
-  let deviceId = getDevId()
-  if (!deviceId) {
-    for (let i = 0; i < 50; i++) {
-      await new Promise(r => setTimeout(r, 100))
-      deviceId = getDevId()
-      if (deviceId) break
-    }
-  }
+  btn.textContent = '⏳ Aguarde...'
 
   try {
-    const params = new URLSearchParams({ courseId, payerName, payerEmail, paymentMethodId: 'pix', pixCpf: cpfRaw, deviceId })
+    const params = new URLSearchParams({ courseId, payerName, payerEmail, paymentMethodId: 'pix' })
     const res = await fetch('/api/process-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString()
     })
     const result = await res.json()
-    if (result.pixQrCode) {
-      showPixQr(result.pixQrCode, result.pixQrCodeBase64)
+    if (result.checkoutUrl) {
+      window.location.href = result.checkoutUrl
     } else {
       errEl.textContent = result.erro || 'Erro ao gerar PIX. Tente novamente.'
       errEl.style.display = 'block'
       btn.disabled = false
-      btn.textContent = '⚡ Gerar QR Code PIX'
+      btn.textContent = '⚡ Pagar com PIX'
     }
   } catch(e) {
     errEl.textContent = 'Erro de conexão. Tente novamente.'
     errEl.style.display = 'block'
     btn.disabled = false
-    btn.textContent = '⚡ Gerar QR Code PIX'
+    btn.textContent = '⚡ Pagar com PIX'
   }
 }
 
