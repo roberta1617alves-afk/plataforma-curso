@@ -245,6 +245,31 @@
     .s-lesson-card.locked .s-lesson-num { background:#aaa; }
     .s-lesson-badge.locked-badge { color:#aaa; }
 
+    /* ── CARDS DE MÓDULO ESTILO KIWIFY ── */
+    .kw-modules-title { font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:24px 0 14px; }
+    .kw-module-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-bottom:32px; }
+    .kw-module-card { position:relative;border-radius:14px;overflow:hidden;aspect-ratio:3/4;background:#1C2410;cursor:pointer;transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;justify-content:flex-end; }
+    .kw-module-card:hover { transform:translateY(-4px);box-shadow:0 8px 28px rgba(0,0,0,.35); }
+    .kw-module-card.done-mod { border:2px solid #515132; }
+    .kw-module-num-bg { position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;padding-right:16px;pointer-events:none; }
+    .kw-module-num-bg span { font-family:'Playfair Display',Georgia,serif;font-size:6rem;font-weight:700;font-style:italic;color:rgba(255,255,255,.08);line-height:1;user-select:none; }
+    .kw-module-gradient { position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85) 40%,rgba(0,0,0,.1) 100%);pointer-events:none; }
+    .kw-module-content { position:relative;z-index:1;padding:14px 14px 12px; }
+    .kw-module-divider { width:28px;height:2px;background:#8A9A60;margin-bottom:8px;border-radius:2px; }
+    .kw-module-label { font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#B8C880;margin-bottom:6px; }
+    .kw-module-title { font-size:.88rem;font-weight:700;color:#fff;line-height:1.3;margin-bottom:8px; }
+    .kw-module-count { font-size:.62rem;color:rgba(255,255,255,.5);font-weight:500; }
+    .kw-module-card.done-mod .kw-module-divider { background:#515132; }
+    .kw-module-card.done-mod .kw-module-label { color:#8A9A60; }
+    /* Voltar aos módulos */
+    .kw-back-btn { display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;color:var(--muted);background:none;border:none;cursor:pointer;padding:0 0 16px;font-family:inherit;transition:color .15s; }
+    .kw-back-btn:hover { color:#515132; }
+    .kw-mod-header { display:flex;align-items:center;gap:10px;margin-bottom:18px; }
+    .kw-mod-header-num { font-family:'Playfair Display',Georgia,serif;font-size:2rem;font-weight:700;font-style:italic;color:#515132;line-height:1; }
+    .kw-mod-header-info { flex:1; }
+    .kw-mod-header-label { font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted); }
+    .kw-mod-header-title { font-size:1.05rem;font-weight:700;color:var(--text);line-height:1.3; }
+
     /* ── ACESSO RÁPIDO ── */
     .quick-section { margin-top:24px; }
     .quick-section-title { font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border); }
@@ -1520,10 +1545,31 @@ function renderOverview() {
       <!-- Banner curso bloqueado -->
       ${lockedCourseBanner}
 
-      <!-- Aulas -->
-      <div style="margin-top:8px">
-        ${total > 0 ? sLessonHtml : `<div style="text-align:center;padding:48px 20px;color:var(--muted);font-size:.9rem">Nenhuma aula disponível ainda.</div>`}
+      <!-- Módulos / Aulas -->
+      <div id="kwModulesView" style="margin-top:8px">
+        ${data.modules.length > 0 ? `
+        <div class="kw-modules-title">Módulos do curso</div>
+        <div class="kw-module-grid">
+          ${data.modules.map((m, i) => {
+            const ml = getModuleLessons(m.id)
+            if (!ml.length) return ''
+            const modDone = ml.length > 0 && ml.every(l => data.progress[l.id]?.completed)
+            const label = m.title || `Módulo ${i+1}`
+            const count = ml.length
+            return `<div class="kw-module-card${modDone?' done-mod':''}" onclick="showKwModule('${m.id}')">
+              <div class="kw-module-num-bg"><span>${i+1}</span></div>
+              <div class="kw-module-gradient"></div>
+              <div class="kw-module-content">
+                <div class="kw-module-divider"></div>
+                <div class="kw-module-label">Módulo ${i+1}</div>
+                <div class="kw-module-title">${label}</div>
+                <div class="kw-module-count">${count} aula${count!==1?'s':''}</div>
+              </div>
+            </div>`
+          }).join('')}
+        </div>` : (total > 0 ? sLessonHtml : `<div style="text-align:center;padding:48px 20px;color:var(--muted);font-size:.9rem">Nenhuma aula disponível ainda.</div>`)}
       </div>
+      <div id="kwLessonsView" style="display:none;margin-top:8px"></div>
 
       ${allDone ? `<div class="completion-banner show"><h3>🎉 Parabéns! Você concluiu o curso!</h3><p>Você completou todas as ${total} aulas!</p></div>` : ''}
 
@@ -2953,6 +2999,73 @@ document.getElementById('backdrop').addEventListener('click', closeSidebar)
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open')
   document.getElementById('backdrop').classList.remove('open')
+}
+
+// ── CARDS DE MÓDULO ESTILO KIWIFY ──
+function showKwModule(moduleId) {
+  const modView = document.getElementById('kwModulesView')
+  const lesView = document.getElementById('kwLessonsView')
+  if (!modView || !lesView) return
+
+  const modIdx = data.modules.findIndex(m => m.id === moduleId)
+  const m = data.modules[modIdx]
+  if (!m) return
+
+  const isStudentMode = !isAdmin || studentViewMode
+  const ml = getModuleLessons(moduleId)
+  let sIdx = 0
+  data.modules.slice(0, modIdx).forEach(prev => { sIdx += getModuleLessons(prev.id).length })
+
+  let lessonsHtml = ml.map(l => {
+    sIdx++
+    const isDone = !currentCourseAccessLocked && !!data.progress[l.id]?.completed
+    const isLocked = (!!l.locked || currentCourseAccessLocked) && isStudentMode
+    const numStr = String(sIdx).padStart(2,'0')
+    return `<div class="s-lesson-card${isLocked?' locked':''}" data-lesson="${l.id}">
+      <div class="s-lesson-num${isDone?' done':''}">
+        <div class="s-lesson-num-val">${isLocked ? '🔒' : numStr}</div>
+        <div class="s-lesson-num-lbl">AULA</div>
+      </div>
+      <div class="s-lesson-body">
+        <div class="s-lesson-title">${l.title}</div>
+        ${l.desc ? `<div class="s-lesson-desc">${l.desc}</div>` : ''}
+        <div class="s-lesson-badge${isLocked?' locked-badge':isDone?' done':''}">
+          ${isLocked ? '🔒 BLOQUEADO' : isDone ? '✓ CONCLUÍDA' : '● DISPONÍVEL'}
+          ${!isLocked && l.duration ? ` · ⏱ ${l.duration}` : ''}
+        </div>
+      </div>
+      <span class="s-lesson-arrow">${isLocked ? '🔒' : '→'}</span>
+    </div>`
+  }).join('')
+
+  lesView.innerHTML = `
+    <button class="kw-back-btn" onclick="showKwModulesGrid()">← Voltar aos módulos</button>
+    <div class="kw-mod-header">
+      <div class="kw-mod-header-num">${modIdx+1}</div>
+      <div class="kw-mod-header-info">
+        <div class="kw-mod-header-label">Módulo ${modIdx+1}</div>
+        <div class="kw-mod-header-title">${m.title || ''}</div>
+      </div>
+    </div>
+    ${lessonsHtml || '<div style="color:var(--muted);font-size:.9rem;padding:20px 0">Nenhuma aula neste módulo ainda.</div>'}
+  `
+
+  // Cliques nas aulas
+  lesView.querySelectorAll('.s-lesson-card:not(.locked)').forEach(card => {
+    card.addEventListener('click', () => selectLesson(card.dataset.lesson))
+  })
+
+  modView.style.display = 'none'
+  lesView.style.display = 'block'
+  lesView.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function showKwModulesGrid() {
+  const modView = document.getElementById('kwModulesView')
+  const lesView = document.getElementById('kwLessonsView')
+  if (modView) modView.style.display = 'block'
+  if (lesView) lesView.style.display = 'none'
+  modView?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 // ── INIT ──
