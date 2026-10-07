@@ -55,34 +55,41 @@ module.exports = async function handler(req, res) {
         payload.payer.identification = { type: body.identificationType, number: body.identificationNumber }
       }
     }
-    // PIX — usa Checkout Pro para evitar rejected_high_risk
+    // PIX — API direta, gera QR Code real (funciona em qualquer banco)
     else if (body.paymentMethodId === 'pix') {
-      const preference = {
-        items: [{ id: courseId, title: course.name, quantity: 1, unit_price: Number(price), currency_id: 'BRL' }],
-        payer: { name: payerName || '', email: payerEmail },
-        back_urls: {
-          success: `${siteUrl}/sucesso.html?courseId=${courseId}&email=${encodeURIComponent(payerEmail)}`,
-          failure: `${siteUrl}/checkout.html?courseId=${courseId}`,
-          pending: `${siteUrl}/aguardando.html?courseId=${courseId}&email=${encodeURIComponent(payerEmail)}`
-        },
-        auto_return: 'approved',
-        external_reference: `${courseId}|${payerEmail}`,
-        notification_url: `${siteUrl}/api/mp-webhook`,
-        statement_descriptor: 'PLATAFORMA CURSOS'
+      const pixCpf = (body.pixCpf || '').replace(/\D/g, '')
+      if (!pixCpf || pixCpf.length !== 11) {
+        return res.status(200).json({ erro: 'Informe seu CPF para pagar com PIX.' })
       }
-      const prefHeaders = { Authorization: `Bearer ${mpToken}`, 'Content-Type': 'application/json' }
-      if (deviceId) prefHeaders['X-meli-session-id'] = deviceId
-      const prefRes = await fetch('https://api.mercadopago.com/checkout/preferences', {
+      payload.payment_method_id = 'pix'
+      payload.payment_type_id = 'bank_transfer'
+      payload.payer.identification = { type: 'CPF', number: pixCpf }
+
+      const pixHeaders = {
+        Authorization: `Bearer ${mpToken}`,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': `pix-${courseId}-${Date.now()}`
+      }
+      if (deviceId) pixHeaders['X-meli-session-id'] = deviceId
+
+      const pixRes = await fetch('https://api.mercadopago.com/v1/payments', {
         method: 'POST',
-        headers: prefHeaders,
-        body: JSON.stringify(preference)
+        headers: pixHeaders,
+        body: JSON.stringify(payload)
       })
-      const pref = await prefRes.json()
-      if (!pref.id) {
-        console.error('MP preference error:', JSON.stringify(pref))
-        return res.status(200).json({ erro: 'Erro ao criar PIX. Tente novamente.' })
+      const pix = await pixRes.json()
+      console.log('PIX:', JSON.stringify({ status: pix.status, detail: pix.status_detail, tracking: pix.additional_info?.tracking_id }))
+
+      if (pix.status === 'pending' && pix.point_of_interaction?.transaction_data) {
+        const td = pix.point_of_interaction.transaction_data
+        return res.status(200).json({
+          pixQrCode: td.qr_code,
+          pixQrCodeBase64: td.qr_code_base64,
+          paymentId: pix.id
+        })
       }
-      return res.status(200).json({ checkoutUrl: pref.init_point })
+      console.error('PIX rejeitado:', JSON.stringify({ status: pix.status, detail: pix.status_detail, cause: pix.cause }))
+      return res.status(200).json({ erro: 'PIX não disponível no momento. Tente pagar com cartão.' })
     }
     // Outro método
     else if (body.paymentMethodId) {

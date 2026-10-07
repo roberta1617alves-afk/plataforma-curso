@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
       const user = users?.users?.find(u => u.email === email)
       if (!user) return res.status(200).json({ hasAccess: false })
       const { data: access } = await supabase
-        .from('user_courses').select('id')
+        .from('course_access').select('id')
         .eq('user_id', user.id).eq('course_id', courseId).single()
       return res.status(200).json({ hasAccess: !!access })
     } catch {
