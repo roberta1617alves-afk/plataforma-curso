@@ -12,9 +12,14 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET' && req.query.mpcheck) {
     const t = (process.env.MP_ACCESS_TOKEN || '').replace(/﻿/g,'').trim()
-    const r = await fetch('https://api.mercadopago.com/users/me', { headers: { Authorization: `Bearer ${t}` } })
-    const d = await r.json()
-    return res.status(200).json({ tokenTipo: t.startsWith('TEST-') ? 'TESTE ❌' : t.startsWith('APP_USR-') ? 'PRODUCAO ✓' : 'OUTRO', email: d.email, id: d.id })
+    const [uRes, mRes] = await Promise.all([
+      fetch('https://api.mercadopago.com/users/me', { headers: { Authorization: `Bearer ${t}` } }),
+      fetch('https://api.mercadopago.com/v1/payment_methods', { headers: { Authorization: `Bearer ${t}` } })
+    ])
+    const u = await uRes.json()
+    const methods = await mRes.json()
+    const pixAvailable = Array.isArray(methods) && methods.some(m => m.id === 'pix')
+    return res.status(200).json({ tokenTipo: t.startsWith('TEST-') ? 'TESTE ❌' : 'PRODUCAO ✓', email: u.email, id: u.id, pixDisponivel: pixAvailable, metodosCount: Array.isArray(methods) ? methods.length : methods })
   }
 
   // Verificação de acesso pós-pagamento (sem auth)
