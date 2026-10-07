@@ -208,8 +208,8 @@ async function gerarPixDireto() {
   btn.disabled = true
   btn.textContent = '⏳ Redirecionando...'
   try {
-    const params = new URLSearchParams({ courseId, payerName, payerEmail })
-    const res = await fetch('/api/create-pix-preference', {
+    const params = new URLSearchParams({ courseId, payerName, payerEmail, paymentMethodId: 'pix' })
+    const res = await fetch('/api/process-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString()

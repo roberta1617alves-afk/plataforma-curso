@@ -55,16 +55,36 @@ module.exports = async function handler(req, res) {
         payload.payer.identification = { type: body.identificationType, number: body.identificationNumber }
       }
     }
-    // PIX
+    // PIX — usa Checkout Pro para evitar rejected_high_risk
     else if (body.paymentMethodId === 'pix') {
-      payload.payment_method_id = 'pix'
-      payload.payment_type_id   = 'bank_transfer'
-      // PIX expira em 24h
-      const exp = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, '.000-03:00')
-      payload.date_of_expiration = exp
-      if (body.identificationNumber) {
-        payload.payer.identification = { type: 'CPF', number: body.identificationNumber }
+      const preference = {
+        items: [{ id: courseId, title: course.name, quantity: 1, unit_price: Number(price), currency_id: 'BRL' }],
+        payer: { name: payerName || '', email: payerEmail },
+        payment_methods: {
+          excluded_payment_types: [{ id: 'credit_card' }, { id: 'debit_card' }, { id: 'ticket' }],
+          installments: 1
+        },
+        back_urls: {
+          success: `${siteUrl}/sucesso.html?courseId=${courseId}&email=${encodeURIComponent(payerEmail)}`,
+          failure: `${siteUrl}/checkout.html?courseId=${courseId}`,
+          pending: `${siteUrl}/aguardando.html?courseId=${courseId}&email=${encodeURIComponent(payerEmail)}`
+        },
+        auto_return: 'approved',
+        external_reference: `${courseId}|${payerEmail}`,
+        notification_url: `${siteUrl}/api/mp-webhook`,
+        statement_descriptor: 'PLATAFORMA CURSOS'
       }
+      const prefRes = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${mpToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(preference)
+      })
+      const pref = await prefRes.json()
+      if (!pref.id) {
+        console.error('MP preference error:', JSON.stringify(pref))
+        return res.status(200).json({ erro: 'Erro ao criar PIX. Tente novamente.' })
+      }
+      return res.status(200).json({ checkoutUrl: pref.init_point })
     }
     // Outro método
     else if (body.paymentMethodId) {

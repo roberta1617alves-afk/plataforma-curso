@@ -10,6 +10,22 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
   if (req.method === 'OPTIONS') return res.status(200).end()
 
+  // Verificação de acesso pós-pagamento (sem auth)
+  const { courseId, email } = req.query || {}
+  if (req.method === 'GET' && courseId && email) {
+    try {
+      const { data: users } = await supabase.auth.admin.listUsers()
+      const user = users?.users?.find(u => u.email === email)
+      if (!user) return res.status(200).json({ hasAccess: false })
+      const { data: access } = await supabase
+        .from('user_courses').select('id')
+        .eq('user_id', user.id).eq('course_id', courseId).single()
+      return res.status(200).json({ hasAccess: !!access })
+    } catch {
+      return res.status(200).json({ hasAccess: false })
+    }
+  }
+
   const token = (req.headers.authorization || '').replace('Bearer ', '')
   if (!token) return res.status(401).json({ isAdmin: false })
 

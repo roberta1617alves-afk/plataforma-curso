@@ -35,7 +35,7 @@ async function verificar() {
   document.getElementById('status').textContent = ''
   document.getElementById('checking').textContent = '🔄 Verificando...'
   try {
-    const res = await fetch(`/api/check-access?courseId=${encodeURIComponent(courseId)}&email=${encodeURIComponent(email)}`)
+    const res = await fetch(`/api/me?courseId=${encodeURIComponent(courseId)}&email=${encodeURIComponent(email)}`)
     const data = await res.json()
     if (data.hasAccess) {
       window.location.href = '/sucesso.html'
@@ -55,7 +55,7 @@ const interval = setInterval(async () => {
   checks++
   if (checks > 30) { clearInterval(interval); return }
   try {
-    const res = await fetch(`/api/check-access?courseId=${encodeURIComponent(courseId)}&email=${encodeURIComponent(email)}`)
+    const res = await fetch(`/api/me?courseId=${encodeURIComponent(courseId)}&email=${encodeURIComponent(email)}`)
     const data = await res.json()
     if (data.hasAccess) {
       clearInterval(interval)
