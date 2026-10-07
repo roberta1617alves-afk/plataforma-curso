@@ -6,7 +6,7 @@
   <title>Checkout</title>
   <script src="config.js"></script>
   <script src="https://sdk.mercadopago.com/js/v2"></script>
-  <script src="https://www.mercadopago.com/v2/security.js" view="checkout"></script>
+  <script src="https://www.mercadopago.com/v2/security.js" view="checkout" data-public-key="APP_USR-eb22defb-977f-481b-875a-447f7c62ceec"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: #FAFAF9; color: #1C1917; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; }
@@ -263,7 +263,8 @@ async function renderBrick() {
     customization: {
       paymentMethods: {
         creditCard: 'all',
-        debitCard: 'all'
+        debitCard: 'all',
+        bankTransfer: 'all'
       },
       visual: { style: { theme: 'default' } }
     },

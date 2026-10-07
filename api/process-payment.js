@@ -57,7 +57,7 @@ module.exports = async function handler(req, res) {
     }
     // PIX — API direta, gera QR Code real (funciona em qualquer banco)
     else if (body.paymentMethodId === 'pix') {
-      const pixCpf = (body.pixCpf || '').replace(/\D/g, '')
+      const pixCpf = (body.pixCpf || body.identificationNumber || '').replace(/\D/g, '')
       if (!pixCpf || pixCpf.length !== 11) {
         return res.status(200).json({ erro: 'Informe seu CPF para pagar com PIX.' })
       }
