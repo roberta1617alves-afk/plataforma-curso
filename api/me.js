@@ -18,8 +18,8 @@ module.exports = async function handler(req, res) {
     ])
     const u = await uRes.json()
     const methods = await mRes.json()
-    const pix = Array.isArray(methods) && methods.find(m => m.id === 'pix')
-    return res.status(200).json({ tokenTipo: 'PRODUCAO ✓', email: u.email, id: u.id, pixInfo: pix || 'não encontrado' })
+    const siteUrl = process.env.SITE_URL || 'https://plataforma-curso-swart.vercel.app'
+    return res.status(200).json({ tokenTipo: 'PRODUCAO ✓', email: u.email, id: u.id, siteUrl, backUrlSuccess: `${siteUrl}/sucesso.html` })
   }
 
   // Verificação de acesso pós-pagamento (sem auth)
