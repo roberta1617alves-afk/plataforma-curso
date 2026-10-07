@@ -70,9 +70,11 @@ module.exports = async function handler(req, res) {
         notification_url: `${siteUrl}/api/mp-webhook`,
         statement_descriptor: 'PLATAFORMA CURSOS'
       }
+      const prefHeaders = { Authorization: `Bearer ${mpToken}`, 'Content-Type': 'application/json' }
+      if (deviceId) prefHeaders['X-meli-session-id'] = deviceId
       const prefRes = await fetch('https://api.mercadopago.com/checkout/preferences', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${mpToken}`, 'Content-Type': 'application/json' },
+        headers: prefHeaders,
         body: JSON.stringify(preference)
       })
       const pref = await prefRes.json()

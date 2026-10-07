@@ -207,8 +207,19 @@ async function gerarPixDireto() {
 
   btn.disabled = true
   btn.textContent = '⏳ Redirecionando...'
+
+  // Aguarda device fingerprint do security.js (até 3s)
+  let deviceId = window.MP_DEVICE_SESSION_ID || ''
+  if (!deviceId) {
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 100))
+      deviceId = window.MP_DEVICE_SESSION_ID || ''
+      if (deviceId) break
+    }
+  }
+
   try {
-    const params = new URLSearchParams({ courseId, payerName, payerEmail, paymentMethodId: 'pix' })
+    const params = new URLSearchParams({ courseId, payerName, payerEmail, paymentMethodId: 'pix', deviceId })
     const res = await fetch('/api/process-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
