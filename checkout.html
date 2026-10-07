@@ -194,7 +194,11 @@ async function renderBrick() {
   brickController = await bricksBuilder.create('payment', 'paymentBrick_container', {
     initialization: { amount: Number(courseData.price), payer: { email: payerEmail } },
     customization: {
-      paymentMethods: { creditCard: 'all' },
+      paymentMethods: {
+        creditCard: 'all',
+        debitCard:  'all',
+        ticket:     'all'
+      },
       visual: { style: { theme: 'default' } }
     },
     callbacks: {
@@ -216,12 +220,52 @@ async function renderBrick() {
             body: params.toString()
           })
           const result = await res.json()
-          if (result.status === 'approved') { resolve(); window.location.href = '/sucesso.html' }
-          else reject(new Error(result.erro || 'Pagamento recusado.'))
+          if (result.status === 'approved') {
+            resolve()
+            window.location.href = '/sucesso.html'
+          } else if (result.pixQrCode || result.pixQrCodeBase64) {
+            // PIX gerado — resolve o Brick e exibe QR code
+            resolve()
+            setTimeout(() => {
+              if (brickController) { brickController.unmount(); brickController = null }
+              showPixQr(result.pixQrCode, result.pixQrCodeBase64)
+            }, 100)
+          } else if (result.status === 'pending') {
+            resolve()
+            window.location.href = '/sucesso.html'
+          } else {
+            reject(new Error(result.erro || 'Pagamento recusado.'))
+          }
         } catch(e) { reject(e) }
       }),
       onError: e => console.error('Brick error:', e)
     }
+  })
+}
+
+function showPixQr(code, base64) {
+  show('viewPix')
+  const el = document.getElementById('viewPix')
+  el.innerHTML = `
+    <div class="card" id="infoCardPix"></div>
+    <div class="card">
+      <div class="pix-box">
+        <h2>⚡ Quase lá! Pague com PIX</h2>
+        <div class="sub">Escaneie o QR code no app do seu banco ou copie o código abaixo</div>
+        ${base64 ? `<img src="data:image/png;base64,${base64}" alt="QR Code PIX">` : ''}
+        <div class="pix-code" id="pixCodeText"></div>
+        <button class="btn-copy" id="btnCopyPix">📋 Copiar código PIX</button>
+        <div class="pix-note">⏳ Após o pagamento ser confirmado, você receberá o acesso por e-mail automaticamente.</div>
+      </div>
+    </div>`
+  document.getElementById('infoCardPix').innerHTML = courseInfoHTML(courseData)
+  document.getElementById('pixCodeText').textContent = code || '(código indisponível)'
+  document.getElementById('btnCopyPix').addEventListener('click', () => {
+    navigator.clipboard.writeText(code).then(() => {
+      document.getElementById('btnCopyPix').textContent = '✅ Copiado! Abra seu app do banco.'
+    }).catch(() => {
+      document.getElementById('btnCopyPix').textContent = 'Selecione e copie o código acima.'
+    })
   })
 }
 
