@@ -877,7 +877,7 @@ function showCourseSelection(courses) {
       ? `<div style="font-size:.75rem;color:var(--muted);padding-top:6px;text-align:center">+ ${extra} aulas a mais</div>`
       : ''
 
-    const adminControls = isAdmin ? `
+    const adminControls = (isAdmin && !studentViewMode) ? `
       <div style="border-top:1px solid #D8D8C0;padding-top:10px;margin-top:8px;display:flex;flex-direction:column;gap:6px">
         <button data-id="${c.id}" data-name="${c.name.replace(/"/g,'&quot;')}" onclick="renameCourse(this.dataset.id,this.dataset.name)" style="padding:7px;background:#F5F5E8;border:1.5px solid #C8C8A0;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:#515132;text-align:left">✏️ Renomear curso</button>
         <button data-id="${c.id}" data-price="${price||0}" onclick="savePricePrompt(this.dataset.id,this.dataset.price)" style="padding:7px;background:#F5F5E8;border:1.5px solid #C8C8A0;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:#515132;text-align:left">💰 ${fmtPrice || 'Sem preço'} — Alterar preço</button>
@@ -897,8 +897,35 @@ function showCourseSelection(courses) {
       ? `<a href="${checkoutLink}" style="display:block;margin-top:10px;padding:10px;background:#515132;color:#fff;border-radius:8px;font-weight:700;font-size:.82rem;text-align:center;text-decoration:none">Adquirir este curso →</a>`
       : ''
 
+    // Card bonito para alunas (modo aluna ou acesso real)
+    const isStudentCard = !isAdmin || studentViewMode
+    if (isStudentCard) {
+      const modCount = (c.data?.modules || []).length
+      const countLabel = modCount > 0
+        ? `${modCount} módulo${modCount!==1?'s':''}${lessonCount > 0 ? ` · ${lessonCount} aulas` : ''}`
+        : lessonCount > 0 ? `${lessonCount} aula${lessonCount!==1?'s':''}` : ''
+      return `<div class="course-sel-card" data-cid="${c.id}" data-cname="${c.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}" style="cursor:pointer;position:relative;border-radius:16px;overflow:hidden;aspect-ratio:3/4;background:#141A0C;display:flex;flex-direction:column;justify-content:flex-end;transition:transform .2s,box-shadow .2s">
+        <!-- luz diagonal -->
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 80% 10%,rgba(138,154,96,.18) 0%,transparent 60%);pointer-events:none"></div>
+        <!-- gradiente inferior -->
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.92) 35%,rgba(0,0,0,.2) 100%);pointer-events:none"></div>
+        <!-- iniciais marca d'água -->
+        <div style="position:absolute;bottom:30%;right:-8px;font-family:'Playfair Display',Georgia,serif;font-size:7rem;font-weight:900;font-style:italic;color:rgba(255,255,255,.06);line-height:1;pointer-events:none;user-select:none">${bInitials}</div>
+        ${isLockedCourse ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:2"><div style="font-size:2.2rem">🔒</div><div style="color:#fff;font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:rgba(139,0,0,.8);padding:4px 12px;border-radius:20px">Bloqueado</div></div>` : ''}
+        <!-- conteúdo -->
+        <div style="position:relative;z-index:1;padding:18px 18px 16px">
+          <div style="width:28px;height:2px;background:#8A9A60;border-radius:2px;margin-bottom:10px"></div>
+          <div style="font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#B8C880;margin-bottom:6px">Curso</div>
+          <div style="font-family:'Playfair Display',Georgia,serif;font-size:1.05rem;font-weight:700;color:#fff;line-height:1.3;margin-bottom:10px">${c.name}</div>
+          ${countLabel ? `<div style="font-size:.65rem;color:rgba(255,255,255,.5);font-weight:500;margin-bottom:12px">${countLabel}</div>` : ''}
+          ${isLockedCourse
+            ? `<a href="${checkoutLink}" style="display:block;padding:10px 14px;background:#515132;color:#fff;border-radius:8px;font-weight:700;font-size:.8rem;text-align:center;text-decoration:none">Adquirir curso →</a>`
+            : `<div style="display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:600;color:#8A9A60">Acessar →</div>`}
+        </div>
+      </div>`
+    }
     return `<div style="background:var(--surface);border:1.5px solid ${isLockedCourse ? '#D0C0C0' : 'var(--border)'};border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
-      <!-- Banner -->
+      <!-- Banner admin -->
       <div class="course-sel-card" data-cid="${c.id}" data-cname="${c.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}" style="cursor:pointer;position:relative;background:${bColor};padding:24px 20px 20px;min-height:90px;display:flex;flex-direction:column;justify-content:flex-end">
         <div style="position:absolute;top:14px;right:16px;font-size:2rem;opacity:.18;font-weight:900;color:#fff;pointer-events:none">${bInitials}</div>
         ${lockOverlay}
@@ -917,15 +944,24 @@ function showCourseSelection(courses) {
              ${lessonListHtml}
              ${extraHtml}`
           : `<div style="color:var(--muted);font-size:.8rem;padding:8px 0">Sem aulas cadastradas.</div>`}
-        ${ctaBtn}
       </div>
       ${adminControls ? `<div style="padding:0 14px 14px">${adminControls}</div>` : ''}
     </div>`
   }).join('')
-  const subTitle = isAdmin
+  const isStudentMode = !isAdmin || studentViewMode
+  const gridCols = isStudentMode ? 'repeat(auto-fill,minmax(190px,1fr))' : 'repeat(auto-fill,minmax(280px,1fr))'
+  const subTitle = isAdmin && !studentViewMode
     ? 'Clique no curso para editar • defina o preço • copie o link de checkout'
-    : 'Clique no curso para ver o conteúdo — cursos bloqueados exigem compra'
-  p.innerHTML = `<div style="max-width:900px;margin:0 auto">${backBtn}<h1 style="font-size:1.3rem;font-weight:800;margin-bottom:6px">Área de Membros</h1><p style="color:var(--muted);margin-bottom:24px;font-size:.9rem">${subTitle}</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">${courses.length ? grid : '<p style="color:var(--muted)">Nenhum curso criado ainda.</p>'}</div>${isAdmin ? `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px"><button onclick="showCreateCourse()" style="padding:10px 22px;background:#515132;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">+ Criar novo curso</button><button onclick="goToStudentsPage()" style="padding:10px 22px;background:#35351F;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">👩‍🎓 Gerenciar Alunas</button></div>` : ''}</div>`
+    : 'Clique no curso para ver o conteúdo'
+  // Hero banner para alunas
+  const studentHero = isStudentMode ? `
+    <div style="background:linear-gradient(135deg,#1C2410,#2A3518);border-radius:16px;padding:32px 28px 28px;margin-bottom:28px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-20px;right:-20px;font-family:'Playfair Display',Georgia,serif;font-size:9rem;font-weight:900;font-style:italic;color:rgba(255,255,255,.04);line-height:1;pointer-events:none">RA</div>
+      <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#8A9A60;margin-bottom:8px">Seja bem-vinda</div>
+      <div style="font-family:'Playfair Display',Georgia,serif;font-size:1.7rem;font-weight:700;color:#fff;line-height:1.2;margin-bottom:8px">Plataforma <em style="color:#B8C880">Roberta Alves</em></div>
+      <div style="font-size:.88rem;color:rgba(255,255,255,.6)">Selecione um curso abaixo para continuar</div>
+    </div>` : ''
+  p.innerHTML = `<div style="max-width:900px;margin:0 auto">${backBtn}${studentHero}${!isStudentMode ? `<h1 style="font-size:1.3rem;font-weight:800;margin-bottom:6px">Área de Membros</h1><p style="color:var(--muted);margin-bottom:24px;font-size:.9rem">${subTitle}</p>` : ''}<div style="display:grid;grid-template-columns:${gridCols};gap:16px">${courses.length ? grid : '<p style="color:var(--muted)">Nenhum curso criado ainda.</p>'}</div>${isAdmin && !studentViewMode ? `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px"><button onclick="showCreateCourse()" style="padding:10px 22px;background:#515132;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">+ Criar novo curso</button><button onclick="goToStudentsPage()" style="padding:10px 22px;background:#35351F;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">👩‍🎓 Gerenciar Alunas</button></div>` : ''}</div>`
 
   // Usa event listener em vez de onclick inline para evitar quebra por aspas no nome do curso
   p.querySelectorAll('.course-sel-card').forEach(el => {
