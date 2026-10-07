@@ -18,8 +18,13 @@ module.exports = async function handler(req, res) {
     ])
     const u = await uRes.json()
     const methods = await mRes.json()
-    const siteUrl = process.env.SITE_URL || 'https://plataforma-curso-swart.vercel.app'
-    return res.status(200).json({ tokenTipo: 'PRODUCAO ✓', email: u.email, id: u.id, siteUrl, backUrlSuccess: `${siteUrl}/sucesso.html` })
+    const pid = req.query.pid
+    if (pid) {
+      const pr = await fetch(`https://api.mercadopago.com/v1/payments/${pid}`, { headers: { Authorization: `Bearer ${t}` } })
+      const pd = await pr.json()
+      return res.status(200).json({ status: pd.status, detail: pd.status_detail, cause: pd.cause, collector_id: pd.collector_id, payer: pd.payer, description: pd.description, transaction_amount: pd.transaction_amount, date_created: pd.date_created })
+    }
+    return res.status(200).json({ tokenTipo: 'PRODUCAO ✓', email: u.email, id: u.id })
   }
 
   // Verificação de acesso pós-pagamento (sem auth)
