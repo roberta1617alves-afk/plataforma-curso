@@ -222,7 +222,8 @@ async function gerarPixDireto() {
     const params = new URLSearchParams({
       courseId, payerName, payerEmail,
       token: '', paymentMethodId: 'pix', installments: 1,
-      issuerId: '', identificationType: 'CPF', identificationNumber: cpf
+      issuerId: '', identificationType: 'CPF', identificationNumber: cpf,
+      deviceId: window.MP_DEVICE_SESSION_ID || ''
     })
     const res = await fetch('/api/process-payment', {
       method: 'POST',
