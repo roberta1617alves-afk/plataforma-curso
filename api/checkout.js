@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
       if (error || !course) return res.status(404).json({ erro: 'Curso não encontrado.' })
 
       // Modo simples: só retorna info do curso
-      if (!pixOnly) return res.status(200).json({ name: course.name, price: course.data?.price ?? null })
+      if (!pixOnly) return res.status(200).json({ name: course.name, price: course.data?.price ?? null, pix_link: course.data?.pix_link ?? null })
 
       // Modo PIX: cria preferência só com PIX
       const price   = course.data?.price

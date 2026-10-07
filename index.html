@@ -856,6 +856,7 @@ function showCourseSelection(courses) {
       <div style="border-top:1px solid #D8D8C0;padding-top:10px;margin-top:8px;display:flex;flex-direction:column;gap:6px">
         <button data-id="${c.id}" data-name="${c.name.replace(/"/g,'&quot;')}" onclick="renameCourse(this.dataset.id,this.dataset.name)" style="padding:7px;background:#F5F5E8;border:1.5px solid #C8C8A0;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:#515132;text-align:left">✏️ Renomear curso</button>
         <button data-id="${c.id}" data-price="${price||0}" onclick="savePricePrompt(this.dataset.id,this.dataset.price)" style="padding:7px;background:#F5F5E8;border:1.5px solid #C8C8A0;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:#515132;text-align:left">💰 ${fmtPrice || 'Sem preço'} — Alterar preço</button>
+        <button data-id="${c.id}" data-pixlink="${(c.data?.pix_link||'').replace(/"/g,'&quot;')}" onclick="savePixLinkPrompt(this.dataset.id,this.dataset.pixlink)" style="padding:7px;background:${c.data?.pix_link ? '#E8F5E8' : '#F5F5E8'};border:1.5px solid ${c.data?.pix_link ? '#A0C8A0' : '#C8C8A0'};border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:#515132;text-align:left">${c.data?.pix_link ? '✅ Link PIX configurado' : '📋 Link PIX — Configurar'}</button>
         <button onclick="navigator.clipboard.writeText('${checkoutLink}');toast('✅ Link copiado!')" style="padding:7px;background:#F5F5E8;border:1.5px solid #C8C8A0;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;color:#515132;text-align:left">🔗 Copiar link de checkout</button>
         <button onclick="goToStudentsPage('${c.id}')" style="padding:7px;background:#515132;border:none;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;text-align:left">👩‍🎓 Gerenciar Alunas</button>
       </div>` : ''
@@ -947,6 +948,28 @@ async function savePricePrompt(courseId, currentPrice) {
     showCourseSelection(d || [])
     toast('✅ Preço salvo!')
   } else toast('❌ Erro ao salvar preço.')
+}
+
+async function savePixLinkPrompt(courseId, currentLink) {
+  const val = prompt('Cole o link de pagamento PIX do Mercado Pago:\n(deixe vazio para remover)', currentLink || '')
+  if (val === null) return // cancelou
+  const pix_link = val.trim()
+  const { data: { session } } = await db.auth.getSession()
+  const cached = coursesCache.find(c => c.id === courseId)
+  const currentData = cached?.data || {}
+  const newData = pix_link ? { ...currentData, pix_link } : Object.fromEntries(Object.entries({ ...currentData }).filter(([k]) => k !== 'pix_link'))
+  const res = await fetch('/api/courses', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: courseId, data: newData })
+  })
+  if (res.ok) {
+    if (cached) cached.data = newData
+    const { data: d } = await db.from('courses').select('id, name, data').order('created_at')
+    coursesCache = d || []
+    showCourseSelection(d || [])
+    toast(pix_link ? '✅ Link PIX salvo!' : '✅ Link PIX removido!')
+  } else toast('❌ Erro ao salvar link PIX.')
 }
 
 

@@ -55,8 +55,11 @@ module.exports = async function handler(req, res) {
         payload.payer.identification = { type: body.identificationType, number: body.identificationNumber }
       }
     }
-    // PIX — Checkout Pro (MP captura device fingerprint na própria página)
+    // PIX — usa link estático do MP se configurado
     else if (body.paymentMethodId === 'pix') {
+      if (course.data?.pix_link) {
+        return res.status(200).json({ checkoutUrl: course.data.pix_link })
+      }
       const preference = {
         items: [{ id: courseId, title: course.name, quantity: 1, unit_price: Number(price), currency_id: 'BRL' }],
         payer: { name: payerName || '', email: payerEmail },
