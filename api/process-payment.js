@@ -61,24 +61,44 @@ module.exports = async function handler(req, res) {
       if (!pixCpf || pixCpf.length !== 11) {
         return res.status(200).json({ erro: 'Informe seu CPF para pagar com PIX.' })
       }
-      payload.payment_method_id = 'pix'
-      payload.payment_type_id = 'bank_transfer'
-      payload.payer.identification = { type: 'CPF', number: pixCpf }
+
+      const buyerIp = (req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || '').split(',')[0].trim()
+      const userAgent = req.headers['user-agent'] || ''
+
+      const pixPayload = {
+        transaction_amount: Number(price),
+        description: course.name,
+        payment_method_id: 'pix',
+        external_reference: courseId,
+        notification_url: `${siteUrl}/api/mp-webhook`,
+        payer: {
+          email: payerEmail,
+          first_name: firstName,
+          last_name: lastName,
+          identification: { type: 'CPF', number: pixCpf }
+        },
+        additional_info: {
+          ip_address: buyerIp || undefined,
+          items: [{ id: courseId, title: course.name, quantity: 1, unit_price: Number(price), category_id: 'services' }],
+          payer: { first_name: firstName, last_name: lastName }
+        }
+      }
 
       const pixHeaders = {
         Authorization: `Bearer ${mpToken}`,
         'Content-Type': 'application/json',
-        'X-Idempotency-Key': `pix-${courseId}-${Date.now()}`
+        'X-Idempotency-Key': `pix-${courseId}-${Date.now()}`,
+        'User-Agent': userAgent || 'MercadoPago/v1'
       }
       if (deviceId) pixHeaders['X-meli-session-id'] = deviceId
 
       const pixRes = await fetch('https://api.mercadopago.com/v1/payments', {
         method: 'POST',
         headers: pixHeaders,
-        body: JSON.stringify(payload)
+        body: JSON.stringify(pixPayload)
       })
       const pix = await pixRes.json()
-      console.log('PIX:', JSON.stringify({ status: pix.status, detail: pix.status_detail, tracking: pix.additional_info?.tracking_id }))
+      console.log('PIX:', JSON.stringify({ status: pix.status, detail: pix.status_detail, tracking: pix.additional_info?.tracking_id, cause: pix.cause, deviceId: !!deviceId, ip: buyerIp }))
 
       if (pix.status === 'pending' && pix.point_of_interaction?.transaction_data) {
         const td = pix.point_of_interaction.transaction_data
@@ -88,7 +108,6 @@ module.exports = async function handler(req, res) {
           paymentId: pix.id
         })
       }
-      console.error('PIX rejeitado:', JSON.stringify({ status: pix.status, detail: pix.status_detail, cause: pix.cause }))
       return res.status(200).json({ erro: 'PIX não disponível no momento. Tente pagar com cartão.' })
     }
     // Outro método
