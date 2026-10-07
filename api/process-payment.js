@@ -59,6 +59,9 @@ module.exports = async function handler(req, res) {
     else if (body.paymentMethodId === 'pix') {
       payload.payment_method_id = 'pix'
       payload.payment_type_id   = 'bank_transfer'
+      // PIX expira em 24h
+      const exp = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().replace(/\.\d{3}Z$/, '.000-03:00')
+      payload.date_of_expiration = exp
       if (body.identificationNumber) {
         payload.payer.identification = { type: 'CPF', number: body.identificationNumber }
       }
@@ -115,8 +118,7 @@ module.exports = async function handler(req, res) {
       cc_rejected_duplicated_payment: 'Pagamento duplicado detectado.',
     }
     const msg = erros[payment.status_detail] || 'Pagamento recusado. Verifique os dados e tente novamente.'
-    const causeArr = Array.isArray(payment.cause) ? payment.cause.map(c => c.code || c.description || JSON.stringify(c)).join(', ') : String(payment.cause ?? '')
-    return res.status(200).json({ status: payment.status || 'rejected', erro: `${msg} [DIAG: ${payment.status_detail} | ${causeArr || 'sem causa'}]` })
+    return res.status(200).json({ status: payment.status || 'rejected', erro: msg })
 
   } catch (err) {
     console.error('Erro process-payment:', err)
