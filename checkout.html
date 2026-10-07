@@ -6,7 +6,7 @@
   <title>Checkout</title>
   <script src="config.js"></script>
   <script src="https://sdk.mercadopago.com/js/v2"></script>
-  <script src="https://www.mercadopago.com/v2/security.js" view="checkout" data-public-key="APP_USR-eb22defb-977f-481b-875a-447f7c62ceec"></script>
+  <script src="https://www.mercadopago.com/v2/security.js" view="checkout" data-public-key="APP_USR-eb22defb-977f-481b-875a-447f7c62ceec" output="MP_DEVICE_SESSION_ID"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: #FAFAF9; color: #1C1917; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; }
@@ -219,12 +219,13 @@ async function gerarPixDireto() {
   btn.disabled = true
   btn.textContent = '⏳ Gerando QR Code...'
 
-  // Aguarda device fingerprint do security.js (até 3s)
-  let deviceId = window.MP_DEVICE_SESSION_ID || ''
+  // Aguarda device fingerprint do security.js (até 5s, múltiplas fontes)
+  const getDevId = () => window.MP_DEVICE_SESSION_ID || window.deviceId || ''
+  let deviceId = getDevId()
   if (!deviceId) {
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 50; i++) {
       await new Promise(r => setTimeout(r, 100))
-      deviceId = window.MP_DEVICE_SESSION_ID || ''
+      deviceId = getDevId()
       if (deviceId) break
     }
   }
