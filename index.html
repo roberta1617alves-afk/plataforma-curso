@@ -642,6 +642,7 @@ let currentCourseName = null
 let saveTimer = null
 let studentsPreselectedCourse = null  // Curso pré-selecionado ao abrir a página de alunas
 let coursesCache = []  // Cache dos cursos carregados (inclui data, evita re-fetch com RLS)
+let currentCourseAccessLocked = false  // true quando aluna visualiza curso que não comprou
 
 function save() {
   clearTimeout(saveTimer)
@@ -758,7 +759,7 @@ async function initAuth() {
   document.getElementById('userEmail').textContent = email
   document.getElementById('userAvatar').textContent = (name[0] || '?').toUpperCase()
   document.getElementById('btnAdmin').style.display = isAdmin ? '' : 'none'
-  document.getElementById('btnCourses').style.display = isAdmin ? '' : 'none'
+  document.getElementById('btnCourses').style.display = ''
   document.getElementById('btnStudentView').style.display = isAdmin ? '' : 'none'
 
   // Garante que admin-mode NUNCA apareça para alunas
@@ -797,14 +798,14 @@ async function loadCourses() {
   document.getElementById('authGate').style.display = 'none'
 
   if (courses.length === 0) {
-    if (isAdmin) {
-      showCourseSelection([])
-    } else {
-      document.querySelector('main').innerHTML = `<div style="padding:80px 20px;text-align:center"><div style="font-size:2.5rem;margin-bottom:16px">🔒</div><h2 style="margin-bottom:8px">Sem acesso</h2><p style="color:var(--muted)">Você ainda não tem acesso a nenhum curso. Entre em contato com a administradora.</p></div>`
-    }
+    showCourseSelection([])
     return
   }
-  if (courses.length === 1) { await selectCourse(courses[0]); return }
+  // Auto-seleciona se só tem 1 curso — para admin sempre, para aluna só se tiver acesso
+  if (courses.length === 1 && (isAdmin || courses[0].hasAccess)) {
+    await selectCourse(courses[0])
+    return
+  }
   showCourseSelection(courses)
 }
 
@@ -824,6 +825,7 @@ function showCourseSelection(courses) {
     const price = c.data?.price
     const fmtPrice = price ? `R$ ${Number(price).toLocaleString('pt-BR',{minimumFractionDigits:2})}` : 'Sem preço'
     const checkoutLink = `${siteUrl}/checkout.html?course=${c.id}`
+    const isLockedCourse = !isAdmin && c.hasAccess === false
     const adminControls = isAdmin ? `
       <div style="border-top:1px solid #D8D8C0;padding-top:10px;margin-top:8px;display:flex;flex-direction:column;gap:6px">
         <button data-id="${c.id}" data-name="${c.name.replace(/"/g,'&quot;')}" onclick="renameCourse(this.dataset.id,this.dataset.name)" style="padding:7px;background:#F5F5E8;border:1.5px solid #C8C8A0;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;color:#515132;text-align:left">✏️ Renomear curso</button>
@@ -831,16 +833,24 @@ function showCourseSelection(courses) {
         <button onclick="navigator.clipboard.writeText('${checkoutLink}');toast('✅ Link copiado!')" style="padding:7px;background:#F5F5E8;border:1.5px solid #C8C8A0;border-radius:6px;font-size:.75rem;font-weight:600;cursor:pointer;font-family:inherit;color:#515132;text-align:left">🔗 Copiar link de checkout</button>
         <button onclick="goToStudentsPage('${c.id}')" style="padding:7px;background:#515132;border:none;border-radius:6px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;text-align:left">👩‍🎓 Gerenciar Alunas</button>
       </div>` : ''
-    return `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:8px">
-      <div class="course-sel-card" data-cid="${c.id}" data-cname="${c.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}" style="cursor:pointer;transition:transform .12s">
-        <div style="font-size:1.5rem;margin-bottom:6px">📚</div>
+    const lockBadge = isLockedCourse
+      ? `<div style="display:inline-block;margin-top:6px;background:#8B0000;color:#fff;border-radius:4px;font-size:.68rem;font-weight:700;padding:2px 8px;letter-spacing:.04em">🔒 BLOQUEADO</div>`
+      : ''
+    const cardOpacity = isLockedCourse ? 'opacity:.6;' : ''
+    return `<div style="background:var(--surface);border:1.5px solid ${isLockedCourse ? '#C8A0A0' : 'var(--border)'};border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:8px${isLockedCourse ? ';background:#FFF8F8' : ''}">
+      <div class="course-sel-card" data-cid="${c.id}" data-cname="${c.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}" style="cursor:pointer;transition:transform .12s;${cardOpacity}">
+        <div style="font-size:1.5rem;margin-bottom:6px">${isLockedCourse ? '🔒' : '📚'}</div>
         <div style="font-weight:700;font-size:.95rem;margin-bottom:2px">${c.name}</div>
         <div style="font-size:.82rem;color:var(--muted)">${fmtPrice}</div>
+        ${lockBadge}
       </div>
       ${adminControls}
     </div>`
   }).join('')
-  p.innerHTML = `<div style="max-width:820px;margin:0 auto">${backBtn}<h1 style="font-size:1.3rem;font-weight:800;margin-bottom:6px">Seus cursos</h1><p style="color:var(--muted);margin-bottom:28px;font-size:.9rem">${isAdmin ? 'Clique no curso para editar • defina o preço • copie o link de checkout' : 'Selecione um curso para continuar'}</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">${courses.length ? grid : '<p style="color:var(--muted)">Nenhum curso criado ainda.</p>'}</div>${isAdmin ? `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px"><button onclick="showCreateCourse()" style="padding:10px 22px;background:#515132;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">+ Criar novo curso</button><button onclick="goToStudentsPage()" style="padding:10px 22px;background:#35351F;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">👩‍🎓 Gerenciar Alunas</button></div>` : ''}</div>`
+  const subTitle = isAdmin
+    ? 'Clique no curso para editar • defina o preço • copie o link de checkout'
+    : 'Clique em qualquer curso para ver o conteúdo — cursos bloqueados exigem compra'
+  p.innerHTML = `<div style="max-width:820px;margin:0 auto">${backBtn}<h1 style="font-size:1.3rem;font-weight:800;margin-bottom:6px">Cursos disponíveis</h1><p style="color:var(--muted);margin-bottom:28px;font-size:.9rem">${subTitle}</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px">${courses.length ? grid : '<p style="color:var(--muted)">Nenhum curso criado ainda.</p>'}</div>${isAdmin ? `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:24px"><button onclick="showCreateCourse()" style="padding:10px 22px;background:#515132;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">+ Criar novo curso</button><button onclick="goToStudentsPage()" style="padding:10px 22px;background:#35351F;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit">👩‍🎓 Gerenciar Alunas</button></div>` : ''}</div>`
 
   // Usa event listener em vez de onclick inline para evitar quebra por aspas no nome do curso
   p.querySelectorAll('.course-sel-card').forEach(el => {
@@ -914,15 +924,9 @@ function goToStudentsPage(courseId) {
 }
 
 async function selectCourse(course) {
-  // Para alunas: verifica acesso via cache (já validado em loadCourses)
-  // Para segurança extra, só bloqueia se o cache estiver populado e o curso não estiver nele
-  if (!isAdmin && coursesCache.length > 0) {
-    const cached = coursesCache.find(c => c.id === course.id)
-    if (!cached) {
-      toast('❌ Você não tem acesso a este curso.')
-      return
-    }
-  }
+  // Define se o curso está bloqueado para esta aluna (não aplicável a admin)
+  const cachedCourse = coursesCache.find(c => c.id === course.id)
+  currentCourseAccessLocked = !isAdmin && cachedCourse?.hasAccess === false
 
   document.getElementById('courseSelPage')?.remove()
   currentCourseId = course.id
@@ -1017,10 +1021,12 @@ document.getElementById('btnLogout').addEventListener('click', async () => {
   window.location.replace('login.html?saiu=1')
 })
 document.getElementById('btnCourses').addEventListener('click', async () => {
-  let courses = []
-  const { data: d } = await db.from('courses').select('id, name, data').order('created_at')
-  courses = d || []
-  showCourseSelection(courses)
+  if (isAdmin) {
+    const { data: d } = await db.from('courses').select('id, name, data').order('created_at')
+    showCourseSelection(d || [])
+  } else {
+    showCourseSelection(coursesCache)
+  }
 })
 
 // ── ADMIN ──
@@ -1114,14 +1120,14 @@ function renderModulesNav(search = '') {
     lessons.forEach(l => {
       globalIdx++
       const done = data.progress[l.id]?.completed
-      const isLocked = !!l.locked && (!isAdmin || studentViewMode)
+      const isLocked = (!!l.locked || currentCourseAccessLocked) && (!isAdmin || studentViewMode)
       const li = document.createElement('li')
       li.innerHTML = `
         <button class="lesson-btn${currentLessonId === l.id ? ' active' : ''}${done ? ' done' : ''}${isLocked ? ' locked-nav' : ''}" data-id="${l.id}" style="${isLocked ? 'opacity:.5;cursor:not-allowed' : ''}">
           <span class="lesson-num">${isLocked ? '🔒' : done ? '✓' : globalIdx}</span>
           <span class="lesson-info">
             <span class="lesson-name">${l.title}</span>
-            ${isLocked ? `<span class="lesson-meta">Em breve</span>` : l.duration ? `<span class="lesson-meta">⏱ ${l.duration}</span>` : ''}
+            ${isLocked ? `<span class="lesson-meta">${currentCourseAccessLocked ? 'Bloqueado' : 'Em breve'}</span>` : l.duration ? `<span class="lesson-meta">⏱ ${l.duration}</span>` : ''}
           </span>
           <span class="lesson-actions">
             <button class="icon-btn" data-edit="${l.id}" title="Editar">✏️</button>
@@ -1140,7 +1146,7 @@ function renderModulesNav(search = '') {
     btn.addEventListener('click', e => {
       if (e.target.closest('[data-edit],[data-del]')) return
       if (btn.classList.contains('locked-nav')) {
-        toast('🔒 Esta aula ainda não está disponível.')
+        toast(currentCourseAccessLocked ? '🔒 Adquira este curso para ter acesso às aulas.' : '🔒 Esta aula ainda não está disponível.')
         return
       }
       openLesson(btn.dataset.id); closeSidebar()
@@ -1164,9 +1170,9 @@ function renderOverview() {
     : `<div class="banner-photo"><span class="banner-photo-placeholder">👤</span></div>`
 
   const isStudentMode = !isAdmin || studentViewMode
-  const lastLesson = isStudentMode
+  const lastLesson = isStudentMode && !currentCourseAccessLocked
     ? (data.lessons.find(l => !l.locked && !data.progress[l.id]?.completed) || data.lessons.find(l => !l.locked) || data.lessons[0])
-    : (data.lessons.find(l => !data.progress[l.id]?.completed) || data.lessons[0])
+    : (!isStudentMode ? (data.lessons.find(l => !data.progress[l.id]?.completed) || data.lessons[0]) : null)
 
   const allDone = total > 0 && done === total
 
@@ -1311,8 +1317,8 @@ function renderOverview() {
         sLessonHtml += `<div class="s-module-sep">MÓDULO — ${modLabel.toUpperCase()}</div>`
         ml.forEach(l => {
           sIdx++
-          const isDone = !!data.progress[l.id]?.completed
-          const isLocked = !!l.locked && (!isAdmin || studentViewMode)
+          const isDone = !currentCourseAccessLocked && !!data.progress[l.id]?.completed
+          const isLocked = (!!l.locked || currentCourseAccessLocked) && (!isAdmin || studentViewMode)
           const numStr = String(sIdx).padStart(2,'0')
           sLessonHtml += `
             <div class="s-lesson-card${isLocked?' locked':''}" data-lesson="${l.id}">
@@ -1325,7 +1331,7 @@ function renderOverview() {
                 <div class="s-lesson-title">${l.title}</div>
                 ${l.desc ? `<div class="s-lesson-desc">${l.desc}</div>` : ''}
                 <div class="s-lesson-badge${isLocked?' locked-badge':isDone?' done':''}">
-                  ${isLocked ? '🔒 EM BREVE' : isDone ? '✓ CONCLUÍDA' : '● DISPONÍVEL'}
+                  ${isLocked ? '🔒 BLOQUEADO' : isDone ? '✓ CONCLUÍDA' : '● DISPONÍVEL'}
                   ${!isLocked && l.duration ? ` · ⏱ ${l.duration}` : ''}
                 </div>
               </div>
@@ -1336,45 +1342,47 @@ function renderOverview() {
       const unassigned = data.lessons.filter(l => !l.moduleId)
       unassigned.forEach(l => {
         sIdx++
-        const isDone = !!data.progress[l.id]?.completed
+        const isDone = !currentCourseAccessLocked && !!data.progress[l.id]?.completed
+        const isLocked = currentCourseAccessLocked && (!isAdmin || studentViewMode)
         const numStr = String(sIdx).padStart(2,'0')
         sLessonHtml += `
-          <div class="s-lesson-card" data-lesson="${l.id}">
+          <div class="s-lesson-card${isLocked?' locked':''}" data-lesson="${l.id}">
             <div class="s-lesson-num${isDone?' done':''}">
-              <div class="s-lesson-num-val">${numStr}</div>
+              <div class="s-lesson-num-val">${isLocked ? '🔒' : numStr}</div>
               <div class="s-lesson-num-lbl">AULA</div>
             </div>
             <div class="s-lesson-body">
               <div class="s-lesson-title">${l.title}</div>
               ${l.desc ? `<div class="s-lesson-desc">${l.desc}</div>` : ''}
-              <div class="s-lesson-badge${isDone?' done':''}">
-                ${isDone ? '✓ CONCLUÍDA' : '● DISPONÍVEL'}
-                ${l.duration ? ` · ⏱ ${l.duration}` : ''}
+              <div class="s-lesson-badge${isLocked?' locked-badge':isDone?' done':''}">
+                ${isLocked ? '🔒 BLOQUEADO' : isDone ? '✓ CONCLUÍDA' : '● DISPONÍVEL'}
+                ${!isLocked && l.duration ? ` · ⏱ ${l.duration}` : ''}
               </div>
             </div>
-            <span class="s-lesson-arrow">→</span>
+            <span class="s-lesson-arrow">${isLocked ? '🔒' : '→'}</span>
           </div>`
       })
     } else {
       data.lessons.forEach(l => {
         sIdx++
-        const isDone = !!data.progress[l.id]?.completed
+        const isDone = !currentCourseAccessLocked && !!data.progress[l.id]?.completed
+        const isLocked = currentCourseAccessLocked && (!isAdmin || studentViewMode)
         const numStr = String(sIdx).padStart(2,'0')
         sLessonHtml += `
-          <div class="s-lesson-card" data-lesson="${l.id}">
+          <div class="s-lesson-card${isLocked?' locked':''}" data-lesson="${l.id}">
             <div class="s-lesson-num${isDone?' done':''}">
-              <div class="s-lesson-num-val">${numStr}</div>
+              <div class="s-lesson-num-val">${isLocked ? '🔒' : numStr}</div>
               <div class="s-lesson-num-lbl">AULA</div>
             </div>
             <div class="s-lesson-body">
               <div class="s-lesson-title">${l.title}</div>
               ${l.desc ? `<div class="s-lesson-desc">${l.desc}</div>` : ''}
-              <div class="s-lesson-badge${isDone?' done':''}">
-                ${isDone ? '✓ CONCLUÍDA' : '● DISPONÍVEL'}
-                ${l.duration ? ` · ⏱ ${l.duration}` : ''}
+              <div class="s-lesson-badge${isLocked?' locked-badge':isDone?' done':''}">
+                ${isLocked ? '🔒 BLOQUEADO' : isDone ? '✓ CONCLUÍDA' : '● DISPONÍVEL'}
+                ${!isLocked && l.duration ? ` · ⏱ ${l.duration}` : ''}
               </div>
             </div>
-            <span class="s-lesson-arrow">→</span>
+            <span class="s-lesson-arrow">${isLocked ? '🔒' : '→'}</span>
           </div>`
       })
     }
@@ -1386,8 +1394,18 @@ function renderOverview() {
     const heroDescHtml = heroDesc
       ? `<div class="hero-desc">${heroDesc}</div>`
       : ''
-    const heroContinueBtn = lastLesson
+    const heroContinueBtn = lastLesson && !currentCourseAccessLocked
       ? `<button class="hero-btn-continue" id="heroBtnContinue">${done === 0 ? '▶ Começar agora' : '▶ Continuar de onde parou'}</button>`
+      : ''
+    const checkoutUrl = `${location.origin}/checkout.html?course=${currentCourseId}`
+    const lockedCourseBanner = currentCourseAccessLocked && (!isAdmin || studentViewMode)
+      ? `<div style="margin:0 0 24px;padding:18px 20px;background:linear-gradient(135deg,#3D1A1A,#6B2020);border-radius:12px;color:#fff;display:flex;flex-wrap:wrap;align-items:center;gap:14px">
+           <div style="flex:1;min-width:200px">
+             <div style="font-weight:800;font-size:1rem;margin-bottom:4px">🔒 Curso bloqueado</div>
+             <div style="font-size:.85rem;opacity:.85">Você ainda não tem acesso a este curso. Adquira para desbloquear todas as aulas.</div>
+           </div>
+           <a href="${checkoutUrl}" style="padding:10px 20px;background:#fff;color:#6B2020;border-radius:8px;font-weight:700;font-size:.88rem;text-decoration:none;white-space:nowrap">Adquirir curso →</a>
+         </div>`
       : ''
 
     page.innerHTML = `
@@ -1405,14 +1423,14 @@ function renderOverview() {
       </div>
 
       <!-- Progresso -->
-      <div class="student-body">
+      ${!currentCourseAccessLocked ? `<div class="student-body">
         <div class="s-progress-header">
           <div class="s-progress-label">Seu progresso no treinamento</div>
           <div class="s-progress-pct">${pct}%</div>
         </div>
         <div class="s-progress-bar"><div class="s-progress-fill" style="width:${pct}%"></div></div>
         ${dotsHtml ? `<div class="module-dots">${dotsHtml}</div>` : ''}
-      </div>
+      </div>` : ''}
 
       <!-- Acesso Rápido -->
       ${(data.quickLinks||[]).length > 0 ? `
@@ -1427,6 +1445,9 @@ function renderOverview() {
         </div>
       </div>` : ''}
 
+      <!-- Banner curso bloqueado -->
+      ${lockedCourseBanner}
+
       <!-- Aulas -->
       <div style="margin-top:8px">
         ${total > 0 ? sLessonHtml : `<div style="text-align:center;padding:48px 20px;color:var(--muted);font-size:.9rem">Nenhuma aula disponível ainda.</div>`}
@@ -1434,8 +1455,8 @@ function renderOverview() {
 
       ${allDone ? `<div class="completion-banner show"><h3>🎉 Parabéns! Você concluiu o curso!</h3><p>Você completou todas as ${total} aulas!</p></div>` : ''}
 
-      <!-- Seção de dúvidas da aluna -->
-      <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border)">
+      <!-- Seção de dúvidas da aluna (apenas para cursos com acesso) -->
+      <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border);${currentCourseAccessLocked ? 'display:none' : ''}">
         <div style="font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:16px">💬 Minhas Dúvidas</div>
         <div id="studentDoubtsArea"><div style="color:var(--muted);font-size:.85rem">Carregando suas dúvidas...</div></div>
         <div style="margin-top:16px">
@@ -1448,7 +1469,7 @@ function renderOverview() {
     page.querySelectorAll('[data-lesson]').forEach(el => {
       el.addEventListener('click', () => {
         if (el.classList.contains('locked') || el.classList.contains('locked-card')) {
-          toast('🔒 Esta aula ainda não está disponível.')
+          toast(currentCourseAccessLocked ? '🔒 Adquira este curso para ter acesso às aulas.' : '🔒 Esta aula ainda não está disponível.')
           return
         }
         openLesson(el.dataset.lesson)
@@ -1716,6 +1737,10 @@ function openQuickLinkModal(idx) {
 
 // ── LESSON PAGE ──
 function openLesson(id) {
+  if (currentCourseAccessLocked && (!isAdmin || studentViewMode)) {
+    toast('🔒 Adquira este curso para ter acesso às aulas.')
+    return
+  }
   const lessonCheck = data.lessons.find(l => l.id === id)
   if (lessonCheck?.locked && (!isAdmin || studentViewMode)) {
     toast('🔒 Esta aula ainda não está disponível.')

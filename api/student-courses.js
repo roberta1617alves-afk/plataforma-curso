@@ -25,26 +25,21 @@ module.exports = async function handler(req, res) {
     return res.status(403).json({ erro: 'Admin deve usar o painel admin.' })
   }
 
-  // Busca cursos da aluna via service key (100% server-side)
-  const { data: accessRows, error: accessErr } = await supabase
+  // Busca TODOS os cursos e marca quais a aluna tem acesso
+  const { data: courses, error: coursesErr } = await supabase
+    .from('courses')
+    .select('id, name, data')
+    .order('created_at')
+
+  if (coursesErr) return res.status(500).json({ erro: coursesErr.message })
+
+  const { data: accessRows } = await supabase
     .from('course_access')
     .select('course_id')
     .eq('user_id', user.id)
 
-  if (accessErr) return res.status(500).json({ erro: accessErr.message })
-  if (!accessRows || accessRows.length === 0) {
-    return res.status(200).json({ courses: [] })
-  }
+  const accessSet = new Set((accessRows || []).map(r => r.course_id))
 
-  const courseIds = accessRows.map(r => r.course_id)
-
-  // Busca dados dos cursos — só os que a aluna tem acesso
-  const { data: courses, error: coursesErr } = await supabase
-    .from('courses')
-    .select('id, name, data')
-    .in('id', courseIds)
-
-  if (coursesErr) return res.status(500).json({ erro: coursesErr.message })
-
-  return res.status(200).json({ courses: courses || [] })
+  const result = (courses || []).map(c => ({ ...c, hasAccess: accessSet.has(c.id) }))
+  return res.status(200).json({ courses: result })
 }
