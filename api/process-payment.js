@@ -115,7 +115,7 @@ module.exports = async function handler(req, res) {
       cc_rejected_duplicated_payment: 'Pagamento duplicado detectado.',
     }
     const msg = erros[payment.status_detail] || 'Pagamento recusado. Verifique os dados e tente novamente.'
-    return res.status(200).json({ status: payment.status || 'rejected', erro: msg })
+    return res.status(200).json({ status: payment.status || 'rejected', erro: msg, _detail: payment.status_detail, _cause: payment.cause })
 
   } catch (err) {
     console.error('Erro process-payment:', err)

@@ -256,6 +256,10 @@ async function renderBrick() {
   brickController = await bricksBuilder.create('payment', 'paymentBrick_container', {
     initialization: { amount: Number(courseData.price), payer: { email: payerEmail } },
     customization: {
+      paymentMethods: {
+        creditCard: 'all',
+        debitCard: 'all'
+      },
       visual: { style: { theme: 'default' } }
     },
     callbacks: {
