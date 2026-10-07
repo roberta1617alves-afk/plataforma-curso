@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
     if (pid) {
       const pr = await fetch(`https://api.mercadopago.com/v1/payments/${pid}`, { headers: { Authorization: `Bearer ${t}` } })
       const pd = await pr.json()
-      return res.status(200).json({ status: pd.status, detail: pd.status_detail, cause: pd.cause, collector_id: pd.collector_id, payer: pd.payer, description: pd.description, transaction_amount: pd.transaction_amount, date_created: pd.date_created })
+      return res.status(200).json({ status: pd.status, detail: pd.status_detail, cause: pd.cause, amount: pd.transaction_amount, preference_id: pd.order?.id, external_ref: pd.external_reference, payer_email: pd.payer?.email, payer_id: pd.payer?.id, additional_info: pd.additional_info })
     }
     return res.status(200).json({ tokenTipo: 'PRODUCAO ✓', email: u.email, id: u.id })
   }
