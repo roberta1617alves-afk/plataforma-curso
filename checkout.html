@@ -106,16 +106,36 @@
       <button class="btn-back" onclick="voltarStep1()">← Alterar dados</button>
       <div class="buyer-summary" id="buyerSummary"></div>
 
-      <!-- Cartão de crédito -->
-      <div id="tabContentCard">
+      <!-- Abas de pagamento -->
+      <div class="tabs">
+        <button class="tab active" id="tabCard" onclick="switchTab('card')">💳 Cartão</button>
+        <button class="tab" id="tabPix"  onclick="switchTab('pix')">⚡ PIX</button>
+      </div>
+
+      <!-- Cartão (crédito e débito via Brick) -->
+      <div class="tab-content active" id="tabContentCard">
         <div id="paymentBrick_container"></div>
+      </div>
+
+      <!-- PIX -->
+      <div class="tab-content" id="tabContentPix">
+        <div class="pix-section">
+          <p>Pague com PIX e receba o acesso imediatamente após a confirmação.</p>
+          <div class="fgroup" style="margin-top:16px">
+            <label>CPF (obrigatório para PIX)</label>
+            <input type="text" id="pixCpf" placeholder="000.000.000-00" maxlength="14"
+              oninput="this.value=this.value.replace(/\D/g,'').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})\.(\d{3})(\d)/,'$1.$2.$3').replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/,'$1.$2.$3-$4').substring(0,14)" />
+          </div>
+          <button class="btn-pix" id="btnGerarPix" onclick="gerarPixDireto()">⚡ Gerar QR Code PIX</button>
+          <div class="error" id="errPix" style="display:none;margin-top:10px"></div>
+        </div>
       </div>
 
       <div class="seguro">🔒 Pagamento 100% seguro via Mercado Pago</div>
     </div>
   </div>
 
-  <!-- STEP 3: PIX aguardando (não mais usado, mantido por compatibilidade) -->
+  <!-- PIX QR Code -->
   <div id="viewPix" style="display:none"></div>
 
 </div>
@@ -177,12 +197,54 @@ function switchTab(tab) {
   document.getElementById('tabPix').classList.toggle('active',  tab === 'pix')
   document.getElementById('tabContentCard').classList.toggle('active', tab === 'card')
   document.getElementById('tabContentPix').classList.toggle('active',  tab === 'pix')
-  // Desmonta o Brick ao ir para PIX (evita overlay invisível que bloqueia cliques)
   if (tab === 'pix' && brickController) {
     brickController.unmount()
     brickController = null
   } else if (tab === 'card' && !brickController) {
     renderBrick()
+  }
+}
+
+async function gerarPixDireto() {
+  const errEl = document.getElementById('errPix')
+  const btn   = document.getElementById('btnGerarPix')
+  errEl.style.display = 'none'
+
+  const cpf = (document.getElementById('pixCpf')?.value || '').replace(/\D/g,'')
+  if (!cpf || cpf.length !== 11) {
+    errEl.textContent = 'Informe seu CPF para pagar com PIX.'
+    errEl.style.display = 'block'
+    return
+  }
+  btn.disabled = true
+  btn.textContent = '⏳ Gerando PIX...'
+  try {
+    const params = new URLSearchParams({
+      courseId, payerName, payerEmail,
+      token: '', paymentMethodId: 'pix', installments: 1,
+      issuerId: '', identificationType: 'CPF', identificationNumber: cpf
+    })
+    const res = await fetch('/api/process-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    })
+    const result = await res.json()
+    if (result.pixQrCode || result.pixQrCodeBase64) {
+      showPixQr(result.pixQrCode, result.pixQrCodeBase64)
+    } else if (result.status === 'approved') {
+      window.location.href = '/sucesso.html'
+    } else {
+      errEl.textContent = result.erro || 'Erro ao gerar PIX. Tente novamente.'
+      errEl.style.display = 'block'
+      btn.disabled = false
+      btn.textContent = '⚡ Gerar QR Code PIX'
+    }
+  } catch(e) {
+    errEl.textContent = 'Erro de conexão. Tente novamente.'
+    errEl.style.display = 'block'
+    btn.disabled = false
+    btn.textContent = '⚡ Gerar QR Code PIX'
   }
 }
 
@@ -194,12 +256,6 @@ async function renderBrick() {
   brickController = await bricksBuilder.create('payment', 'paymentBrick_container', {
     initialization: { amount: Number(courseData.price), payer: { email: payerEmail } },
     customization: {
-      paymentMethods: {
-        creditCard:   'all',
-        debitCard:    'all',
-        ticket:       'all',
-        bankTransfer: 'all'
-      },
       visual: { style: { theme: 'default' } }
     },
     callbacks: {
