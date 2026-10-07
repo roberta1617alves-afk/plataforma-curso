@@ -60,10 +60,6 @@ module.exports = async function handler(req, res) {
       const preference = {
         items: [{ id: courseId, title: course.name, quantity: 1, unit_price: Number(price), currency_id: 'BRL' }],
         payer: { name: payerName || '', email: payerEmail },
-        payment_methods: {
-          excluded_payment_types: [{ id: 'credit_card' }, { id: 'debit_card' }, { id: 'ticket' }],
-          installments: 1
-        },
         back_urls: {
           success: `${siteUrl}/sucesso.html?courseId=${courseId}&email=${encodeURIComponent(payerEmail)}`,
           failure: `${siteUrl}/checkout.html?courseId=${courseId}`,
